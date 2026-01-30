@@ -1,6 +1,6 @@
 services:
   app:
-    container_name: mecanica_xpto
+    container_name: os-service-api
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,37 +21,14 @@ services:
         condition: service_healthy
 
   migration:
-    container_name: migration
+    container_name: os-service-api-migration
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["./mecanica-xpto-migrate"]
+    command: ["./os-service-api-migrate"]
     depends_on:
       app:
         condition: service_started
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-    networks:
-      - app_network
-    restart: on-failure
-
-  os_execution_metrics_job:
-    container_name: os_execution_metrics_job
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ["./os-execution-metrics-job"]
-    depends_on:
-      app:
-        condition: service_started
-      migration:
-        condition: service_completed_successfully
     env_file:
       - .env
     environment:

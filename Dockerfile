@@ -18,24 +18,24 @@ ARG BUILDPLATFORM
 
 WORKDIR /app/cmd/api
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /mecanica-xpto-api
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /os-service-api
 
 # Build do binário de migration
 WORKDIR /app/cmd/migrate
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /mecanica-xpto-migrate
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /os-service-api-migrate
 
 FROM alpine:3.22
 
 WORKDIR /app
 
-COPY --from=builder /mecanica-xpto-api .
+COPY --from=builder /os-service-api .
 
-COPY --from=builder /mecanica-xpto-migrate .
+COPY --from=builder /os-service-api-migrate .
 
 
 COPY --from=builder /app/docs ./docs
 
 EXPOSE 8080
 
-CMD ["./mecanica-xpto-api"]
+CMD ["./os-service-api"]
