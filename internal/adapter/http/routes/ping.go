@@ -12,7 +12,7 @@ import (
 // @Produce json
 // @Success 200 {object} map[string]interface{} "Returns pong message"
 // @Router /ping [get]
-func addPingRoutes(rg *gin.RouterGroup) {
+func addPingRoutes(rg *gin.Engine) {
 	ping := rg.Group(PathHealthCheck)
 	{
 		ping.GET("", func(c *gin.Context) {

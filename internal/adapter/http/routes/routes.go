@@ -9,7 +9,7 @@ import (
 	"mecanica_xpto/internal/infrastructure/logs"
 	"mecanica_xpto/internal/infrastructure/observability"
 	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg/utils"
+	"mecanica_xpto/pkg/utils/auth"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -57,8 +57,8 @@ func Run() {
 
 func getRoutes() {
 	// Config JWT
-	jwtCfg := utils.LoadJWTConfig()
-	jwtService := utils.NewJWTService(jwtCfg)
+	jwtCfg := auth.LoadJWTConfig()
+	jwtService := auth.NewJWTService(jwtCfg)
 
 	db := database.ConnectDatabase()
 	userRepository := repository2.NewUserRepository(db)
@@ -69,8 +69,7 @@ func getRoutes() {
 	)
 
 	// Rotas PÚBLICAS
-	v1 := router.Group("/v1")
-	v1.POST("/login", authHandler.Login)
+	router.POST(PostLogin, authHandler.Login)
 
 	partsSupplyRepository := repository2.NewPartsSupplyRepository(db)
 	serviceRepository := repository2.NewServiceRepository(db)
@@ -95,11 +94,10 @@ func getRoutes() {
 	additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
 
 	// Rotas PROTEGIDAS
-	authGroup := v1.Group("/")
-	authGroup.Use(middleware.AuthMiddleware(jwtService))
-	addPingRoutes(authGroup)
-	addServiceOrderRoutes(authGroup, serviceOrderHandler)
-	addAdditionalRepairRoutes(authGroup, additionalRepairHandler)
+	router.Use(middleware.AuthMiddleware(jwtService))
+	addPingRoutes(router)
+	addServiceOrderRoutes(router, serviceOrderHandler)
+	addAdditionalRepairRoutes(router, additionalRepairHandler)
 }
 
 func setMiddlewares() {

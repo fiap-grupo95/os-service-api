@@ -389,6 +389,7 @@ func parseServiceOrderIDParam(c *gin.Context) (uint, bool) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil || id <= 0 {
 		logger.Error().Err(err).Str("id", c.Param("id")).Msg("Invalid service order ID")
+		
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service order ID"})
 		return 0, false
 	}

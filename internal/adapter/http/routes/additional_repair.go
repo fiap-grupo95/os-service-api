@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func addAdditionalRepairRoutes(rg *gin.RouterGroup, additionalRepair *handlers.AdditionalRepairHandler) {
+func addAdditionalRepairRoutes(rg *gin.Engine, additionalRepair *handlers.AdditionalRepairHandler) {
 	serviceOrdersRoutes := rg.Group(PathAdditionalRepair)
 	{
 		serviceOrdersRoutes.POST("", additionalRepair.CreateAdditionalRepair)

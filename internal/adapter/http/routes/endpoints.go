@@ -22,3 +22,7 @@ const (
 	GetServiceOrder        = "/v1/service-orders/:id"
 	GetServiceOrderHistory = "/v1/service-orders/:id/history"
 )
+
+const (
+	PostLogin = "/v1/login"
+)

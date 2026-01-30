@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"strings"
 
-	"mecanica_xpto/pkg/utils"
+	"mecanica_xpto/pkg/utils/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtService *utils.JWTService) gin.HandlerFunc {
+func AuthMiddleware(jwtService *auth.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

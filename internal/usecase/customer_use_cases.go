@@ -5,7 +5,7 @@ import (
 	"mecanica_xpto/internal/domain/entities"
 	"mecanica_xpto/internal/domain/valueobject"
 	"mecanica_xpto/internal/usecase/interfaces"
-	"mecanica_xpto/pkg"
+	"mecanica_xpto/pkg/utils/password"
 )
 
 var (

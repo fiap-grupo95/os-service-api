@@ -7,7 +7,7 @@ import (
 
 	dto "mecanica_xpto/internal/infrastructure/database/model"
 	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg"
+	"mecanica_xpto/pkg/utils/errors"
 )
 
 const (

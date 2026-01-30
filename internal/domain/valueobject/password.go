@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"mecanica_xpto/pkg"
+	"mecanica_xpto/pkg/utils/password"
 	"strings"
 
 	"golang.org/x/crypto/argon2"

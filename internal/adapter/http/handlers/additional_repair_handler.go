@@ -7,7 +7,7 @@ import (
 	"mecanica_xpto/internal/domain/entities"
 	"mecanica_xpto/internal/infrastructure/logs"
 	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg"
+	"mecanica_xpto/pkg/utils/errors"
 	"net/http"
 	"strconv"
 

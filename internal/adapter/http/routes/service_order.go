@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func addServiceOrderRoutes(rg *gin.RouterGroup, serviceOrderHandler *handlers.ServiceOrderHandler) {
+func addServiceOrderRoutes(rg *gin.Engine, serviceOrderHandler *handlers.ServiceOrderHandler) {
 	// Get endpoints
 	rg.GET(GetServiceOrder, serviceOrderHandler.GetServiceOrder)
 	rg.GET(GetServiceOrderHistory, serviceOrderHandler.GetServiceOrderHistory)

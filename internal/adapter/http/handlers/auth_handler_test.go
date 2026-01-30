@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"mecanica_xpto/internal/adapter/http/handlers"
-	"mecanica_xpto/pkg"
+	"mecanica_xpto/pkg/utils/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
