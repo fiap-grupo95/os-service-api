@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	dto "mecanica_xpto/internal/infrastructure/database/model"
-	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg/utils/errors"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 )
 
 const (

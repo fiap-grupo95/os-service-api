@@ -1,6 +1,6 @@
 package interfaces
 
-import "mecanica_xpto/internal/domain/entities"
+import "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 
 type IServiceOrderRepository interface {
 	Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)

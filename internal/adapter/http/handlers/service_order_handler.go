@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"strconv"
 
-	request "mecanica_xpto/internal/adapter/http/dto/request"
-	response "mecanica_xpto/internal/adapter/http/dto/response"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/infrastructure/logs"
-	"mecanica_xpto/internal/infrastructure/observability"
-	"mecanica_xpto/internal/usecase"
+	request "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
+	response "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/newrelic/go-agent/v3/integrations/nrgin"

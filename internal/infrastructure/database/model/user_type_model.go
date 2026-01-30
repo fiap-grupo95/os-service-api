@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"mecanica_xpto/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 )
 
 type UserTypeModel struct {

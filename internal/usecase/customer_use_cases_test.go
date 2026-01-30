@@ -2,11 +2,11 @@ package usecase_test
 
 import (
 	"errors"
-	use_cases "mecanica_xpto/internal/usecase"
-	"mecanica_xpto/internal/usecase/interfaces/mocks"
+	use_cases "github.com/fiap-grupo95/os-service-api/internal/usecase"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces/mocks"
 	"testing"
 
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"

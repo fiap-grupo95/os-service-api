@@ -1,7 +1,7 @@
 package routes
 
 import (
-	handlers "mecanica_xpto/internal/adapter/http/handlers"
+	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	passwordpkg "mecanica_xpto/internal/domain/valueobject/password_utils"
+	passwordpkg "github.com/fiap-grupo95/os-service-api/internal/domain/valueobject/password_utils"
 )
 
 func HashPassword(password string) (string, error) {

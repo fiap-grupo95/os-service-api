@@ -3,7 +3,7 @@ package response
 import (
 	"time"
 
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 )
 
 type ServiceOrderResponse struct {

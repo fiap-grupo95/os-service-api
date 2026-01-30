@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	
-	"mecanica_xpto/internal/infrastructure/logs"
-	"mecanica_xpto/pkg/metrics"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/metrics"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
 )

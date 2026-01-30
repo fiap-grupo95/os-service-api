@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/usecase/mocks"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 
 	"github.com/golang/mock/gomock"
 )

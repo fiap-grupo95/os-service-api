@@ -2,8 +2,8 @@
 package mocks
 
 import (
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 
 	"github.com/stretchr/testify/mock"
 )

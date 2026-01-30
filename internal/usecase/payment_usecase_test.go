@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	"mecanica_xpto/internal/domain/entities"
-	domainmocks "mecanica_xpto/internal/domain/mocks"
-	dto "mecanica_xpto/internal/infrastructure/database/model"
-	usecasemocks "mecanica_xpto/internal/usecase/mocks"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	domainmocks "github.com/fiap-grupo95/os-service-api/internal/domain/mocks"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
+	usecasemocks "github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 )
 
 func TestPaymentUseCase_CreatePayment(t *testing.T) {

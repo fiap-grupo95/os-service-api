@@ -2,11 +2,11 @@ package repository
 
 import (
 	"errors"
-	domainrepo "mecanica_xpto/internal/usecase/interfaces"
+	domainrepo "github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
-	dto "mecanica_xpto/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 
 	"gorm.io/gorm"
 )

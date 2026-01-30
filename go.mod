@@ -1,4 +1,4 @@
-module mecanica_xpto
+module github.com/fiap-grupo95/os-service-api
 
 go 1.24.4
 

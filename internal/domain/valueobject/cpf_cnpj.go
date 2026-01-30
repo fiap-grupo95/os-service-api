@@ -1,8 +1,8 @@
 package valueobject
 
 import (
-	cpfutils "mecanica_xpto/internal/domain/valueobject/cpf_cnpj_utils/utils"
-	"mecanica_xpto/internal/domain/valueobject/cpf_cnpj_utils/validators"
+	cpfutils "github.com/fiap-grupo95/os-service-api/internal/domain/valueobject/cpf_cnpj_utils/utils"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject/cpf_cnpj_utils/validators"
 	"regexp"
 )
 

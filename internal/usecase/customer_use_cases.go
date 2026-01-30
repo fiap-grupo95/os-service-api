@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"errors"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
-	"mecanica_xpto/internal/usecase/interfaces"
-	"mecanica_xpto/pkg/utils/password"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/password"
 )
 
 var (

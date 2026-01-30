@@ -1,15 +1,15 @@
 package routes
 
 import (
-	_ "mecanica_xpto/docs" // This will be auto-generated
-	"mecanica_xpto/internal/adapter/http/handlers"
-	"mecanica_xpto/internal/adapter/http/middleware"
-	repository "mecanica_xpto/internal/adapter/persistence/repository"
-	"mecanica_xpto/internal/infrastructure/database"
-	"mecanica_xpto/internal/infrastructure/logs"
-	"mecanica_xpto/internal/infrastructure/observability"
-	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg/utils/auth"
+	_ "github.com/fiap-grupo95/os-service-api/docs" // This will be auto-generated
+	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
+	middleware "github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
+	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/repository"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/auth"
 	"strconv"
 
 	"github.com/gin-gonic/gin"

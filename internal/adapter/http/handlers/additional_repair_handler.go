@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"errors"
-	"mecanica_xpto/internal/adapter/http/dto/request"
-	"mecanica_xpto/internal/adapter/http/dto/response"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/infrastructure/logs"
-	"mecanica_xpto/internal/usecase"
-	"mecanica_xpto/pkg/utils/errors"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 	"net/http"
 	"strconv"
 

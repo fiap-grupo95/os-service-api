@@ -2,9 +2,10 @@ package usecase
 
 import (
 	"errors"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
-	domainrepo "mecanica_xpto/internal/usecase/interfaces"
+
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	domainrepo "github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 )
 
 var (

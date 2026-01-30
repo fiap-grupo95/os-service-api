@@ -2,7 +2,7 @@ package mocks
 
 import (
 	"context"
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"reflect"
 
 	"github.com/golang/mock/gomock"

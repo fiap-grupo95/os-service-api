@@ -1,9 +1,9 @@
 package usecase
 
 import (
-	"mecanica_xpto/internal/domain/valueobject"
-	"mecanica_xpto/internal/usecase/interfaces"
-	"mecanica_xpto/pkg/utils/errors"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 	"net/http"
 )
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "mecanica_xpto/docs"
-	"mecanica_xpto/internal/adapter/http/routes"
+	_ "github.com/fiap-grupo95/os-service-api/docs"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/routes"
 )
 
 // @title           Mecanica XPTO API

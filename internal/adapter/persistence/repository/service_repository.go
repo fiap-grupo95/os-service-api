@@ -2,9 +2,9 @@ package repository
 
 import (
 	"context"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/infrastructure/database/model"
-	"mecanica_xpto/internal/usecase/interfaces"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
 	"gorm.io/gorm"
 )

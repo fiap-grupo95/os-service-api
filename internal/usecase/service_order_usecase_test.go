@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
-	dto "mecanica_xpto/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

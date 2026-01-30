@@ -1,7 +1,7 @@
 package main
 
 import (
-	"mecanica_xpto/internal/infrastructure/database"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
 )
 
 func main() {

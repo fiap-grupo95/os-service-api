@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"mecanica_xpto/pkg/utils/auth"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/auth"
 
 	"github.com/gin-gonic/gin"
 )

@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"mecanica_xpto/internal/adapter/http/handlers/mocks"
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers/mocks"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"

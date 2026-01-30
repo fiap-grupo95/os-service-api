@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"mecanica_xpto/internal/domain/valueobject"
-	"mecanica_xpto/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 )
 
 type UserTypeDTO struct {

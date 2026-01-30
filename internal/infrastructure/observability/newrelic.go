@@ -2,7 +2,7 @@ package observability
 
 import (
 	"context"
-	"mecanica_xpto/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"os"
 	"time"
 

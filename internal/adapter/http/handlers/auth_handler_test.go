@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"mecanica_xpto/internal/adapter/http/handlers"
-	"mecanica_xpto/pkg/utils/errors"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
+	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

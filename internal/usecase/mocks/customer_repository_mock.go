@@ -5,7 +5,7 @@
 package mocks
 
 import (
-	dto "mecanica_xpto/internal/infrastructure/database/model"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"

@@ -1,8 +1,8 @@
 package interfaces
 
 import (
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 )
 
 // VehicleRepository defines the contracts required by the domain/use case layer

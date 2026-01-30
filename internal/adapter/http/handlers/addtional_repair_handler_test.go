@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	request "mecanica_xpto/internal/adapter/http/dto/request"
-	response "mecanica_xpto/internal/adapter/http/dto/response"
-	handler "mecanica_xpto/internal/adapter/http/handlers"
-	"mecanica_xpto/internal/adapter/http/handlers/mocks"
-	"mecanica_xpto/internal/domain/entities"
-	"mecanica_xpto/internal/domain/valueobject"
+	request "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
+	response "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
+	handler "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers/mocks"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"

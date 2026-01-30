@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"context"
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 )
 
 type IPaymentRepo interface {

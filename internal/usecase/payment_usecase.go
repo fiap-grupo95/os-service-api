@@ -3,10 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
-	"mecanica_xpto/internal/usecase/interfaces"
 	"time"
 
-	"mecanica_xpto/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 )
 
 var (

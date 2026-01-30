@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	Model "mecanica_xpto/internal/infrastructure/database/model"
+	Model "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 
 	"gorm.io/gorm"
 )
