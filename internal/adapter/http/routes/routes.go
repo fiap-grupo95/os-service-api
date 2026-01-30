@@ -4,7 +4,7 @@ import (
 	_ "mecanica_xpto/docs" // This will be auto-generated
 	"mecanica_xpto/internal/adapter/http/handlers"
 	"mecanica_xpto/internal/adapter/http/middleware"
-	repository2 "mecanica_xpto/internal/adapter/persistence/repository"
+	repository "mecanica_xpto/internal/adapter/persistence/repository"
 	"mecanica_xpto/internal/infrastructure/database"
 	"mecanica_xpto/internal/infrastructure/logs"
 	"mecanica_xpto/internal/infrastructure/observability"
@@ -46,7 +46,7 @@ func Run() {
 	// Swagger documentation endpoint
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	getRoutes()
+	InitApp()
 
 	logger := logs.Logger()
 	err = router.Run(":" + strconv.Itoa(PORT))
@@ -55,28 +55,27 @@ func Run() {
 	}
 }
 
-func getRoutes() {
+func InitApp() {
 	// Config JWT
 	jwtCfg := auth.LoadJWTConfig()
 	jwtService := auth.NewJWTService(jwtCfg)
-
 	db := database.ConnectDatabase()
-	userRepository := repository2.NewUserRepository(db)
 
 	// Handler de autenticação
+	userRepository := repository.NewUserRepository(db)
 	authHandler := handlers.NewAuthHandler(
 		usecase.NewAuthUseCase(jwtService, userRepository),
 	)
 
-	// Rotas PÚBLICAS
-	router.POST(PostLogin, authHandler.Login)
+	// Auth routes
+	addAuthRoutes(router, authHandler)
 
-	partsSupplyRepository := repository2.NewPartsSupplyRepository(db)
-	serviceRepository := repository2.NewServiceRepository(db)
-	vehiclesRepository := repository2.NewVehicleRepository(db)
-	customerRepository := repository2.NewCustomerRepository(db)
-	serviceOrderRepository := repository2.NewServiceOrderRepository(db)
-	additionalRepairRepository := repository2.NewAdditionalRepairRepository(db)
+	partsSupplyRepository := repository.NewPartsSupplyRepository(db)
+	serviceRepository := repository.NewServiceRepository(db)
+	vehiclesRepository := repository.NewVehicleRepository(db)
+	customerRepository := repository.NewCustomerRepository(db)
+	serviceOrderRepository := repository.NewServiceOrderRepository(db)
+	additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
 
 	serviceOrderUsecase := usecase.NewServiceOrderUseCase(
 		serviceOrderRepository,
@@ -93,7 +92,7 @@ func getRoutes() {
 	serviceOrderHandler := handlers.NewServiceOrderHandler(serviceOrderUsecase)
 	additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
 
-	// Rotas PROTEGIDAS
+	// Protected routes
 	router.Use(middleware.AuthMiddleware(jwtService))
 	addPingRoutes(router)
 	addServiceOrderRoutes(router, serviceOrderHandler)

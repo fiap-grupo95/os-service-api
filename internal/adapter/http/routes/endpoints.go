@@ -1,9 +1,8 @@
 package routes
 
 const (
-	PathHealthCheck      = "/ping"
-	PathServiceOrders    = "/service-orders"
-	PathAdditionalRepair = "/additional-repair"
+	PathHealthCheck = "/v1/ping"
+	PostLogin       = "/v1/login"
 )
 
 const (
@@ -24,5 +23,5 @@ const (
 )
 
 const (
-	PostLogin = "/v1/login"
+	PathAdditionalRepair = "/v1/additional-repair"
 )

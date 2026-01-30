@@ -11,7 +11,7 @@ import (
 
 func NewRelicApp() (*newrelic.Application, error) {
 	app, err := newrelic.NewApplication(
-		newrelic.ConfigAppName("mecanica-xpto-api"),
+		newrelic.ConfigAppName("os-service-api"),
 		newrelic.ConfigLicense(os.Getenv("NEW_RELIC_LICENSE_KEY")),
 		newrelic.ConfigDistributedTracerEnabled(true),
 		newrelic.ConfigAppLogForwardingEnabled(true),

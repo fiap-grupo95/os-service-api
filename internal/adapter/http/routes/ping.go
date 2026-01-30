@@ -13,10 +13,9 @@ import (
 // @Success 200 {object} map[string]interface{} "Returns pong message"
 // @Router /ping [get]
 func addPingRoutes(rg *gin.Engine) {
-	ping := rg.Group(PathHealthCheck)
-	{
-		ping.GET("", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "pong"})
-		})
-	}
+	rg.GET(PathHealthCheck, pingHandler)
+}
+
+func pingHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "pong"})
 }
