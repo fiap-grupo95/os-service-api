@@ -1,7 +1,6 @@
 package routes
 
 import (
-	_ "github.com/fiap-grupo95/os-service-api/docs" // This will be auto-generated
 	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
 	middleware "github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
 	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/repository"

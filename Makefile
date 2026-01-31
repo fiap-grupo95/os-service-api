@@ -38,7 +38,7 @@ dev-up:
 	docker-compose up -d dev
 
 swag-generate: dev-up
-	docker-compose exec dev sh -c "go install github.com/swaggo/swag/cmd/swag@latest && swag init -g internal/infrastructure/http/routes/routes.go --output ./docs --parseDependency --parseInternal"
+	docker-compose exec dev sh -c "go install github.com/swaggo/swag/cmd/swag@latest && swag init -g ./internal/adapter/http/routes/routes.go --output ./docs --parseDependency --parseInternal"
 
 test: dev-up
 	docker-compose exec dev go test ./... -v
