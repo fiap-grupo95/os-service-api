@@ -56,19 +56,10 @@ Collection do **Insomnia** com as cURLs do projeto:
 ![Diagrama de Componentes](docs/diagrams/component_diagram.drawio.png)
 
 ### Diagramas de Sequência
-<details>
-<summary>Ordem de serviço</summary>
 
-![Ordem de serviço](docs/diagrams/diagrama_sequencia_os.md)
+[Documentação de Ordem de serviço](docs/diagrams/diagrama_sequencia_os.md)
 
-</details>
-
-<details>
-<summary>Reparos adicionais</summary>
-
-![Reparos adicionais](docs/diagrams/diagrama_sequencia_ar.md)
-
-</details>
+[Documentação de Reparos adicionais](docs/diagrams/diagrama_sequencia_ar.md)
 
 ## Como executar localmente
 
