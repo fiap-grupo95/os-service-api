@@ -48,6 +48,11 @@ Collection do **Insomnia** com as cURLs do projeto:
   A documentação Swagger estará disponível em:  
 `http://localhost:8080/swagger/index.html` enquanto a aplicação estiver rodando.
 
+### Documentação de Fluxos
+
+- [Ordem de Serviço](docs/flows/service_order.md)
+- [Reparos Adicionais](docs/flows/additional_repair.md)
+
 ### Diagrama de Arquitetura
 
 ![Diagrama de Arquitetura](assets/arquitetura.drawio.png)
