@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "github.com/fiap-grupo95/os-service-api/docs"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/routes"
 )
 
