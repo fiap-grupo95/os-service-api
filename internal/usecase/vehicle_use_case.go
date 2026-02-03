@@ -31,14 +31,13 @@ type VehicleServiceInterface interface {
 	CreateVehicle(vehicle entities.Vehicle) (*entities.Vehicle, error)
 	UpdateVehicle(vehicle entities.Vehicle) (string, error)
 	UpdateVehiclePartial(id uint, updates map[string]interface{}) (string, error)
-	DeleteVehicle(id uint) error
 }
 
 type VehicleService struct {
-	repo domainrepo.VehicleRepository
+	repo domainrepo.IVehicleGateway
 }
 
-func NewVehicleService(repo domainrepo.VehicleRepository) VehicleServiceInterface {
+func NewVehicleService(repo domainrepo.IVehicleGateway) VehicleServiceInterface {
 	return &VehicleService{repo: repo}
 }
 
@@ -158,20 +157,4 @@ func (s *VehicleService) UpdateVehiclePartial(id uint, updates map[string]interf
 	}
 
 	return MessageVehicleUpdatedSuccessfully, nil
-}
-
-func (s *VehicleService) DeleteVehicle(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
-	}
-	vehicle, err := s.repo.FindByID(id)
-	if err != nil {
-		return err
-	}
-	if vehicle == nil || vehicle.ID == 0 {
-		return ErrVehicleNotFound
-	}
-
-	err = s.repo.Delete(id)
-	return err
 }

@@ -15,7 +15,7 @@ import (
 func TestGetServiceByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockRepo := mocks.NewMockIServiceGateway(ctrl)
 	uc := NewServiceUseCase(mockRepo)
 	ctx := context.Background()
 
@@ -48,7 +48,7 @@ func TestGetServiceByID(t *testing.T) {
 func TestCreateService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockRepo := mocks.NewMockIServiceGateway(ctrl)
 	uc := NewServiceUseCase(mockRepo)
 	ctx := context.Background()
 
@@ -90,7 +90,7 @@ func TestCreateService(t *testing.T) {
 func TestUpdateService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockRepo := mocks.NewMockIServiceGateway(ctrl)
 	uc := NewServiceUseCase(mockRepo)
 	ctx := context.Background()
 	// Erro ao buscar por ID
@@ -128,7 +128,7 @@ func TestUpdateService(t *testing.T) {
 func TestDeleteService(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockRepo := mocks.NewMockIServiceGateway(ctrl)
 	uc := NewServiceUseCase(mockRepo)
 	ctx := context.Background()
 
@@ -166,7 +166,7 @@ func TestDeleteService(t *testing.T) {
 func TestListServices(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockRepo := mocks.NewMockIServiceGateway(ctrl)
 	uc := NewServiceUseCase(mockRepo)
 	ctx := context.Background()
 	services := []entities.Service{{ID: 1, Name: "Troca de ÃƒÆ’Ã‚Â³leo"}, {ID: 2, Name: "Alinhamento"}}

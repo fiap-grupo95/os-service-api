@@ -8,15 +8,15 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockVehicleRepository struct {
+type MockIVehicleGateway struct {
 	mock.Mock
 }
 
-func NewMockVehicleRepository() *MockVehicleRepository {
-	return &MockVehicleRepository{}
+func NewMockIVehicleGateway() *MockIVehicleGateway {
+	return &MockIVehicleGateway{}
 }
 
-func (m *MockVehicleRepository) FindAll() ([]entities.Vehicle, error) {
+func (m *MockIVehicleGateway) FindAll() ([]entities.Vehicle, error) {
 	args := m.Called()
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -24,7 +24,7 @@ func (m *MockVehicleRepository) FindAll() ([]entities.Vehicle, error) {
 	return args.Get(0).([]entities.Vehicle), args.Error(1)
 }
 
-func (m *MockVehicleRepository) FindByID(id uint) (*entities.Vehicle, error) {
+func (m *MockIVehicleGateway) FindByID(id uint) (*entities.Vehicle, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -32,7 +32,7 @@ func (m *MockVehicleRepository) FindByID(id uint) (*entities.Vehicle, error) {
 	return args.Get(0).(*entities.Vehicle), args.Error(1)
 }
 
-func (m *MockVehicleRepository) FindByPlate(plate valueobject.Plate) (*entities.Vehicle, error) {
+func (m *MockIVehicleGateway) FindByPlate(plate valueobject.Plate) (*entities.Vehicle, error) {
 	args := m.Called(plate)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -40,7 +40,7 @@ func (m *MockVehicleRepository) FindByPlate(plate valueobject.Plate) (*entities.
 	return args.Get(0).(*entities.Vehicle), args.Error(1)
 }
 
-func (m *MockVehicleRepository) FindByCustomerID(customerID uint) ([]entities.Vehicle, error) {
+func (m *MockIVehicleGateway) FindByCustomerID(customerID uint) ([]entities.Vehicle, error) {
 	args := m.Called(customerID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -48,7 +48,7 @@ func (m *MockVehicleRepository) FindByCustomerID(customerID uint) ([]entities.Ve
 	return args.Get(0).([]entities.Vehicle), args.Error(1)
 }
 
-func (m *MockVehicleRepository) Create(vehicle entities.Vehicle) (*entities.Vehicle, error) {
+func (m *MockIVehicleGateway) Create(vehicle entities.Vehicle) (*entities.Vehicle, error) {
 	args := m.Called(vehicle)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -56,12 +56,12 @@ func (m *MockVehicleRepository) Create(vehicle entities.Vehicle) (*entities.Vehi
 	return args.Get(0).(*entities.Vehicle), args.Error(1)
 }
 
-func (m *MockVehicleRepository) Update(vehicle entities.Vehicle) error {
+func (m *MockIVehicleGateway) Update(vehicle entities.Vehicle) error {
 	args := m.Called(vehicle)
 	return args.Error(0)
 }
 
-func (m *MockVehicleRepository) Delete(id uint) error {
+func (m *MockIVehicleGateway) Delete(id uint) error {
 	args := m.Called(id)
 	return args.Error(0)
 }

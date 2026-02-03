@@ -22,15 +22,14 @@ type ICustomerUseCase interface {
 	GetByDocument(CpfCnpj string) (*entities.Customer, error)
 	CreateCustomer(customer *entities.Customer) (*entities.Customer, error)
 	UpdateCustomer(id uint, customer *entities.Customer) error
-	DeleteCustomer(id uint) error
 	ListCustomer() ([]entities.Customer, error)
 }
 type CustomerUseCase struct {
-	customerRepo interfaces.ICustomerRepository
+	customerRepo interfaces.ICustomerGateway
 	userRepo     interfaces.IUserRepository
 }
 
-func NewCustomerUseCase(customerRepo interfaces.ICustomerRepository, userRepo interfaces.IUserRepository) ICustomerUseCase {
+func NewCustomerUseCase(customerRepo interfaces.ICustomerGateway, userRepo interfaces.IUserRepository) ICustomerUseCase {
 	return &CustomerUseCase{customerRepo: customerRepo, userRepo: userRepo}
 }
 
@@ -91,10 +90,6 @@ func (uc *CustomerUseCase) UpdateCustomer(id uint, customer *entities.Customer) 
 	}
 
 	return uc.customerRepo.Update(existingDTO)
-}
-
-func (uc *CustomerUseCase) DeleteCustomer(id uint) error {
-	return uc.customerRepo.Delete(id)
 }
 
 func (uc *CustomerUseCase) ListCustomer() ([]entities.Customer, error) {

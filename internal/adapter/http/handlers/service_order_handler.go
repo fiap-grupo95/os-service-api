@@ -114,7 +114,7 @@ func (h *ServiceOrderHandler) GetServiceOrderHistory(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders [post]
+// @Router /v1/service-orders/create [post]
 func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Create")

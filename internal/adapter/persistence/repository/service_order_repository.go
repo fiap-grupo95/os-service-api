@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
@@ -22,12 +21,12 @@ func NewServiceOrderRepository(db *gorm.DB) *ServiceOrderRepository {
 	return &ServiceOrderRepository{db: db}
 }
 
-func (r *ServiceOrderRepository) Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	if serviceOrder == nil {
+func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) (*dto.ServiceOrderModel, error) {
+	if serviceOrderDto == nil {
 		return nil, gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(serviceOrder.ServiceOrderStatus)
+	dtoStatus, err := r.getStatus(valueobject.StatusRecebida)
 	if err != nil {
 		return nil, gorm.ErrInvalidData
 	}
@@ -36,20 +35,10 @@ func (r *ServiceOrderRepository) Create(serviceOrder *entities.ServiceOrder) (*e
 		return nil, gorm.ErrInvalidData
 	}
 
+	serviceOrderDto.OSStatusID = dtoStatus.ID
+
 	// Begin transaction
 	tx := r.db.Begin()
-
-	serviceOrderDto := dto.ServiceOrderModel{
-		ID:                   serviceOrder.ID,
-		CustomerID:           serviceOrder.CustomerID,
-		VehicleID:            serviceOrder.VehicleID,
-		OSStatusID:           dtoStatus.ID,
-		Estimate:             serviceOrder.Estimate,
-		StartedExecutionDate: serviceOrder.StartedExecutionDate,
-		FinalExecutionDate:   serviceOrder.FinalExecutionDate,
-		CreatedAt:            serviceOrder.CreatedAt,
-		UpdatedAt:            serviceOrder.UpdatedAt,
-	}
 
 	if err := tx.Create(&serviceOrderDto).Error; err != nil {
 		tx.Rollback()
@@ -60,12 +49,10 @@ func (r *ServiceOrderRepository) Create(serviceOrder *entities.ServiceOrder) (*e
 		return nil, err
 	}
 
-	serviceOrderDto.ServiceOrderStatus = *dtoStatus
-
-	return serviceOrderDto.ToDomain(), nil
+	return serviceOrderDto, nil
 }
 
-func (r *ServiceOrderRepository) GetByID(id uint) (*entities.ServiceOrder, error) {
+func (r *ServiceOrderRepository) GetByID(id uint) (*dto.ServiceOrderModel, error) {
 	var serviceOrder dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
 	err := r.db.Preload("Customer").
@@ -87,7 +74,7 @@ func (r *ServiceOrderRepository) GetByID(id uint) (*entities.ServiceOrder, error
 		}
 		return nil, err
 	}
-	return serviceOrder.ToDomain(), nil
+	return &serviceOrder, nil
 }
 
 func (r *ServiceOrderRepository) UpdateEstimate(id uint, estimate float64) error {
@@ -102,12 +89,12 @@ func (r *ServiceOrderRepository) UpdateEstimate(id uint, estimate float64) error
 		Update("estimate", newEstimate).Error
 }
 
-func (r *ServiceOrderRepository) Update(serviceOrder *entities.ServiceOrder) error {
+func (r *ServiceOrderRepository) Update(serviceOrder *dto.ServiceOrderModel) error {
 	if serviceOrder == nil {
 		return gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(serviceOrder.ServiceOrderStatus)
+	dtoStatus, err := r.getStatus(valueobject.ParseServiceOrderStatus(serviceOrder.ServiceOrderStatus.Description))
 	if err != nil {
 		return gorm.ErrInvalidData
 	}
@@ -172,7 +159,7 @@ func (r *ServiceOrderRepository) Update(serviceOrder *entities.ServiceOrder) err
 	return tx.Commit().Error
 }
 
-func (r *ServiceOrderRepository) List() ([]*entities.ServiceOrder, error) {
+func (r *ServiceOrderRepository) List() ([]*dto.ServiceOrderModel, error) {
 	var serviceOrders []dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
 	err := r.db.
@@ -192,9 +179,9 @@ func (r *ServiceOrderRepository) List() ([]*entities.ServiceOrder, error) {
 		return nil, err
 	}
 
-	result := make([]*entities.ServiceOrder, 0, len(serviceOrders))
+	result := make([]*dto.ServiceOrderModel, 0, len(serviceOrders))
 	for _, so := range serviceOrders {
-		result = append(result, so.ToDomain())
+		result = append(result, &so)
 	}
 	return result, nil
 }
@@ -208,15 +195,11 @@ func (r *ServiceOrderRepository) getStatus(status valueobject.ServiceOrderStatus
 	return &serviceOrderStatuses, nil
 }
 
-func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
+func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*dto.PartsSupplyServiceOrder, error) {
 	var relation dto.PartsSupplyServiceOrder
 	err := r.db.Where("parts_supply_id = ? AND service_order_id = ?", partsSupplyID, serviceOrderID).First(&relation).Error
 	if err != nil {
 		return nil, err
 	}
-	return &entities.ServiceOrderPartsSupply{
-		PartsSupplyID:  relation.PartsSupplyID,
-		ServiceOrderID: relation.ServiceOrderID,
-		Quantity:       relation.Quantity,
-	}, nil
+	return &relation, nil
 }

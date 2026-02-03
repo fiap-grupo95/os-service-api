@@ -15,7 +15,7 @@ import (
 func TestUpdateCustomer_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockICustomerRepository(ctrl)
+	mockRepo := mocks.NewMockICustomerGateway(ctrl)
 	uc := use_cases.NewCustomerUseCase(mockRepo, nil)
 
 	customer := &entities.Customer{FullName: "Updated", CpfCnpj: "123", PhoneNumber: "999"}
@@ -30,35 +30,11 @@ func TestUpdateCustomer_Success(t *testing.T) {
 func TestUpdateCustomer_NotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	mockRepo := mocks.NewMockICustomerRepository(ctrl)
+	mockRepo := mocks.NewMockICustomerGateway(ctrl)
 	uc := use_cases.NewCustomerUseCase(mockRepo, nil)
 
 	mockRepo.EXPECT().GetByID(uint(1)).Return(nil, errors.New("not found"))
 
 	err := uc.UpdateCustomer(1, &entities.Customer{})
-	assert.Error(t, err)
-}
-
-func TestDeleteCustomer_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockRepo := mocks.NewMockICustomerRepository(ctrl)
-	uc := use_cases.NewCustomerUseCase(mockRepo, nil)
-
-	mockRepo.EXPECT().Delete(uint(1)).Return(nil)
-
-	err := uc.DeleteCustomer(1)
-	assert.NoError(t, err)
-}
-
-func TestDeleteCustomer_RepoError(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockRepo := mocks.NewMockICustomerRepository(ctrl)
-	uc := use_cases.NewCustomerUseCase(mockRepo, nil)
-
-	mockRepo.EXPECT().Delete(uint(1)).Return(errors.New("fail"))
-
-	err := uc.DeleteCustomer(1)
 	assert.Error(t, err)
 }

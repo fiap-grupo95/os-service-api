@@ -13,30 +13,30 @@ import (
 )
 
 // MockIServiceRepo is a mock of IServiceRepo interface.
-type MockIServiceRepo struct {
+type MockIServiceGateway struct {
 	ctrl     *gomock.Controller
-	recorder *MockIServiceRepoMockRecorder
+	recorder *MockIServiceGatewayMockRecorder
 }
 
-// MockIServiceRepoMockRecorder is the mock recorder for MockIServiceRepo.
-type MockIServiceRepoMockRecorder struct {
-	mock *MockIServiceRepo
+// MockIServiceGatewayMockRecorder is the mock recorder for MockIServiceGateway.
+type MockIServiceGatewayMockRecorder struct {
+	mock *MockIServiceGateway
 }
 
-// NewMockIServiceRepo creates a new mock instance.
-func NewMockIServiceRepo(ctrl *gomock.Controller) *MockIServiceRepo {
-	mock := &MockIServiceRepo{ctrl: ctrl}
-	mock.recorder = &MockIServiceRepoMockRecorder{mock}
+// NewMockIServiceGateway creates a new mock instance.
+func NewMockIServiceGateway(ctrl *gomock.Controller) *MockIServiceGateway {
+	mock := &MockIServiceGateway{ctrl: ctrl}
+	mock.recorder = &MockIServiceGatewayMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIServiceRepo) EXPECT() *MockIServiceRepoMockRecorder {
+func (m *MockIServiceGateway) EXPECT() *MockIServiceGatewayMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method.
-func (m *MockIServiceRepo) Create(ctx context.Context, so *entities.Service) (entities.Service, error) {
+func (m *MockIServiceGateway) Create(ctx context.Context, so *entities.Service) (entities.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, so)
 	ret0, _ := ret[0].(entities.Service)
@@ -45,13 +45,13 @@ func (m *MockIServiceRepo) Create(ctx context.Context, so *entities.Service) (en
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockIServiceRepoMockRecorder) Create(ctx, so interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) Create(ctx, so interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIServiceRepo)(nil).Create), ctx, so)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIServiceGateway)(nil).Create), ctx, so)
 }
 
 // Delete mocks base method.
-func (m *MockIServiceRepo) Delete(ctx context.Context, id uint) error {
+func (m *MockIServiceGateway) Delete(ctx context.Context, id uint) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, id)
 	ret0, _ := ret[0].(error)
@@ -59,13 +59,13 @@ func (m *MockIServiceRepo) Delete(ctx context.Context, id uint) error {
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockIServiceRepoMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) Delete(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockIServiceRepo)(nil).Delete), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockIServiceGateway)(nil).Delete), ctx, id)
 }
 
 // GetByID mocks base method.
-func (m *MockIServiceRepo) GetByID(ctx context.Context, id uint) (entities.Service, error) {
+func (m *MockIServiceGateway) GetByID(ctx context.Context, id uint) (entities.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(entities.Service)
@@ -74,13 +74,13 @@ func (m *MockIServiceRepo) GetByID(ctx context.Context, id uint) (entities.Servi
 }
 
 // GetByID indicates an expected call of GetByID.
-func (mr *MockIServiceRepoMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIServiceRepo)(nil).GetByID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIServiceGateway)(nil).GetByID), ctx, id)
 }
 
 // GetByName mocks base method.
-func (m *MockIServiceRepo) GetByName(ctx context.Context, name string) (entities.Service, error) {
+func (m *MockIServiceGateway) GetByName(ctx context.Context, name string) (entities.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByName", ctx, name)
 	ret0, _ := ret[0].(entities.Service)
@@ -89,13 +89,13 @@ func (m *MockIServiceRepo) GetByName(ctx context.Context, name string) (entities
 }
 
 // GetByName indicates an expected call of GetByName.
-func (mr *MockIServiceRepoMockRecorder) GetByName(ctx, name interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) GetByName(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByName", reflect.TypeOf((*MockIServiceRepo)(nil).GetByName), ctx, name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByName", reflect.TypeOf((*MockIServiceGateway)(nil).GetByName), ctx, name)
 }
 
 // List mocks base method.
-func (m *MockIServiceRepo) List(ctx context.Context) ([]entities.Service, error) {
+func (m *MockIServiceGateway) List(ctx context.Context) ([]entities.Service, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx)
 	ret0, _ := ret[0].([]entities.Service)
@@ -104,13 +104,13 @@ func (m *MockIServiceRepo) List(ctx context.Context) ([]entities.Service, error)
 }
 
 // List indicates an expected call of List.
-func (mr *MockIServiceRepoMockRecorder) List(ctx interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) List(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockIServiceRepo)(nil).List), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockIServiceGateway)(nil).List), ctx)
 }
 
 // Update mocks base method.
-func (m *MockIServiceRepo) Update(ctx context.Context, so *entities.Service) error {
+func (m *MockIServiceGateway) Update(ctx context.Context, so *entities.Service) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", ctx, so)
 	ret0, _ := ret[0].(error)
@@ -118,7 +118,7 @@ func (m *MockIServiceRepo) Update(ctx context.Context, so *entities.Service) err
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockIServiceRepoMockRecorder) Update(ctx, so interface{}) *gomock.Call {
+func (mr *MockIServiceGatewayMockRecorder) Update(ctx, so interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIServiceRepo)(nil).Update), ctx, so)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIServiceGateway)(nil).Update), ctx, so)
 }

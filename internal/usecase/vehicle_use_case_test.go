@@ -13,7 +13,7 @@ import (
 )
 
 func TestVehicleService_GetAllVehicles(t *testing.T) {
-	mockRepo := mocks.NewMockVehicleRepository()
+	mockRepo := mocks.NewMockIVehicleGateway()
 	service := NewVehicleService(mockRepo)
 
 	expected := []entities.Vehicle{
@@ -31,7 +31,7 @@ func TestVehicleService_GetAllVehicles(t *testing.T) {
 }
 
 func TestVehicleService_GetAllVehicles_Error(t *testing.T) {
-	mockRepo := mocks.NewMockVehicleRepository()
+	mockRepo := mocks.NewMockIVehicleGateway()
 	service := NewVehicleService(mockRepo)
 
 	mockRepo.On("FindAll").Return(nil, errors.New("db error"))
@@ -45,7 +45,7 @@ func TestVehicleService_GetAllVehicles_Error(t *testing.T) {
 
 func TestVehicleService_GetVehicleByID(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := &entities.Vehicle{ID: 1, Plate: valueobject.ParsePlate("ABC1234")}
@@ -60,7 +60,7 @@ func TestVehicleService_GetVehicleByID(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		mockRepo.On("FindByID", uint(1)).Return((*entities.Vehicle)(nil), nil)
@@ -73,7 +73,7 @@ func TestVehicleService_GetVehicleByID(t *testing.T) {
 	})
 
 	t.Run("repository error", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		mockRepo.On("FindByID", uint(1)).Return((*entities.Vehicle)(nil), errors.New("db error"))
@@ -88,7 +88,7 @@ func TestVehicleService_GetVehicleByID(t *testing.T) {
 
 func TestVehicleService_GetVehicleByPlate(t *testing.T) {
 	t.Run("invalid plate format", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		result, err := service.GetVehicleByPlate("INVALID")
@@ -99,7 +99,7 @@ func TestVehicleService_GetVehicleByPlate(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 		vehicle := &entities.Vehicle{ID: 1, Plate: valueobject.ParsePlate("ABC1234")}
 
@@ -113,7 +113,7 @@ func TestVehicleService_GetVehicleByPlate(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		mockRepo.On("FindByPlate", valueobject.ParsePlate("ABC1234")).Return((*entities.Vehicle)(nil), nil)
@@ -127,7 +127,7 @@ func TestVehicleService_GetVehicleByPlate(t *testing.T) {
 }
 
 func TestVehicleService_GetVehiclesByCustomerID(t *testing.T) {
-	mockRepo := mocks.NewMockVehicleRepository()
+	mockRepo := mocks.NewMockIVehicleGateway()
 	service := NewVehicleService(mockRepo)
 
 	vehicles := []entities.Vehicle{{ID: 1}, {ID: 2}}
@@ -142,7 +142,7 @@ func TestVehicleService_GetVehiclesByCustomerID(t *testing.T) {
 
 func TestVehicleService_CreateVehicle(t *testing.T) {
 	t.Run("invalid plate", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{Plate: valueobject.ParsePlate("INVALID")}
@@ -155,7 +155,7 @@ func TestVehicleService_CreateVehicle(t *testing.T) {
 	})
 
 	t.Run("duplicate plate", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{Plate: valueobject.ParsePlate("ABC1234")}
@@ -170,7 +170,7 @@ func TestVehicleService_CreateVehicle(t *testing.T) {
 	})
 
 	t.Run("repository find error", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{Plate: valueobject.ParsePlate("ABC1234")}
@@ -185,7 +185,7 @@ func TestVehicleService_CreateVehicle(t *testing.T) {
 	})
 
 	t.Run("create success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{
@@ -210,7 +210,7 @@ func TestVehicleService_CreateVehicle(t *testing.T) {
 
 func TestVehicleService_UpdateVehicle(t *testing.T) {
 	t.Run("invalid plate", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{Plate: valueobject.ParsePlate("INVALID")}
@@ -223,7 +223,7 @@ func TestVehicleService_UpdateVehicle(t *testing.T) {
 	})
 
 	t.Run("not found", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{ID: 1, Plate: valueobject.ParsePlate("ABC1234")}
@@ -238,7 +238,7 @@ func TestVehicleService_UpdateVehicle(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		vehicle := entities.Vehicle{
@@ -262,7 +262,7 @@ func TestVehicleService_UpdateVehicle(t *testing.T) {
 
 func TestVehicleService_UpdateVehiclePartial(t *testing.T) {
 	t.Run("vehicle not found", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		mockRepo.On("FindByID", uint(1)).Return((*entities.Vehicle)(nil), nil)
@@ -275,7 +275,7 @@ func TestVehicleService_UpdateVehiclePartial(t *testing.T) {
 	})
 
 	t.Run("invalid plate", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		existing := &entities.Vehicle{ID: 1, Plate: valueobject.ParsePlate("ABC1234")}
@@ -290,7 +290,7 @@ func TestVehicleService_UpdateVehiclePartial(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
+		mockRepo := mocks.NewMockIVehicleGateway()
 		service := NewVehicleService(mockRepo)
 
 		existing := &entities.Vehicle{
@@ -313,43 +313,6 @@ func TestVehicleService_UpdateVehiclePartial(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, MessageVehicleUpdatedSuccessfully, message)
-		mockRepo.AssertExpectations(t)
-	})
-}
-
-func TestVehicleService_DeleteVehicle(t *testing.T) {
-	t.Run("invalid id", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
-		service := NewVehicleService(mockRepo)
-
-		err := service.DeleteVehicle(0)
-
-		assert.ErrorIs(t, err, ErrInvalidID)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
-		service := NewVehicleService(mockRepo)
-
-		mockRepo.On("FindByID", uint(1)).Return((*entities.Vehicle)(nil), nil)
-
-		err := service.DeleteVehicle(1)
-
-		assert.ErrorIs(t, err, ErrVehicleNotFound)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("success", func(t *testing.T) {
-		mockRepo := mocks.NewMockVehicleRepository()
-		service := NewVehicleService(mockRepo)
-
-		mockRepo.On("FindByID", uint(1)).Return(&entities.Vehicle{ID: 1}, nil)
-		mockRepo.On("Delete", uint(1)).Return(nil)
-
-		err := service.DeleteVehicle(1)
-
-		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
 	})
 }
