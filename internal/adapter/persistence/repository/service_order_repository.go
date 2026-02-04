@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 	"strings"
@@ -26,7 +25,7 @@ func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) 
 		return nil, gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(valueobject.StatusRecebida)
+	dtoStatus, err := r.getStatus(serviceOrderDto.ServiceOrderStatus)
 	if err != nil {
 		return nil, gorm.ErrInvalidData
 	}
@@ -36,6 +35,7 @@ func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) 
 	}
 
 	serviceOrderDto.OSStatusID = dtoStatus.ID
+	serviceOrderDto.ServiceOrderStatus = *dtoStatus
 
 	// Begin transaction
 	tx := r.db.Begin()
@@ -94,7 +94,7 @@ func (r *ServiceOrderRepository) Update(serviceOrder *dto.ServiceOrderModel) err
 		return gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(valueobject.ParseServiceOrderStatus(serviceOrder.ServiceOrderStatus.Description))
+	dtoStatus, err := r.getStatus(serviceOrder.ServiceOrderStatus)
 	if err != nil {
 		return gorm.ErrInvalidData
 	}
@@ -186,9 +186,9 @@ func (r *ServiceOrderRepository) List() ([]*dto.ServiceOrderModel, error) {
 	return result, nil
 }
 
-func (r *ServiceOrderRepository) getStatus(status valueobject.ServiceOrderStatus) (*dto.ServiceOrderStatus, error) {
+func (r *ServiceOrderRepository) getStatus(status dto.ServiceOrderStatus) (*dto.ServiceOrderStatus, error) {
 	var serviceOrderStatuses dto.ServiceOrderStatus
-	err := r.db.Where("description = ?", status.String()).First(&serviceOrderStatuses).Error
+	err := r.db.Where("description = ?", status.Description).First(&serviceOrderStatuses).Error
 	if err != nil {
 		return nil, err
 	}

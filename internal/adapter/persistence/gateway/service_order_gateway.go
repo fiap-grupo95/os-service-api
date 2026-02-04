@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
@@ -24,17 +23,20 @@ func NewServiceOrderGateway(repository interfaces.IServiceOrderRepository) *Serv
 	}
 }
 
-func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error){
-	logger := logs.Logger()	
-	if serviceOrder.ServiceOrderStatus != valueobject.StatusRecebida {
+func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	logger := logs.Logger()
+	if !serviceOrder.ServiceOrderStatus.IsRecebida() {
 		return nil, errors.New(ErrInvalidStatus)
 	}
 
 	serviceOrderDto := &dto.ServiceOrderModel{
-		ID:                   serviceOrder.ID,
-		CustomerID:           serviceOrder.CustomerID,
-		VehicleID:            serviceOrder.VehicleID,
-		Estimate:             serviceOrder.Estimate,
+		ID:         serviceOrder.ID,
+		CustomerID: serviceOrder.CustomerID,
+		VehicleID:  serviceOrder.VehicleID,
+		Estimate:   serviceOrder.Estimate,
+		ServiceOrderStatus: dto.ServiceOrderStatus{
+			Description: serviceOrder.ServiceOrderStatus.String(),
+		},
 		StartedExecutionDate: serviceOrder.StartedExecutionDate,
 		FinalExecutionDate:   serviceOrder.FinalExecutionDate,
 		CreatedAt:            serviceOrder.CreatedAt,
@@ -49,27 +51,27 @@ func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*enti
 	return createdServiceOrder.ToDomain(), nil
 }
 
-func (s *ServiceOrderGateway) GetByID(id uint) (*entities.ServiceOrder, error){
+func (s *ServiceOrderGateway) GetByID(id uint) (*entities.ServiceOrder, error) {
 	// TODO: Implement me
 	return nil, nil
 }
 
-func (s *ServiceOrderGateway) Update(serviceOrder *entities.ServiceOrder) error{
+func (s *ServiceOrderGateway) Update(serviceOrder *entities.ServiceOrder) error {
 	// TODO: Implement me
 	return nil
 }
 
-func (s *ServiceOrderGateway) List() ([]*entities.ServiceOrder, error){
+func (s *ServiceOrderGateway) List() ([]*entities.ServiceOrder, error) {
 	// TODO: Implement me
 	return nil, nil
 }
 
-func (s *ServiceOrderGateway) UpdateEstimate(id uint, estimate float64) error{
+func (s *ServiceOrderGateway) UpdateEstimate(id uint, estimate float64) error {
 	// TODO: Implement me
 	return nil
 }
 
-func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error){
+func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
 	// TODO: Implement me
 	return nil, nil
 }
