@@ -20,7 +20,7 @@ type ServiceOrderResponse struct {
 	Services                 []ServiceOrderServiceResponse          `json:"services"`
 	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies"`
 	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs"`
-	Payment                  *ServiceOrderPaymentResponse           `json:"payment,omitempty"`
+	PaymentID                *uint                                  `json:"payment_id,omitempty"`
 }
 
 type ServiceOrderServiceResponse struct {
@@ -69,7 +69,7 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 		Services:                 mapServiceResponses(entity.Services),
 		PartsSupplies:            mapPartsSupplyResponses(entity.PartsSupplies),
 		AdditionalRepairs:        mapAdditionalRepairResponses(entity.AdditionalRepairs),
-		Payment:                  mapPaymentResponse(entity.Payment),
+		PaymentID:                entity.PaymentID,
 	}
 }
 
@@ -134,16 +134,4 @@ func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []Service
 		})
 	}
 	return result
-}
-
-func mapPaymentResponse(payment *entities.Payment) *ServiceOrderPaymentResponse {
-	if payment == nil {
-		return nil
-	}
-
-	return &ServiceOrderPaymentResponse{
-		ID:          payment.ID,
-		Amount:      payment.Amount,
-		PaymentDate: payment.PaymentDate,
-	}
 }

@@ -35,9 +35,7 @@ func (m *ServiceOrderStatus) ToDomain() valueobject.ServiceOrderStatus {
 type ServiceOrderModel struct {
 	ID                       uint               `gorm:"primaryKey"`
 	CustomerID               uint               `gorm:"not null"`
-	Customer                 CustomerModel      `gorm:"foreignKey:CustomerID"`
 	VehicleID                uint               `gorm:"not null"`
-	Vehicle                  VehicleModel       `gorm:"foreignKey:VehicleID"`
 	OSStatusID               uint               `gorm:"not null"`
 	ServiceOrderStatus       ServiceOrderStatus `gorm:"foreignKey:OSStatusID"`
 	Estimate                 float64            `gorm:"type:decimal(10,2)"`
@@ -47,7 +45,7 @@ type ServiceOrderModel struct {
 	CreatedAt                *time.Time              `gorm:"autoCreateTime"`
 	UpdatedAt                *time.Time              `gorm:"autoUpdateTime"`
 	AdditionalRepairs        []AdditionalRepairModel `gorm:"foreignKey:ServiceOrderID"`
-	Payment                  *PaymentModel           `gorm:"foreignKey:ServiceOrderID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	PaymentID                *uint                   `gorm:"nullable"`
 	PartsSupplies            []PartsSupplyModel      `gorm:"many2many:parts_supply_service_orders;foreignKey:ID;joinForeignKey:ServiceOrderID;references:ID;joinReferences:PartsSupplyID"`
 	Services                 []ServiceModel          `gorm:"many2many:service_service_orders;foreignKey:ID;joinForeignKey:ServiceOrderID;references:ID;joinReferences:ServiceID"`
 }
@@ -76,29 +74,10 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		services = append(services, s.ToDomain())
 	}
 
-	// Convert Payment if exists
-	var payment *entities.Payment
-	if m.Payment != nil {
-		p := m.Payment.ToDomain()
-		payment = p
-	}
-
-	// Convert Customer and Vehicle if they are loaded
-	var customer entities.Customer
-	var vehicle entities.Vehicle
-	if m.Customer.ID != 0 {
-		customer = *m.Customer.ToDomain()
-	}
-	if m.Vehicle.ID != 0 {
-		vehicle = *m.Vehicle.ToDomain()
-	}
-
 	return &entities.ServiceOrder{
 		ID:                       m.ID,
 		CustomerID:               m.CustomerID,
-		Customer:                 &customer,
 		VehicleID:                m.VehicleID,
-		Vehicle:                  &vehicle,
 		ServiceOrderStatus:       m.ServiceOrderStatus.ToDomain(),
 		Estimate:                 m.Estimate,
 		StartedExecutionDate:     m.StartedExecutionDate,
@@ -107,7 +86,7 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		CreatedAt:                m.CreatedAt,
 		UpdatedAt:                m.UpdatedAt,
 		AdditionalRepairs:        additionalRepairs,
-		Payment:                  payment,
+		PaymentID:                m.PaymentID,
 		PartsSupplies:            partsSupplies,
 		Services:                 services,
 	}

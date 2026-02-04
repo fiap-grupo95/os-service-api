@@ -11,9 +11,9 @@ func Migrate(db *gorm.DB) {
 	err := db.AutoMigrate(
 		&Model.PartsSupplyModel{},
 		&Model.ServiceModel{},
-		&Model.VehicleModel{},
+		// &Model.VehicleModel{},
 		&Model.ServiceOrderModel{},
-		&Model.CustomerModel{},
+		// &Model.CustomerModel{},
 		&Model.UserModel{},
 		&Model.ServiceOrderStatus{},
 		&Model.AdditionalRepairModel{},

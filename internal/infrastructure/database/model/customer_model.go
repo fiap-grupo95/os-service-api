@@ -15,8 +15,6 @@ type CustomerModel struct {
 	CpfCnpj       string              `gorm:"size:20;not null"`
 	PhoneNumber   string              `gorm:"size:20;not null"`
 	FullName      string              `gorm:"column:fullname;size:100;not null"`
-	Vehicles      []VehicleModel      `gorm:"foreignKey:CustomerID;references:ID"`
-	ServiceOrders []ServiceOrderModel `gorm:"foreignKey:CustomerID;references:ID"`
 }
 
 func (cm *CustomerModel) TableName() string {
@@ -25,14 +23,8 @@ func (cm *CustomerModel) TableName() string {
 
 func (cm *CustomerModel) ToDomain() *entities.Customer {
 	var user *entities.User
-	var vehicles []entities.Vehicle
 	if cm.User != nil {
 		user = cm.User.ToDomain()
-	}
-	if cm.Vehicles != nil {
-		for _, v := range cm.Vehicles {
-			vehicles = append(vehicles, *v.ToDomain())
-		}
 	}
 	var email string
 	if user != nil {
@@ -45,8 +37,6 @@ func (cm *CustomerModel) ToDomain() *entities.Customer {
 		CpfCnpj:       valueobject.CpfCnpj(cm.CpfCnpj),
 		PhoneNumber:   cm.PhoneNumber,
 		FullName:      cm.FullName,
-		Vehicles:      vehicles,
-		ServiceOrders: nil, // This will be populated later if needed
 	}
 }
 
@@ -68,6 +58,5 @@ func FromDomainCustomer(c *entities.Customer) *CustomerModel {
 		CpfCnpj:     string(c.CpfCnpj),
 		PhoneNumber: c.PhoneNumber,
 		FullName:    c.FullName,
-		// Vehicles and ServiceOrders are not set here to avoid deep nesting
 	}
 }

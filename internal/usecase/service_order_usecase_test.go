@@ -37,6 +37,10 @@ type MockServiceRepository struct {
 	mock.Mock
 }
 
+func UintPointer(value uint) *uint {
+	return &value
+}
+
 func (m *MockServiceRepository) Update(ctx context.Context, so *entities.Service) error {
 	args := m.Called(ctx, so)
 	if args.Get(0) == nil {
@@ -830,11 +834,7 @@ func TestValidateDelivery(t *testing.T) {
 				ServiceOrderStatus: dto.ServiceOrderStatus{
 					Description: string(valueobject.StatusFinalizada),
 				},
-				Payment: &dto.PaymentModel{
-					ID:           1,
-					ServiceOrder: dto.ServiceOrderModel{ID: 1},
-					PaymentDate:  time.Now(),
-				},
+				PaymentID: UintPointer(1),
 			},
 			expectedError: nil,
 		},
@@ -857,11 +857,7 @@ func TestValidateDelivery(t *testing.T) {
 			request: &entities.ServiceOrder{
 				ID:                 1,
 				ServiceOrderStatus: valueobject.StatusEntregue,
-				Payment: &entities.Payment{
-					ID:           1,
-					ServiceOrder: &entities.ServiceOrder{ID: 1},
-					PaymentDate:  time.Now(),
-				},
+				PaymentID:          UintPointer(1),
 			},
 			serviceOrderDTO: &dto.ServiceOrderModel{
 				ID: 1,

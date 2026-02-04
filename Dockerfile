@@ -7,7 +7,7 @@ RUN go install github.com/swaggo/swag/cmd/swag@latest
 
 COPY . .
 
-RUN go mod download
+RUN go mod download && go clean -modcache
 
 # Gera documentação Swagger (ajuste o caminho do main.go se necessário)
 RUN swag init -g cmd/api/main.go -o docs

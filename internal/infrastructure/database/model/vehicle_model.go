@@ -19,7 +19,6 @@ type VehicleModel struct {
 	CreatedAt     time.Time           `gorm:"autoCreateTime"`
 	UpdatedAt     *time.Time          `gorm:"autoUpdateTime"`
 	DeletedAt     gorm.DeletedAt      `gorm:"index"`
-	ServiceOrders []ServiceOrderModel `gorm:"foreignKey:VehicleID;references:ID"`
 }
 
 func (v *VehicleModel) ToDomain() *entities.Vehicle {

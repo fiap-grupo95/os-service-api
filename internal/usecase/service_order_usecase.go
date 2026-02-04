@@ -122,10 +122,6 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 		return nil, err
 	}
 
-	// clean fields that are not needed in the response
-	register.Vehicle = nil
-	register.Customer = nil
-
 	return register, nil
 }
 
@@ -195,8 +191,8 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request en
 		return nil, err
 	}
 
-	if updatedSO.Payment != nil {
-		updatedSO.Payment.ServiceOrder = nil
+	if updatedSO.PaymentID != nil {
+		updatedSO.PaymentID = nil
 	}
 
 	return updatedSO, nil
@@ -428,7 +424,7 @@ func ValidateDelivery(ctx context.Context, request *entities.ServiceOrder, curre
 	}
 
 	if oldStatus.IsFinalizada() && request.ServiceOrderStatus.IsEntregue() {
-		if current.Payment == nil {
+		if current.PaymentID == nil {
 			return nil, errors.New("payment information is required for delivery")
 		}
 		update.ServiceOrderStatus = valueobject.StatusEntregue
