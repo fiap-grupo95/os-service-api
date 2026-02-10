@@ -1,0 +1,30 @@
+name: Backport main -> develop after release or hotfix
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  backport:
+    if: github.event.pull_request.merged == true && (startsWith(github.event.pull_request.head.ref, 'release/') || startsWith(github.event.pull_request.head.ref, 'hotfix/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Fetch develop
+        run: git fetch origin develop
+      - name: Merge main into develop
+        run: |
+          git checkout develop
+          git merge origin/main --no-edit
+      - name: Push to develop
+        run: git push origin develop
