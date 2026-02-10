@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.1] - 2025-07-25
+## [0.0.1] - 2026-02-10
 
 ### Added
 
-- Changelog file to track changes in the project.
-- Initial version of the project with basic functionality.
-- Docker Compose file for easy setup and deployment.
+- Add project structure by clone repository from mecanica-xpto-api repository.
+- Add GitHub Actions workflows for Git Flow (for protect main branch and backport).
+- Add flow documentation and diagrams for service order and additional repair.
 
-[unreleased]: https://github.com/olivierlacan/keep-a-changelog/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/olivierlacan/keep-a-changelog/releases/tag/v0.0.1
+### Fix
+
+- Fix nil pointer exception in OS usecase by map initialization.
+
+[unreleased]: https://github.com/fiap-grupo95/os-service-api/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/fiap-grupo95/os-service-api/releases/tag/v0.0.1
