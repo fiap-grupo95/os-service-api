@@ -486,7 +486,7 @@ func getStatusError(err error) int {
 
 func sendToMetric(ctx context.Context, metricName string, result string, flow string, status string, code string) {
 	tags := make(map[string]string)
-
+	
 	if result != "" {
 		tags["result"] = result
 	}
