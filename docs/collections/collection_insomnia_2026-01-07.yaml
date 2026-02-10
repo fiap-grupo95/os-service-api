@@ -1,0 +1,1277 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: mecanica_xpto
+meta:
+  id: wrk_ce7be190fa104c36bad1ed3554bdd212
+  created: 1760302575745
+  modified: 1760302575745
+  description: ""
+collection:
+  - url: "{{ _.url }}/v1/login"
+    name: Get Token
+    meta:
+      id: req_a6c7e820ae30432b862a4d53e08611ee
+      created: 1754779950616
+      modified: 1766448882599
+      isPrivate: false
+      description: ""
+      sortKey: -1754873688217
+    method: POST
+    body:
+      mimeType: application/json
+      text: '{"email":"admin@xpto.com", "password":"Q1w2e3r%"}'
+    headers:
+      - name: Content-Type
+        value: application/json
+    scripts:
+      afterResponse: |+
+        
+        const jsonBody = insomnia.response.json();
+
+        if(jsonBody.token)
+        insomnia.environment.set("token", jsonBody.token);
+
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: "{{ _.url }}/v1/ping"
+    name: Get Ping
+    meta:
+      id: req_f0164b6f29af4055b412388543980d9b
+      created: 1756680014709
+      modified: 1767411086118
+      isPrivate: false
+      description: ""
+      sortKey: -1754873688167
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+    authentication:
+      type: bearer
+      disabled: false
+      token: "{{ _.token }}"
+      prefix: Bearer
+    scripts:
+      afterResponse: |+
+        
+        const jsonBody = insomnia.response.json();
+
+        if(jsonBody.token)
+        insomnia.environment.set("token", jsonBody.token);
+
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - name: customer
+    meta:
+      id: fld_d49f90796a0c4489bbeab75dbe287375
+      created: 1754873688117
+      modified: 1754876840446
+      sortKey: -1754873688117
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/customers/74381996062"
+        name: Get customer by document
+        meta:
+          id: req_b5e956895ac34e89b731bc7e54763c2d
+          created: 1753020861714
+          modified: 1767761534444
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697914
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers"
+        name: Create Customer
+        meta:
+          id: req_9d9275e619ce4408a6d0d6baaa73394f
+          created: 1754438443914
+          modified: 1767411569406
+          isPrivate: false
+          description: ""
+          sortKey: -1754873698014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"document": "70782360092",
+            	"phone_number": "11999858454",
+            	"full_name": "Nome Completo",
+            	"email": "email345@mail.com"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+          - name: x-request-id
+            value: amanda-pagani-lima
+            description: ""
+            disabled: false
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers/full/1"
+        name: Get customer full
+        meta:
+          id: req_1ea3083a26744963ab5bbecc3640d94a
+          created: 1754524356270
+          modified: 1767761546447
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697814
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers/1"
+        name: Update Customer
+        meta:
+          id: req_6d96dfed094a48399d04711f717d810a
+          created: 1754594620884
+          modified: 1767761549794
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697764
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"email": "ab@mail.com",
+            	"phone_number": "11999854412",
+            	"full_name": "Nome Completo"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers"
+        name: Get all customers
+        meta:
+          id: req_8811cd84ef34412b93284608fda33146
+          created: 1754594879058
+          modified: 1767411608805
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697964
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers/3"
+        name: Delete Customer
+        meta:
+          id: req_cad993c2fa874ec1ad0c9134cafc808f
+          created: 1754594952377
+          modified: 1767761554745
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697739
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: vehicle
+    meta:
+      id: fld_c8505905216c42789bb5ccb0f083e2ae
+      created: 1754873755032
+      modified: 1754874789281
+      sortKey: -1754873688067
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/vehicles/customer/1"
+        name: Get vehicle customer
+        meta:
+          id: req_3289ab40a6dd4fa9b96c4311c54a4ce5
+          created: 1754873755052
+          modified: 1767761560003
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697914
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/vehicles"
+        name: Create Vehicle
+        meta:
+          id: req_35a4a95b18cd46e0b6f5848897b099dd
+          created: 1754873755055
+          modified: 1766448871476
+          isPrivate: false
+          description: ""
+          sortKey: -1754873698014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "brand": "Marca",
+              "customer_id": 1,
+              "model": "Modelo",
+              "plate": "HSD1234",
+              "year": "2025"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/vehicles/plate/HSD1234"
+        name: Get vehicle by plate
+        meta:
+          id: req_8ddbb67145eb44b9b2b2039fc4eee227
+          created: 1754873755058
+          modified: 1767761563154
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697814
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers/1"
+        name: Update Customer
+        meta:
+          id: req_24821bc8aa064c7b9296355d62172551
+          created: 1754873755061
+          modified: 1767761571214
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697764
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"email": "ab@mail.com",
+            	"phone_number": "11999854412",
+            	"full_name": "Nome Completo"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/vehicles"
+        name: Get all vehicles
+        meta:
+          id: req_32c6a5da3f064710921eacfb36910c00
+          created: 1754873755063
+          modified: 1767483369304
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697964
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/customers/3"
+        name: Delete Customer
+        meta:
+          id: req_9ef4c60539ba4c40a093403af259d094
+          created: 1754873755066
+          modified: 1767761574276
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697739
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: parts and supply
+    meta:
+      id: fld_ac271bb44f5f401ea01b9c882e702118
+      created: 1754874805330
+      modified: 1754874805330
+      sortKey: -1754873688017
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/parts-supply"
+        name: Get all
+        meta:
+          id: req_52b643007c084355b6340ecfd8f09942
+          created: 1754874805331
+          modified: 1767412094111
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697914
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/parts-supply"
+        name: "Create "
+        meta:
+          id: req_4258b6fa5cb4486fb924859ca73c7e8b
+          created: 1754874805333
+          modified: 1766448875484
+          isPrivate: false
+          description: ""
+          sortKey: -1754873698014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Pneus {% faker 'randomInt' %}",
+              "description": "Pneus",
+              "price": 250.0,
+              "quantity_total": 100
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/parts-supply/1"
+        name: "Update "
+        meta:
+          id: req_207a8271ca52497ea0316adcd3a0c887
+          created: 1754874805336
+          modified: 1767761585541
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697764
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Pneus edited",
+              "description": "Pneus edited",
+              "price": 250.0,
+              "quantity_total": 100
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/parts-supply"
+        name: Get by id
+        meta:
+          id: req_e6a77924760b42f89bdc346e83fd0b23
+          created: 1754874805337
+          modified: 1767761580460
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697964
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/parts-supply/1"
+        name: Delete
+        meta:
+          id: req_b61617c697ee4d7aac9991db9fc05296
+          created: 1754874805338
+          modified: 1767761588310
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697739
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: services
+    meta:
+      id: fld_2195cdb20b7f413ba63910d5aed6e163
+      created: 1754875445115
+      modified: 1754875445115
+      sortKey: -1754873687967
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/service"
+        name: Get all
+        meta:
+          id: req_4270f187ba3d47f79cbcc49d22230c99
+          created: 1754875445118
+          modified: 1767412131235
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697914
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service"
+        name: "Create "
+        meta:
+          id: req_1e57a5d30cc4434e8009e872f228df12
+          created: 1754875445123
+          modified: 1767412111601
+          isPrivate: false
+          description: ""
+          sortKey: -1754873698014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Troca de pneu {% faker 'randomInt' %}",
+              "description": "Trocar de óleo",
+              "price": 250.0
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service/1"
+        name: "Update "
+        meta:
+          id: req_ad8a77a45c5e4e419f8322bb79da6271
+          created: 1754875445128
+          modified: 1767761598981
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697764
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "name": "Troca de óleo",
+              "description": "Trocar de óleo",
+              "price": 250.0
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service/1"
+        name: Get by id
+        meta:
+          id: req_dc542441c01a4c6e8639af7c740e5be9
+          created: 1754875445132
+          modified: 1767761594934
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697964
+        method: GET
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service/1"
+        name: Delete
+        meta:
+          id: req_0d9e89ba83e6436f8e73d32043ad4da2
+          created: 1754875445135
+          modified: 1767761601785
+          isPrivate: false
+          description: ""
+          sortKey: -1754873697739
+        method: DELETE
+        headers:
+          - name: User-Agent
+            value: insomnia/11.3.0
+        authentication:
+          type: bearer
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: order service
+    meta:
+      id: fld_4df5a8fa6864459fa8bee80a06916121
+      created: 1754875737104
+      modified: 1754966757835
+      sortKey: -1753947274715.5
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/service-orders"
+        name: Create OS
+        meta:
+          id: req_aebaf47a191744219809de57ce28f3d5
+          created: 1754873507615
+          modified: 1767413951909
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746899
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"customer_id": 1,
+            	"vehicle_id": 1
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders"
+        name: Get OS
+        meta:
+          id: req_af93b2d6c6564091b42def4a623eda25
+          created: 1754949608774
+          modified: 1767411548215
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746999
+        method: GET
+        headers:
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1"
+        name: Get OS by id
+        meta:
+          id: req_ae1a712d3b0b438cbbde611fadcf0939
+          created: 1754949697805
+          modified: 1767670632425
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746949
+        method: GET
+        headers:
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1/estimate"
+        name: Approve
+        meta:
+          id: req_b2a789f8d77c4958a84620edfd24fb39
+          created: 1755037438900
+          modified: 1767670594916
+          isPrivate: false
+          description: ""
+          sortKey: -1755037438900
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: '{     "service_order_status": "APROVADA" }'
+        headers:
+          - name: Authorization
+            value: Bearer {{ _.token }}
+            disabled: false
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1/diagnosis"
+        name: Diagnoses
+        meta:
+          id: req_5932a2cfa346491782504ca70952504d
+          created: 1755047033852
+          modified: 1767670577494
+          isPrivate: false
+          description: ""
+          sortKey: -1755047033852
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+                "service_order_status": "EM DIAGNÓSTICO",
+                "parts_supplies": [
+                    {
+                        "id": 1,
+                        "quantity_reserve": 2
+                    },
+                    {
+                        "id": 2,
+                        "quantity_reserve": 1
+                    }
+                ],
+                "services": [
+                    {
+                        "id": 1
+                    },
+                    {
+                        "id": 2
+                    }
+                ]
+            }
+        headers:
+          - name: Authorization
+            value: "{{ _.token }}"
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTQ4ODI1OTEsImlhdCI6MTc1NDc5NjE5MSwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.WE35yvGCx4Cjbz5YCdCbpseBkBkpQg-vwyB3K3HUycw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/2/diagnosis"
+        name: Canceled
+        meta:
+          id: req_ed7653d5adeb42b18fa6cf7f8d4370e0
+          created: 1755047085465
+          modified: 1767483410650
+          isPrivate: false
+          description: ""
+          sortKey: -1755042236376
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+                "service_order_status": "CANCELADA"
+            }
+        headers:
+          - name: Authorization
+            value: Bearer {{ _.token }}
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTQ4ODI1OTEsImlhdCI6MTc1NDc5NjE5MSwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.WE35yvGCx4Cjbz5YCdCbpseBkBkpQg-vwyB3K3HUycw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1/execution"
+        name: Executing
+        meta:
+          id: req_f5aacdd267f6499990e528658d72b572
+          created: 1755047156641
+          modified: 1767670581818
+          isPrivate: false
+          description: ""
+          sortKey: -1755039837638
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"service_order_status": "EM EXECUÇÃO"
+            }
+        headers:
+          - name: Authorization
+            value: "{{ _.token }}"
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTQ4ODI1OTEsImlhdCI6MTc1NDc5NjE5MSwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.WE35yvGCx4Cjbz5YCdCbpseBkBkpQg-vwyB3K3HUycw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1/execution"
+        name: Finished
+        meta:
+          id: req_b23b7131ef55415baf83c3cf3fea5749
+          created: 1755047172210
+          modified: 1767670602166
+          isPrivate: false
+          description: ""
+          sortKey: -1754956592949.5
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+                "service_order_status": "FINALIZADA"
+            }
+        headers:
+          - name: Authorization
+            value: Bearer {{ _.token }}
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTQ4ODI1OTEsImlhdCI6MTc1NDc5NjE5MSwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.WE35yvGCx4Cjbz5YCdCbpseBkBkpQg-vwyB3K3HUycw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/service-orders/1/delivery"
+        name: Delivered
+        meta:
+          id: req_10c0de99ea61409486f8df60cad33a4d
+          created: 1755047186415
+          modified: 1767412266612
+          isPrivate: false
+          description: ""
+          sortKey: -1754916169974.25
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+                "service_order_status": "ENTREGUE"
+            }
+        headers:
+          - name: Authorization
+            value: Bearer {{ _.token }}
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTQ4ODI1OTEsImlhdCI6MTc1NDc5NjE5MSwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.WE35yvGCx4Cjbz5YCdCbpseBkBkpQg-vwyB3K3HUycw
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: additional repair
+    meta:
+      id: fld_ac7d2659c8f54d34aa04740a28f65b11
+      created: 1754965583236
+      modified: 1754965583236
+      sortKey: -1753947274665.5
+      description: ""
+    children:
+      - url: "{{ _.url }}/v1/additional-repair/1/add"
+        name: Add Part Supplies and Services
+        meta:
+          id: req_aad228907f1e4af286d9ae8259d34317
+          created: 1754965583237
+          modified: 1767761641426
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746974
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"services": [
+            		{
+            			"id": 1
+            		}
+            	],
+            	"parts_supplies": [
+            		{
+            			"id": 1,
+            			"quantity_reserve": 2
+            		}
+            	]
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/additional-repair/1"
+        name: Get Additional Repair
+        meta:
+          id: req_a4c25cd00a394ab6a4739a59dd181cab
+          created: 1754965583238
+          modified: 1767761635055
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746999
+        method: GET
+        headers:
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/additional-repair"
+        name: Create Additional Repair
+        meta:
+          id: req_4a07e43a9cf449eb9cbb992b65a5e7e5
+          created: 1754965583239
+          modified: 1767761637919
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746986.5
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"description": "teste create",
+            	"service_order_id": 1,
+            	"services": [
+            		{
+            			"id": 1
+            		}
+            	],
+            	"parts_supplies": [
+            		{
+            			"id": 1,
+            			"quantity_reserve": 1
+            		}
+            	]
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/additional-repair/1/remove"
+        name: Remove Part Supplies and Services
+        meta:
+          id: req_15bb77d31ecc4ac3b1fd1efd48a00c23
+          created: 1754965758611
+          modified: 1767761644195
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746961.5
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"services":[{"id":1}],
+            	"parts_supplies":[{"id":1}]
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.url }}/v1/additional-repair/8/customer_approval"
+        name: Customer Approval
+        meta:
+          id: req_13b47726c0384789b26b60ffdc6fe802
+          created: 1754969863850
+          modified: 1767761647666
+          isPrivate: false
+          description: ""
+          sortKey: -1754875746955.25
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"approval_status": "APPROVED"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: X-API-Key
+            value: ""
+        authentication:
+          type: bearer
+          disabled: false
+          token: "{{ _.token }}"
+          prefix: Bearer
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_f18f125153014871bca92f135d6cd247
+    created: 1753414298781
+    modified: 1767670286229
+environments:
+  name: Base Environment
+  meta:
+    id: env_e88e10e3e40444b5af22feb78b4506b1
+    created: 1753414298776
+    modified: 1767670286231
+    isPrivate: false
+  data:
+    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjY1MTM3ODYsImlhdCI6MTc2NjQyNzM4Niwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.nO4mzoPmLgEbXri4zrjT_4AVKbY2QQHXAby-YfYSfKg
+    local_url: http://localhost:8080
+    aws_url: ae316f3ff516740a1bac6f866c0ba222-2099201079.us-east-1.elb.amazonaws.com:8080
+  subEnvironments:
+    - name: AWS Environment
+      meta:
+        id: env_5dc1eec4c17b4f4fa1b86432f622311d
+        created: 1766448766777
+        modified: 1767670286231
+        isPrivate: false
+        sortKey: 1766448766777
+      data:
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3Njc3NTY2ODIsImlhdCI6MTc2NzY3MDI4Miwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.rDstwQGp87RT6OhjFMvx_HKOgP5tnsNIfMEum4AO4aM
+        url: a3793e3aa2c6c4f61a4d468e7706c925-1240582908.us-east-1.elb.amazonaws.com:8080
+      color: "#6916d0"
+    - name: Local Environment
+      meta:
+        id: env_248738a59b494c6fb1691d0758152286
+        created: 1766448814732
+        modified: 1766448861131
+        isPrivate: false
+        sortKey: 1766448814732
+      data:
+        token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjY1MTM3ODYsImlhdCI6MTc2NjQyNzM4Niwic3ViIjoiYWRtaW5AeHB0by5jb20ifQ.nO4mzoPmLgEbXri4zrjT_4AVKbY2QQHXAby-YfYSfKg
+        url: http://localhost:8080
+      color: "#c2630a"

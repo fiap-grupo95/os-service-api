@@ -1,0 +1,17 @@
+name: Block PRs to main except from release/* or hotfix/*
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  block:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow only release/* or hotfix/* branches
+        run: |
+          if [[ "${GITHUB_HEAD_REF}" != release/* && "${GITHUB_HEAD_REF}" != hotfix/* ]]; then
+            echo "Apenas branches release/* ou hotfix/* podem criar PRs para main"
+            exit 1
+          fi

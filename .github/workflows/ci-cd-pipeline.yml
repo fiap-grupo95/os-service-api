@@ -1,0 +1,69 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    types: [closed]
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  go:
+    name: Go Build & Test
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24.4'
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+      - name: Generate Swagger Documentation
+        run: swag init -g cmd/api/main.go
+      - name: Build
+        run: go build -v ./...
+      - name: Test
+        run: go test -v ./...
+
+  docker-build:
+    name: Build Docker Image
+    needs: go
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build . --file Dockerfile
+
+  docker-push:
+    name: Publish Docker Image
+    needs: docker-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get latest version
+        id: get_version
+        run: |
+          LATEST_VERSION=$(curl -s "https://hub.docker.com/v2/repositories/mandaapag03/mecanica-xpto-api/tags/?page_size=100" \
+            | jq -r '.results[].name' \
+            | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+-rc$' \
+            | sed -E 's/-rc$//' \
+            | sort -V \
+            | tail -n 1)
+          if [ -z "$LATEST_VERSION" ]; then
+            LATEST_VERSION="v0.0.0"
+          fi
+          echo "New version will be: $LATEST_VERSION"
+      - name: Build and tag Docker image
+        run: |
+          docker build . --file Dockerfile --tag mandaapag03/mecanica-xpto-api:${{ env.LATEST_VERSION }}
+          docker tag mandaapag03/mecanica-xpto-api:${{ env.LATEST_VERSION }} mandaapag03/mecanica-xpto-api:latest
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push Docker image
+        run: |
+          docker push mandaapag03/mecanica-xpto-api:${{ env.LATEST_VERSION }}
+          docker push mandaapag03/mecanica-xpto-api:latest
