@@ -26,14 +26,14 @@ type IAdditionalRepairUseCase interface {
 
 type AdditionalRepairUseCase struct {
 	repo            interfaces.IAdditionalRepairRepository
-	repoOS          interfaces.IServiceOrderRepository
+	repoOS          interfaces.IServiceOrderGateway
 	serviceRepo     interfaces.IServiceRepo
 	partsSupplyRepo interfaces.IPartsSupplyRepo
 }
 
 var _ IAdditionalRepairUseCase = (*AdditionalRepairUseCase)(nil)
 
-func NewSOAdditionalRepairUseCase(repo interfaces.IAdditionalRepairRepository, repoOS interfaces.IServiceOrderRepository, serviceRepo interfaces.IServiceRepo, partsSupplyRepo interfaces.IPartsSupplyRepo) *AdditionalRepairUseCase {
+func NewSOAdditionalRepairUseCase(repo interfaces.IAdditionalRepairRepository, repoOS interfaces.IServiceOrderGateway, serviceRepo interfaces.IServiceRepo, partsSupplyRepo interfaces.IPartsSupplyRepo) *AdditionalRepairUseCase {
 	return &AdditionalRepairUseCase{
 		repo:            repo,
 		repoOS:          repoOS,

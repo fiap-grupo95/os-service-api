@@ -50,3 +50,4 @@ mongo_data/
 *.terraform.lock.hcl
 .terraform/
 terraform.tfstate
+*.DS_Store

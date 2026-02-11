@@ -103,6 +103,21 @@ services:
     volumes:
       - postgresql_sonar_data:/var/lib/postgresql/data
 
+  mockoon:
+    image: mockoon/cli
+    container_name: mockoon
+    ports:
+      - '8083:8083'
+    volumes:
+      - ./mockoon/tech_challenge.json:/data/tech_challenge.json:ro
+    networks:
+      - app_network
+    command: [
+      "--data", "/data/tech_challenge.json",
+      "--port", "8083",
+      "--hostname", "0.0.0.0"
+    ]
+
 networks:
   default:
     driver: bridge
@@ -123,3 +138,4 @@ volumes:
   sonar_extensions:
   postgresql_sonar_data:
   postgresql_data:
+  mockoon_data:

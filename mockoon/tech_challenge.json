@@ -1,0 +1,129 @@
+{
+  "uuid": "b56778ce-c312-4e16-bf15-af51d1dd231c",
+  "lastMigration": 33,
+  "name": "Tech Challenge",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 8083,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "b1f86835-9eeb-4f70-bbe2-b138531efe92",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "v1/customers/:id",
+      "responses": [
+        {
+          "uuid": "5064ac39-8c5d-4fb8-9a96-3cacb1f6e42f",
+          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"user_id\": 1,\n\t\"full_name\": \"Nome Completo\",\n\t\"email\": \"email345@mail.com\",\n\t\"phone_number\": \"11999858454\",\n\t\"document\": \"70782360092\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "c9f36b44-eef2-4068-81c6-8180856b4dc8",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "v1/vehicles/:id",
+      "responses": [
+        {
+          "uuid": "85f90c09-17c1-46a4-a2ac-dbd28798f828",
+          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"customer_id\": 1,\n\t\"brand\": \"Marca\",\n\t\"model\": \"Modelo\",\n\t\"year\": \"2025\",\n\t\"plate\": \"HSD1234\"\n}\n",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "b1f86835-9eeb-4f70-bbe2-b138531efe92"
+    },
+    {
+      "type": "route",
+      "uuid": "c9f36b44-eef2-4068-81c6-8180856b4dc8"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}

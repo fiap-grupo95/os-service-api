@@ -1,15 +1,19 @@
 package routes
 
 import (
+	"net/http"
+	"strconv"
+
 	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
 	middleware "github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
+	entityapi "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/entity_api"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/gateway"
 	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/repository"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 	"github.com/fiap-grupo95/os-service-api/pkg/utils/auth"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/newrelic/go-agent/v3/integrations/nrgin"
@@ -71,31 +75,35 @@ func InitApp() {
 
 	partsSupplyRepository := repository.NewPartsSupplyRepository(db)
 	serviceRepository := repository.NewServiceRepository(db)
-	vehiclesRepository := repository.NewVehicleRepository(db)
-	customerRepository := repository.NewCustomerRepository(db)
+	vehiclesRepository := entityapi.NewVehicleRepository()
+	customerRepository := entityapi.NewCustomerRepository(&http.Client{})
 	serviceOrderRepository := repository.NewServiceOrderRepository(db)
-	additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
+	// additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
+
+	serviceOrderGateway := gateway.NewServiceOrderGateway(serviceOrderRepository)
+	vehiclesGateway := gateway.NewVehicleGateway(vehiclesRepository)
+	customerGateway := gateway.NewCustomerGateway(customerRepository)
 
 	serviceOrderUsecase := usecase.NewServiceOrderUseCase(
-		serviceOrderRepository,
-		vehiclesRepository,
-		customerRepository,
+		serviceOrderGateway,
+		vehiclesGateway,
+		customerGateway,
 		serviceRepository,
 		partsSupplyRepository)
-	additionalRepairUsecase := usecase.NewSOAdditionalRepairUseCase(
-		additionalRepairRepository,
-		serviceOrderRepository,
-		serviceRepository,
-		partsSupplyRepository)
-		
+	// additionalRepairUsecase := usecase.NewSOAdditionalRepairUseCase(
+	// 	additionalRepairGateway,
+	// 	serviceOrderGateway,
+	// 	serviceRepository,
+	// 	partsSupplyRepository)
+
 	serviceOrderHandler := handlers.NewServiceOrderHandler(serviceOrderUsecase)
-	additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
+	// additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
 
 	// Protected routes
 	router.Use(middleware.AuthMiddleware(jwtService))
 	addPingRoutes(router)
 	addServiceOrderRoutes(router, serviceOrderHandler)
-	addAdditionalRepairRoutes(router, additionalRepairHandler)
+	// addAdditionalRepairRoutes(router, additionalRepairHandler)
 }
 
 func setMiddlewares() {

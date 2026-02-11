@@ -20,7 +20,7 @@ func TestCreateAdditionalRepair_ServiceOrderNotFound(t *testing.T) {
 
 	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
 	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
 	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)
@@ -40,7 +40,7 @@ func TestCreateAdditionalRepair_ServiceNotFound(t *testing.T) {
 
 	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
 	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
 	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)
@@ -64,7 +64,7 @@ func TestCreateAdditionalRepair_PartsSupplyNotFound(t *testing.T) {
 
 	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
 	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceRepo(ctrl)
+	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
 	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)

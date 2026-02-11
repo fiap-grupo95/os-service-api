@@ -23,12 +23,12 @@ type IPaymentUseCase interface {
 
 type PaymentUseCase struct {
 	repo             interfaces.IPaymentRepo
-	serviceOrderRepo interfaces.IServiceOrderRepository
+	serviceOrderRepo interfaces.IServiceOrderGateway
 }
 
 var _ IPaymentUseCase = (*PaymentUseCase)(nil)
 
-func NewPaymentUseCase(repo interfaces.IPaymentRepo, serviceOrderRepo interfaces.IServiceOrderRepository) *PaymentUseCase {
+func NewPaymentUseCase(repo interfaces.IPaymentRepo, serviceOrderRepo interfaces.IServiceOrderGateway) *PaymentUseCase {
 	return &PaymentUseCase{
 		repo:             repo,
 		serviceOrderRepo: serviceOrderRepo,
