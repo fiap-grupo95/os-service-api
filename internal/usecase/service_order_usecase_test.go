@@ -229,7 +229,7 @@ func (m *MockCustomerGateway) GetByID(id uint) (*entities.Customer, error) {
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*dto.CustomerModel).ToDomain(), args.Error(1)
+	return args.Get(0).(*entities.Customer), args.Error(1)
 }
 
 func (m *MockCustomerGateway) GetByDocument(CpfCnpj string) (*entities.Customer, error) {
@@ -237,7 +237,7 @@ func (m *MockCustomerGateway) GetByDocument(CpfCnpj string) (*entities.Customer,
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*dto.CustomerModel).ToDomain(), args.Error(1)
+	return args.Get(0).(*entities.Customer), args.Error(1)
 }
 func (m *MockCustomerGateway) Create(customer *entities.Customer) error {
 	args := m.Called(customer)
@@ -295,7 +295,7 @@ func (m *MockServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+	return args.Get(0).(*entities.ServiceOrder), nil
 }
 
 func (m *MockServiceOrderGateway) GetByID(id uint) (*entities.ServiceOrder, error) {
@@ -434,87 +434,174 @@ func (m *MockPartsSupplyGateway) GetByServiceOrderID(ctx context.Context, servic
 }
 
 func TestCreateServiceOrder(t *testing.T) {
-	vehicleRepo := new(MockVehicleGateway)
-	customerRepo := new(MockCustomerGateway)
-	serviceOrderRepo := new(MockServiceOrderGateway)
-	serviceRepo := new(MockServiceRepository)
-	partsSupplyRepo := new(MockPartsSupplyGateway)
+	t.Run("Success - Valid service order creation", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
 
-	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
 
-	tests := []struct {
-		name          string
-		serviceOrder  entities.ServiceOrder
-		setupMocks    func()
-		expectedError error
-	}{
-		{
-			name: "Success - Valid service order creation",
-			serviceOrder: entities.ServiceOrder{
-				CustomerID: 1,
-				VehicleID:  1,
-			},
-			setupMocks: func() {
-				vehicleRepo.On("FindByID", uint(1)).Return(&dto.VehicleModel{ID: 1}, nil)
-				customerRepo.On("GetByID", uint(1)).Return(&dto.CustomerModel{ID: 1}, nil)
-				serviceOrderRepo.On("Create", mock.AnythingOfType("*entities.ServiceOrder")).Return(&entities.ServiceOrder{
-					ID:         1,
-					CustomerID: 1,
-					VehicleID:  1,
-				}, nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Error - Vehicle not found",
-			serviceOrder: entities.ServiceOrder{
-				CustomerID: 1,
-				VehicleID:  1,
-			},
-			setupMocks: func() {
-				vehicleRepo.On("FindByID", uint(1)).Return(nil, errors.New("vehicle not found"))
-			},
-			expectedError: errors.New("vehicle not found"),
-		},
-		{
-			name: "Error - Customer not found",
-			serviceOrder: entities.ServiceOrder{
-				CustomerID: 1,
-				VehicleID:  1,
-			},
-			setupMocks: func() {
-				vehicleRepo.On("FindByID", mock.Anything, uint(1)).Return(&dto.VehicleModel{ID: 1}, nil)
-				customerRepo.On("GetByID", uint(1)).Return(nil, errors.New("customer not found"))
-			},
-			expectedError: errors.New("customer not found"),
-		},
-	}
+		serviceOrder := entities.ServiceOrder{
+			CustomerID:         1,
+			VehicleID:          1,
+			ServiceOrderStatus: valueobject.StatusRecebida,
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMocks()
-			r, err := useCase.CreateServiceOrder(context.Background(), tt.serviceOrder)
-			if tt.expectedError != nil && err != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NotNil(t, r)
-				assert.NoError(t, err)
-			}
-		})
-	}
+		vehicleRepo.On("FindByID", uint(1)).Return(&entities.Vehicle{ID: 1}, nil)
+		customerRepo.On("GetByID", uint(1)).Return(&entities.Customer{ID: 1}, nil)
+		serviceOrderRepo.On("Create", mock.AnythingOfType("*entities.ServiceOrder")).Return(&entities.ServiceOrder{
+			ID:         1,
+			CustomerID: 1,
+			VehicleID:  1,
+		}, nil)
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.NoError(t, err)
+		assert.NotNil(t, r)
+	})
+
+	t.Run("Error - Internal DB Error", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			CustomerID: 1,
+			VehicleID:  1,
+		}
+
+		vehicleRepo.On("FindByID", uint(1)).Return(&entities.Vehicle{ID: 1}, nil)
+		customerRepo.On("GetByID", uint(1)).Return(&entities.Customer{ID: 1}, nil)
+		serviceOrderRepo.On("Create", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, errors.New("internal db error"))
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.Error(t, err)
+		assert.Equal(t, "internal db error", err.Error())
+		assert.Nil(t, r)
+	})
+
+	t.Run("Error - Vehicle not found", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			CustomerID: 1,
+			VehicleID:  1,
+		}
+
+		vehicleRepo.On("FindByID", uint(1)).Return(nil, errors.New("vehicle not found"))
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.Error(t, err)
+		assert.Equal(t, "vehicle not found", err.Error())
+		assert.Nil(t, r)
+	})
+
+	t.Run("Error - Vehicle Has invalid ID", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			CustomerID: 1,
+			VehicleID:  0,
+		}
+
+		vehicleRepo.On("FindByID", uint(0)).Return(nil, errors.New("invalid vehicle ID"))
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid vehicle ID", err.Error())
+		assert.Nil(t, r)
+	})
+
+	t.Run("Error - Customer not found", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			CustomerID: 1,
+			VehicleID:  1,
+		}
+
+		vehicleRepo.On("FindByID", uint(1)).Return(&entities.Vehicle{ID: 1}, nil)
+		customerRepo.On("GetByID", uint(1)).Return(nil, errors.New("customer not found"))
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.Error(t, err)
+		assert.Equal(t, "customer not found", err.Error())
+		assert.Nil(t, r)
+	})
+
+	t.Run("Error - Customer Has invalid ID", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			CustomerID: 0,
+			VehicleID:  1,
+		}
+
+		vehicleRepo.On("FindByID", uint(1)).Return(&entities.Vehicle{ID: 1}, nil)
+		customerRepo.On("GetByID", uint(0)).Return(nil, errors.New("invalid customer ID"))
+
+		r, err := useCase.CreateServiceOrder(context.Background(), serviceOrder)
+		assert.Error(t, err)
+		assert.Equal(t, "invalid customer ID", err.Error())
+		assert.Nil(t, r)
+	})
 }
 
 func TestUpdateServiceOrder(t *testing.T) {
-	vehicleRepo := new(MockVehicleGateway)
-	customerRepo := new(MockCustomerGateway)
-	serviceOrderRepo := new(MockServiceOrderGateway)
-	serviceRepo := new(MockServiceRepository)
-	partsSupplyRepo := new(MockPartsSupplyGateway)
+	t.Run("Success - Update to EmDiagnostico", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
 
-	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
 
-	setupMocks := func() {
+		serviceOrder := entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEmDiagnostico,
+			Services: []entities.Service{
+				{ID: 1},
+			},
+			PartsSupplies: []entities.PartsSupply{
+				{
+					ID:              1,
+					QuantityReserve: 2,
+				},
+			},
+		}
+		flow := DIAGNOSIS
+
 		serviceOrderRepo.On("GetByID", uint(1)).Return(&dto.ServiceOrderModel{
 			ID: 1,
 			ServiceOrderStatus: dto.ServiceOrderStatus{
@@ -530,423 +617,347 @@ func TestUpdateServiceOrder(t *testing.T) {
 		}, nil)
 		partsSupplyRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
 		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
-	}
-	tests := []struct {
-		name          string
-		serviceOrder  entities.ServiceOrder
-		flow          string
-		setupMocks    func()
-		expectedError error
-	}{
-		{
-			name: "Success - Update to EmDiagnostico",
-			serviceOrder: entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEmDiagnostico,
-				Services: []entities.Service{
-					{ID: 1},
-				},
-				PartsSupplies: []entities.PartsSupply{
-					{
-						ID:              1,
-						QuantityReserve: 2,
-					},
-				},
-			},
-			flow:          DIAGNOSIS,
-			setupMocks:    setupMocks,
-			expectedError: nil,
-		},
-		{
-			name: "Error - Invalid Status Transition",
-			serviceOrder: entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEntregue,
-			},
-			flow: DIAGNOSIS,
-			setupMocks: func() {
-				serviceOrderRepo.On("GetByID", uint(1)).Return(&dto.ServiceOrderModel{
-					ID: 1,
-					ServiceOrderStatus: dto.ServiceOrderStatus{
-						ID:          1,
-						Description: string(valueobject.StatusRecebida),
-					},
-				}, nil)
-			},
-			expectedError: ErrInvalidTransitionStatusToDiagnosis,
-		},
-	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMocks()
-			r, err := useCase.UpdateServiceOrder(context.Background(), tt.serviceOrder, tt.flow)
-			if tt.expectedError != nil && err != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NotNil(t, r)
-				assert.NoError(t, err)
-			}
-		})
-	}
+		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		assert.NoError(t, err)
+		assert.NotNil(t, r)
+	})
+
+	t.Run("Error - Invalid Status Transition", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEntregue,
+		}
+		flow := DIAGNOSIS
+
+		serviceOrderRepo.On("GetByID", uint(1)).Return(&dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				ID:          1,
+				Description: string(valueobject.StatusRecebida),
+			},
+		}, nil)
+
+		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidTransitionStatusToDiagnosis, err)
+		assert.Nil(t, r)
+	})
 }
 
 func TestValidateEstimate(t *testing.T) {
-	tests := []struct {
-		name            string
-		request         *entities.ServiceOrder
-		serviceOrderDTO *dto.ServiceOrderModel
-		setupMocks      func(*MockPartsSupplyGateway, *MockServiceOrderGateway)
-		expectedError   error
-	}{
-		{
-			name: "Should approve estimate and release parts supply",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusAprovada,
+	t.Run("Should approve estimate and release parts supply", func(t *testing.T) {
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusAprovada,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: StatusAguardandoAprovacao,
 			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: StatusAguardandoAprovacao,
-				},
+		}
+
+		// Mock get parts supplies by service order ID
+		partsSupplyRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
+			{ID: 1, QuantityTotal: 10, QuantityReserve: 2},
+		}, nil)
+
+		// Mock get parts supply service order relation
+		serviceOrderRepo.On("GetPartsSupplyServiceOrder", uint(1), uint(1)).Return(&dto.PartsSupplyServiceOrder{
+			PartsSupplyID:  1,
+			ServiceOrderID: 1,
+			Quantity:       2,
+		}, nil)
+
+		// Mock get parts supply by ID
+		partsSupplyRepo.On("GetByID", context.Background(), uint(1)).Return(entities.PartsSupply{
+			ID:              1,
+			QuantityTotal:   10,
+			QuantityReserve: 2,
+		}, nil)
+
+		// Mock update parts supply
+		partsSupplyRepo.On("Update", context.Background(), mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
+
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateEstimate(context.Background(), request, current, update, partsSupplyRepo, serviceOrderRepo)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, valueobject.StatusAprovada, result.ServiceOrderStatus)
+	})
+
+	t.Run("Should fail when getting parts supply relation fails", func(t *testing.T) {
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusAprovada,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: StatusAguardandoAprovacao,
 			},
-			setupMocks: func(psRepo *MockPartsSupplyGateway, soRepo *MockServiceOrderGateway) {
-				// Mock get parts supplies by service order ID
-				psRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
-					{ID: 1, QuantityTotal: 10, QuantityReserve: 2},
-				}, nil)
+		}
 
-				// Mock get parts supply service order relation
-				soRepo.On("GetPartsSupplyServiceOrder", uint(1), uint(1)).Return(&dto.PartsSupplyServiceOrder{
-					PartsSupplyID:  1,
-					ServiceOrderID: 1,
-					Quantity:       2,
-				}, nil)
+		partsSupplyRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
+			{ID: 1},
+		}, nil)
 
-				// Mock get parts supply by ID
-				psRepo.On("GetByID", context.Background(), uint(1)).Return(entities.PartsSupply{
-					ID:              1,
-					QuantityTotal:   10,
-					QuantityReserve: 2,
-				}, nil)
+		serviceOrderRepo.On("GetPartsSupplyServiceOrder", uint(1), uint(1)).Return(nil, errors.New("error getting relation"))
 
-				// Mock update parts supply
-				psRepo.On("Update", context.Background(), mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Should fail when getting parts supply relation fails",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusAprovada,
-			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: StatusAguardandoAprovacao,
-				},
-			},
-			setupMocks: func(psRepo *MockPartsSupplyGateway, soRepo *MockServiceOrderGateway) {
-				psRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
-					{ID: 1},
-				}, nil)
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateEstimate(context.Background(), request, current, update, partsSupplyRepo, serviceOrderRepo)
 
-				soRepo.On("GetPartsSupplyServiceOrder", uint(1), uint(1)).Return(nil, errors.New("error getting relation"))
-			},
-			expectedError: errors.New("error getting relation"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			partsSupplyRepo := new(MockPartsSupplyGateway)
-			serviceOrderRepo := new(MockServiceOrderGateway)
-
-			if tt.setupMocks != nil {
-				tt.setupMocks(partsSupplyRepo, serviceOrderRepo)
-			}
-
-			update := &entities.ServiceOrder{}
-			current := toServiceOrderEntity(tt.serviceOrderDTO)
-			result, err := ValidateEstimate(context.Background(), tt.request, current, update, partsSupplyRepo, serviceOrderRepo)
-
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-				assert.Equal(t, valueobject.StatusAprovada, result.ServiceOrderStatus)
-			}
-		})
-	}
+		assert.Error(t, err)
+		assert.Equal(t, "error getting relation", err.Error())
+		assert.Nil(t, result)
+	})
 }
 
 func TestCalculateEstimate(t *testing.T) {
-	tests := []struct {
-		name           string
-		services       []entities.Service
-		partsSupplies  []entities.PartsSupply
-		serviceRepo    *MockServiceRepository
-		partsSuplyRepo *MockPartsSupplyGateway
-		expected       float64
-	}{
-		{
-			name: "Calculate with services and parts supplies",
-			services: []entities.Service{
-				{ID: 1},
-				{ID: 2},
-			},
-			partsSupplies: []entities.PartsSupply{
-				{ID: 1, QuantityReserve: 2},
-				{ID: 2, QuantityReserve: 3},
-			},
-			serviceRepo:    &MockServiceRepository{},
-			partsSuplyRepo: &MockPartsSupplyGateway{},
-			expected:       350.0, // Updated to match actual calculation: (100 + 75) + (50*2 + 25*3) = 175 + 175 = 350
-		},
-	}
+	t.Run("Calculate with services and parts supplies", func(t *testing.T) {
+		services := []entities.Service{
+			{ID: 1},
+			{ID: 2},
+		}
+		partsSupplies := []entities.PartsSupply{
+			{ID: 1, QuantityReserve: 2},
+			{ID: 2, QuantityReserve: 3},
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mocks for services
-			tt.serviceRepo.On("GetByID", mock.Anything, uint(1)).Return(entities.Service{
-				ID:    1,
-				Price: 100.0,
-			}, nil)
-			tt.serviceRepo.On("GetByID", mock.Anything, uint(2)).Return(entities.Service{
-				ID:    2,
-				Price: 75.0,
-			}, nil)
+		serviceRepo := &MockServiceRepository{}
+		partsSupplyRepo := &MockPartsSupplyGateway{}
 
-			// Setup mocks for parts supplies
-			tt.partsSuplyRepo.On("GetByID", mock.Anything, uint(1)).Return(entities.PartsSupply{
-				ID:    1,
-				Price: 50.0,
-			}, nil)
-			tt.partsSuplyRepo.On("GetByID", mock.Anything, uint(2)).Return(entities.PartsSupply{
-				ID:    2,
-				Price: 25.0,
-			}, nil)
+		// Setup mocks for services
+		serviceRepo.On("GetByID", mock.Anything, uint(1)).Return(entities.Service{
+			ID:    1,
+			Price: 100.0,
+		}, nil)
+		serviceRepo.On("GetByID", mock.Anything, uint(2)).Return(entities.Service{
+			ID:    2,
+			Price: 75.0,
+		}, nil)
 
-			result, err := CalculateEstimate(context.Background(), tt.services, tt.partsSupplies, tt.serviceRepo, tt.partsSuplyRepo)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expected, result)
-		})
-	}
+		// Setup mocks for parts supplies
+		partsSupplyRepo.On("GetByID", mock.Anything, uint(1)).Return(entities.PartsSupply{
+			ID:    1,
+			Price: 50.0,
+		}, nil)
+		partsSupplyRepo.On("GetByID", mock.Anything, uint(2)).Return(entities.PartsSupply{
+			ID:    2,
+			Price: 25.0,
+		}, nil)
+
+		result, err := CalculateEstimate(context.Background(), services, partsSupplies, serviceRepo, partsSupplyRepo)
+		assert.NoError(t, err)
+		assert.Equal(t, 350.0, result) // (100 + 75) + (50*2 + 25*3) = 175 + 175 = 350
+	})
 }
 
 func TestValidateExecution(t *testing.T) {
-	tests := []struct {
-		name             string
-		request          *entities.ServiceOrder
-		serviceOrderDTO  *dto.ServiceOrderModel
-		expectedError    error
-		expectedDuration float64 // Espera-se que a duraÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o da execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o seja arredondada para 2 casas decimais
-	}{
-		{
-			name: "Success - Start Execution",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEmExecucao,
+	t.Run("Success - Start Execution", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEmExecucao,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusAprovada),
 			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusAprovada),
-				},
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Success - Finish Execution",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusFinalizada,
-			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusEmExecucao),
-				},
-				StartedExecutionDate: func() *time.Time {
-					// Cria uma data que ocorreu 1.25 horas no passado
-					t := time.Now().Add(-75 * time.Minute)
-					return &t
-				}(),
-			},
-			expectedDuration: 1.25, // Exemplo de duraÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o esperada com 2 casas decimais
-			expectedError:    nil,
-		},
-		{
-			name: "Error - Invalid Status Transition",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusFinalizada,
-			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusRecebida),
-				},
-			},
-			expectedError: ErrInvalidTransitionStatusToExecution,
-		},
-	}
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			update := &entities.ServiceOrder{}
-			current := toServiceOrderEntity(tt.serviceOrderDTO)
-			result, err := ValidateExecution(context.Background(), tt.request, current, update)
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateExecution(context.Background(), request, current, update)
 
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-				assert.Equal(t, tt.request.ServiceOrderStatus, result.ServiceOrderStatus)
-				assert.Equal(t, tt.expectedDuration, result.ExecutionDurationInHours)
-			}
-		})
-	}
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, valueobject.StatusEmExecucao, result.ServiceOrderStatus)
+		assert.NotNil(t, result.StartedExecutionDate)
+	})
+
+	t.Run("Success - Finish Execution", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusFinalizada,
+		}
+		start := time.Now().Add(-75 * time.Minute) // 1.25 horas no passado
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusEmExecucao),
+			},
+			StartedExecutionDate: &start,
+		}
+
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateExecution(context.Background(), request, current, update)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, valueobject.StatusFinalizada, result.ServiceOrderStatus)
+		assert.InDelta(t, 1.25, result.ExecutionDurationInHours, 0.01)
+	})
+
+	t.Run("Error - Invalid Status Transition", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusFinalizada,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusRecebida),
+			},
+		}
+
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateExecution(context.Background(), request, current, update)
+
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidTransitionStatusToExecution, err)
+		assert.Nil(t, result)
+	})
 }
 
 func TestValidateDelivery(t *testing.T) {
-	tests := []struct {
-		name            string
-		request         *entities.ServiceOrder
-		serviceOrderDTO *dto.ServiceOrderModel
-		expectedError   error
-	}{
-		{
-			name: "Success - Complete Delivery",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEntregue,
+	t.Run("Success - Complete Delivery", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEntregue,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusFinalizada),
 			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusFinalizada),
-				},
-				PaymentID: UintPointer(1),
-			},
-			expectedError: nil,
-		},
-		{
-			name: "Error - Missing Payment Information",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEntregue,
-			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusFinalizada),
-				},
-			},
-			expectedError: errors.New("payment information is required for delivery"),
-		},
-		{
-			name: "Error - Invalid Status Transition",
-			request: &entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEntregue,
-				PaymentID:          UintPointer(1),
-			},
-			serviceOrderDTO: &dto.ServiceOrderModel{
-				ID: 1,
-				ServiceOrderStatus: dto.ServiceOrderStatus{
-					Description: string(valueobject.StatusEmDiagnostico),
-				},
-			},
-			expectedError: ErrInvalidTransitionStatusToDelivery,
-		},
-	}
+			PaymentID: UintPointer(1),
+		}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			update := &entities.ServiceOrder{}
-			current := toServiceOrderEntity(tt.serviceOrderDTO)
-			result, err := ValidateDelivery(context.Background(), tt.request, current, update)
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateDelivery(context.Background(), request, current, update)
 
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
-				assert.Equal(t, valueobject.StatusEntregue, result.ServiceOrderStatus)
-			}
-		})
-	}
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, valueobject.StatusEntregue, result.ServiceOrderStatus)
+	})
+
+	t.Run("Error - Missing Payment Information", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEntregue,
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusFinalizada),
+			},
+		}
+
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateDelivery(context.Background(), request, current, update)
+
+		assert.Error(t, err)
+		assert.Equal(t, "payment information is required for delivery", err.Error())
+		assert.Nil(t, result)
+	})
+
+	t.Run("Error - Invalid Status Transition", func(t *testing.T) {
+		request := &entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEntregue,
+			PaymentID:          UintPointer(1),
+		}
+		serviceOrderDTO := &dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusEmDiagnostico),
+			},
+		}
+
+		update := &entities.ServiceOrder{}
+		current := toServiceOrderEntity(serviceOrderDTO)
+		result, err := ValidateDelivery(context.Background(), request, current, update)
+
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidTransitionStatusToDelivery, err)
+		assert.Nil(t, result)
+	})
 }
 
 func TestInvalidServiceOrder(t *testing.T) {
-	vehicleRepo := new(MockVehicleGateway)
-	customerRepo := new(MockCustomerGateway)
-	serviceOrderRepo := new(MockServiceOrderGateway)
-	serviceRepo := new(MockServiceRepository)
-	partsSupplyRepo := new(MockPartsSupplyGateway)
+	t.Run("Error - Service Order Not Found", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
 
-	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
 
-	tests := []struct {
-		name          string
-		serviceOrder  entities.ServiceOrder
-		flow          string
-		setupMocks    func()
-		expectedError error
-	}{
-		{
-			name: "Error - Service Order Not Found",
-			serviceOrder: entities.ServiceOrder{
-				ID:                 999,
-				ServiceOrderStatus: valueobject.StatusEmDiagnostico,
-			},
-			flow: DIAGNOSIS,
-			setupMocks: func() {
-				serviceOrderRepo.On("GetByID", uint(999)).Return(nil, ErrServiceOrderNotFound)
-			},
-			expectedError: ErrServiceOrderNotFound,
-		},
-		{
-			name: "Error - Invalid Flow Type",
-			serviceOrder: entities.ServiceOrder{
-				ID:                 1,
-				ServiceOrderStatus: valueobject.StatusEmDiagnostico,
-			},
-			flow: "invalid_flow",
-			setupMocks: func() {
-				serviceOrderRepo.On("GetByID", uint(1)).Return(&dto.ServiceOrderModel{
-					ID: 1,
-					ServiceOrderStatus: dto.ServiceOrderStatus{
-						Description: string(valueobject.StatusRecebida),
-					},
-				}, nil)
-			},
-			expectedError: ErrInvalidFlow, // The update will return nil since no valid flow was matched
-		},
-	}
+		serviceOrder := entities.ServiceOrder{
+			ID:                 999,
+			ServiceOrderStatus: valueobject.StatusEmDiagnostico,
+		}
+		flow := DIAGNOSIS
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setupMocks()
-			r, err := useCase.UpdateServiceOrder(context.Background(), tt.serviceOrder, tt.flow)
-			if tt.expectedError != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				assert.NotNil(t, r)
-				assert.NoError(t, err)
-			}
-		})
-	}
+		serviceOrderRepo.On("GetByID", uint(999)).Return(nil, ErrServiceOrderNotFound)
+
+		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		assert.Error(t, err)
+		assert.Equal(t, ErrServiceOrderNotFound, err)
+		assert.Nil(t, r)
+	})
+
+	t.Run("Error - Invalid Flow Type", func(t *testing.T) {
+		vehicleRepo := new(MockVehicleGateway)
+		customerRepo := new(MockCustomerGateway)
+		serviceOrderRepo := new(MockServiceOrderGateway)
+		serviceRepo := new(MockServiceRepository)
+		partsSupplyRepo := new(MockPartsSupplyGateway)
+
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo)
+
+		serviceOrder := entities.ServiceOrder{
+			ID:                 1,
+			ServiceOrderStatus: valueobject.StatusEmDiagnostico,
+		}
+		flow := "invalid_flow"
+
+		serviceOrderRepo.On("GetByID", uint(1)).Return(&dto.ServiceOrderModel{
+			ID: 1,
+			ServiceOrderStatus: dto.ServiceOrderStatus{
+				Description: string(valueobject.StatusRecebida),
+			},
+		}, nil)
+
+		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		assert.Error(t, err)
+		assert.Equal(t, ErrInvalidFlow, err)
+		assert.Nil(t, r)
+	})
 }
 
 func TestGetServiceOrder(t *testing.T) {

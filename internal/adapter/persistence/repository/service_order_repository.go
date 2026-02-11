@@ -30,10 +30,6 @@ func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) 
 		return nil, gorm.ErrInvalidData
 	}
 
-	if dtoStatus == nil {
-		return nil, gorm.ErrInvalidData
-	}
-
 	serviceOrderDto.OSStatusID = dtoStatus.ID
 	serviceOrderDto.ServiceOrderStatus = *dtoStatus
 

@@ -51,7 +51,7 @@ type ServiceOrderUseCase struct {
 var _ IServiceOrderUseCase = (*ServiceOrderUseCase)(nil)
 
 func NewServiceOrderUseCase(
-	repo interfaces.IServiceOrderGateway,/*  */
+	repo interfaces.IServiceOrderGateway,
 	vehicleRepo interfaces.IVehicleGateway,
 	customerRepo interfaces.ICustomerGateway,
 	serviceRepo interfaces.IServiceRepo,
