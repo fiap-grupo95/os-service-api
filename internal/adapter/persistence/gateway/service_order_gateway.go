@@ -52,8 +52,14 @@ func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*enti
 }
 
 func (s *ServiceOrderGateway) GetByID(id uint) (*entities.ServiceOrder, error) {
-	// TODO: Implement me
-	return nil, nil
+	logger := logs.Logger()
+
+	serviceOrder, err := s.repo.GetByID(id)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+	return serviceOrder.ToDomain(), nil
 }
 
 func (s *ServiceOrderGateway) Update(serviceOrder *entities.ServiceOrder) error {
@@ -62,8 +68,20 @@ func (s *ServiceOrderGateway) Update(serviceOrder *entities.ServiceOrder) error 
 }
 
 func (s *ServiceOrderGateway) List() ([]*entities.ServiceOrder, error) {
-	// TODO: Implement me
-	return nil, nil
+	logger := logs.Logger()
+	var serviceOrders []*entities.ServiceOrder
+
+	dtoList, err := s.repo.List()
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+
+	for _, s := range dtoList{
+		serviceOrders = append(serviceOrders, s.ToDomain())
+	}
+
+	return serviceOrders, nil
 }
 
 func (s *ServiceOrderGateway) UpdateEstimate(id uint, estimate float64) error {

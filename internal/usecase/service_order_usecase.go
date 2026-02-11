@@ -104,7 +104,7 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 		seg.End()
 	}
 
-	newServiceOrder := entities.ServiceOrder{
+	newServiceOrder := &entities.ServiceOrder{
 		CustomerID:         serviceOrder.CustomerID,
 		VehicleID:          serviceOrder.VehicleID,
 		ServiceOrderStatus: valueobject.StatusRecebida,
@@ -116,7 +116,7 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 		defer repoSeg.End()
 	}
 
-	register, err := u.repo.Create(&newServiceOrder)
+	register, err := u.repo.Create(newServiceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error creating service order")
 		return nil, err

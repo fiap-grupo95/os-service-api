@@ -51,17 +51,11 @@ func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) 
 func (r *ServiceOrderRepository) GetByID(id uint) (*dto.ServiceOrderModel, error) {
 	var serviceOrder dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
-	err := r.db.Preload("Customer").
-		Preload("Customer.User").
-		Preload("Vehicle").
-		Preload("ServiceOrderStatus").
+	err := r.db.Preload("ServiceOrderStatus").
 		Preload("AdditionalRepairs").
 		Preload("AdditionalRepairs.ARStatus").
 		Preload("AdditionalRepairs.Services").
 		Preload("AdditionalRepairs.PartsSupplies").
-		Preload("Payment").
-		Preload("PartsSupplies").
-		Preload("Services").
 		First(&serviceOrder, id).Error
 	if err != nil {
 		log.Error().Msgf("Error finding service order with id %d: %v", id, err)
@@ -159,17 +153,11 @@ func (r *ServiceOrderRepository) List() ([]*dto.ServiceOrderModel, error) {
 	var serviceOrders []dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
 	err := r.db.
-		Preload("Customer").
-		Preload("Customer.User").
-		Preload("Vehicle").
 		Preload("ServiceOrderStatus").
 		Preload("AdditionalRepairs").
 		Preload("AdditionalRepairs.ARStatus").
 		Preload("AdditionalRepairs.Services").
 		Preload("AdditionalRepairs.PartsSupplies").
-		Preload("Payment").
-		Preload("PartsSupplies").
-		Preload("Services").
 		Find(&serviceOrders).Error
 	if err != nil {
 		return nil, err

@@ -8,7 +8,9 @@ import (
 type ServiceOrder struct {
 	ID                       uint                           `json:"id"`
 	CustomerID               uint                           `json:"customer_id"`
+	Customer                 *Customer                      `json:"customer"`
 	VehicleID                uint                           `json:"vehicle_id"`
+	Vehicle                  *Vehicle                       `json:"vehicle"`
 	ServiceOrderStatus       valueobject.ServiceOrderStatus `json:"service_order_status"`
 	Estimate                 float64                        `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                     `json:"started_execution_date,omitempty"`

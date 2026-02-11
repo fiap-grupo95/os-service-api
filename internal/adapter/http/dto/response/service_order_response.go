@@ -17,9 +17,9 @@ type ServiceOrderResponse struct {
 	ExecutionDurationInHours float64                                `json:"execution_duration_in_hours,omitempty"`
 	CreatedAt                *time.Time                             `json:"created_at,omitempty"`
 	UpdatedAt                *time.Time                             `json:"updated_at,omitempty"`
-	Services                 []ServiceOrderServiceResponse          `json:"services"`
-	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies"`
-	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs"`
+	Services                 []ServiceOrderServiceResponse          `json:"services,omitempty"`
+	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies,omitempty"`
+	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs,omitempty"`
 	PaymentID                *uint                                  `json:"payment_id,omitempty"`
 }
 
@@ -87,7 +87,7 @@ func NewServiceOrderListResponse(orders []*entities.ServiceOrder) []ServiceOrder
 
 func mapServiceResponses(services []entities.Service) []ServiceOrderServiceResponse {
 	if len(services) == 0 {
-		return []ServiceOrderServiceResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderServiceResponse, 0, len(services))
@@ -103,7 +103,7 @@ func mapServiceResponses(services []entities.Service) []ServiceOrderServiceRespo
 
 func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrderPartsSupplyResponse {
 	if len(partsSupplies) == 0 {
-		return []ServiceOrderPartsSupplyResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderPartsSupplyResponse, 0, len(partsSupplies))
@@ -121,7 +121,7 @@ func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrde
 
 func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []ServiceOrderAdditionalRepairResponse {
 	if len(repairs) == 0 {
-		return []ServiceOrderAdditionalRepairResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderAdditionalRepairResponse, 0, len(repairs))
