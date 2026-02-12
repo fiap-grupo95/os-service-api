@@ -31,12 +31,17 @@ var (
 	ErrInvalidStatus                      = errors.New("invalid service order status")
 	ErrInsufficientPartsSupply            = errors.New("insufficient parts supply available")
 	ErrInvalidFlow                        = errors.New("invalid flow")
+	ErrInvalidID                          = errors.New("invalid ID provided")
+	ErrCustomerNotFound                   = errors.New("customer not found")
+	ErrVehicleNotFound                    = errors.New("vehicle not found")
+	ErrServiceNotFound                    = errors.New("service not found")
+	ErrPartsSupplyNotFound                = errors.New("parts supply not found")
 )
 
 type IServiceOrderUseCase interface {
 	CreateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error)
 	UpdateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, flow string) (*entities.ServiceOrder, error)
-	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error)
+	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error)
 	ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error)
 }
 
@@ -44,8 +49,8 @@ type ServiceOrderUseCase struct {
 	repo            interfaces.IServiceOrderGateway
 	vehicleRepo     interfaces.IVehicleGateway
 	customerRepo    interfaces.ICustomerGateway
-	serviceRepo     interfaces.IServiceRepo
-	partsSupplyRepo interfaces.IPartsSupplyRepo
+	serviceRepo     interfaces.IServiceGateway
+	partsSupplyRepo interfaces.IPartsSupplyGateway
 }
 
 var _ IServiceOrderUseCase = (*ServiceOrderUseCase)(nil)
@@ -54,8 +59,8 @@ func NewServiceOrderUseCase(
 	repo interfaces.IServiceOrderGateway,
 	vehicleRepo interfaces.IVehicleGateway,
 	customerRepo interfaces.ICustomerGateway,
-	serviceRepo interfaces.IServiceRepo,
-	partsSupplyRepo interfaces.IPartsSupplyRepo,
+	serviceRepo interfaces.IServiceGateway,
+	partsSupplyRepo interfaces.IPartsSupplyGateway,
 ) *ServiceOrderUseCase {
 	return &ServiceOrderUseCase{
 		repo:            repo,
@@ -80,29 +85,21 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 	var seg *newrelic.Segment
 	if txn != nil {
 		seg = txn.StartSegment("ServiceOrderUseCase.CreateServiceOrder.Validation")
+		defer seg.End()
 	}
 
 	err := validateVehicle(ctx, serviceOrder, u.vehicleRepo)
 	if err != nil {
-		if seg != nil {
-			seg.End()
-		}
 		logger.Error().Err(err).Uint("vehicle_id", serviceOrder.VehicleID).Msg("Error validating vehicle")
 		return nil, err
 	}
 
 	err = validateCustomer(ctx, serviceOrder, u.customerRepo)
 	if err != nil {
-		if seg != nil {
-			seg.End()
-		}
 		logger.Error().Err(err).Uint("customer_id", serviceOrder.CustomerID).Msg("Error validating customer")
 		return nil, err
 	}
 
-	if seg != nil {
-		seg.End()
-	}
 
 	newServiceOrder := &entities.ServiceOrder{
 		CustomerID:         serviceOrder.CustomerID,
@@ -116,7 +113,7 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 		defer repoSeg.End()
 	}
 
-	register, err := u.repo.Create(newServiceOrder)
+	register, err := u.repo.Create(ctx, newServiceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error creating service order")
 		return nil, err
@@ -140,7 +137,7 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request en
 
 	update.ID = request.ID
 
-	serviceOrderRecord, err := u.repo.GetByID(request.ID)
+	serviceOrderRecord, err := u.repo.GetByID(ctx, request.ID, false)
 	if err != nil {
 		logger.Error().Err(err).Any("OS_ID", update.ID).Msg("Error finding service order with id")
 		return nil, err
@@ -180,13 +177,13 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request en
 		return nil, ErrInvalidFlow
 	}
 
-	err = u.repo.Update(update)
+	err = u.repo.Update(ctx, update)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
 	}
 
-	updatedSO, err := u.repo.GetByID(request.ID)
+	updatedSO, err := u.repo.GetByID(ctx, request.ID, false)
 	if err != nil || updatedSO == nil {
 		return nil, err
 	}
@@ -205,8 +202,8 @@ func ValidateDiagnosis(ctx context.Context,
 	request *entities.ServiceOrder,
 	current *entities.ServiceOrder,
 	update *entities.ServiceOrder,
-	serviceRepo interfaces.IServiceRepo,
-	partsSupplyRepo interfaces.IPartsSupplyRepo,
+	serviceRepo interfaces.IServiceGateway,
+	partsSupplyRepo interfaces.IPartsSupplyGateway,
 	serviceOrderRepo interfaces.IServiceOrderGateway) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
@@ -286,7 +283,7 @@ func ValidateDiagnosis(ctx context.Context,
 
 }
 
-func CalculateEstimate(ctx context.Context, services []entities.Service, partsSupplies []entities.PartsSupply, serviceRepo interfaces.IServiceRepo, psRepo interfaces.IPartsSupplyRepo) (float64, error) {
+func CalculateEstimate(ctx context.Context, services []entities.Service, partsSupplies []entities.PartsSupply, serviceRepo interfaces.IServiceGateway, psRepo interfaces.IPartsSupplyGateway) (float64, error) {
 	var totalEstimate float64
 
 	servicesRegistered, err := getServicesByIDs(ctx, services, serviceRepo)
@@ -320,7 +317,7 @@ func CalculateEstimate(ctx context.Context, services []entities.Service, partsSu
 	return totalEstimate, nil
 }
 
-func ValidateEstimate(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder, partsSupplyRepo interfaces.IPartsSupplyRepo, serviceOrderRepo interfaces.IServiceOrderGateway) (*entities.ServiceOrder, error) {
+func ValidateEstimate(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder, partsSupplyRepo interfaces.IPartsSupplyGateway, serviceOrderRepo interfaces.IServiceOrderGateway) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
 	oldStatus := current.ServiceOrderStatus
@@ -339,7 +336,7 @@ func ValidateEstimate(ctx context.Context, request *entities.ServiceOrder, curre
 		}
 
 		for _, ps := range partsSupplies {
-			relation, err := serviceOrderRepo.GetPartsSupplyServiceOrder(ps.ID, current.ID)
+			relation, err := serviceOrderRepo.GetPartsSupplyServiceOrder(ctx, ps.ID, current.ID)
 			if err != nil {
 				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error getting parts supply service order relation")
 				return nil, err
@@ -464,10 +461,10 @@ func validateCustomer(ctx context.Context, serviceOrder entities.ServiceOrder, c
 		}
 		return nil
 	}
-	return ErrInvalidCustomerID
+	return ErrInvalidID
 }
 
-func getSeviceById(ctx context.Context, s entities.Service, serviceRepo interfaces.IServiceRepo) (*entities.Service, error) {
+func getSeviceById(ctx context.Context, s entities.Service, serviceRepo interfaces.IServiceGateway) (*entities.Service, error) {
 	logger := logs.LoggerWithContext(ctx)
 
 	if s.ID == 0 {
@@ -478,14 +475,14 @@ func getSeviceById(ctx context.Context, s entities.Service, serviceRepo interfac
 		logger.Error().Err(err).Any("service_id", s.ID).Msg("error finding service with id")
 		return nil, err
 	}
-	if result.ID == 0 {
+	if result == nil {
 		logger.Error().Any("service_id", s.ID).Msg("service with id not found")
 		return nil, ErrServiceNotFound
 	}
-	return &result, nil
+	return result, nil
 }
 
-func getPartsSupplyByID(ctx context.Context, id uint, partsSupplyRepo interfaces.IPartsSupplyRepo) (*entities.PartsSupply, error) {
+func getPartsSupplyByID(ctx context.Context, id uint, partsSupplyRepo interfaces.IPartsSupplyGateway) (*entities.PartsSupply, error) {
 	if id == 0 {
 		return nil, ErrInvalidID
 	}
@@ -494,14 +491,14 @@ func getPartsSupplyByID(ctx context.Context, id uint, partsSupplyRepo interfaces
 		logs.Logger().Error().Err(err).Any("parts_supply_id", id).Msg("error finding parts supply with id")
 		return nil, err
 	}
-	if result.ID == 0 {
+	if result == nil {
 		logs.Logger().Error().Any("parts_supply_id", id).Msg("parts supply with id not found")
 		return nil, ErrPartsSupplyNotFound
 	}
-	return &result, nil
+	return result, nil
 }
 
-func validateQttPartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyRepo) error {
+func validateQttPartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
 	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
 	if err != nil {
 		return err
@@ -515,7 +512,7 @@ func validateQttPartsSupply(ctx context.Context, partsSupply entities.PartsSuppl
 	return nil
 }
 
-func reservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyRepo) error {
+func reservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
 	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
 	if err != nil {
 		return err
@@ -529,15 +526,15 @@ func reservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, p
 		return errors.New("no quantity to reserve")
 	}
 
-	err = partsSupplyRepo.Update(ctx, current)
-	if err != nil {
-		return err
-	}
+	// err = partsSupplyRepo.Update(ctx, current)
+	// if err != nil {
+	// 	return err
+	// }
 	return nil
 }
 
 // releaseReservedPartsSupply is when a service order is approved - Baixa de estoque
-func releaseReservedPartsSupply(ctx context.Context, request entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyRepo) error {
+func releaseReservedPartsSupply(ctx context.Context, request entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
 	current, err := getPartsSupplyByID(ctx, request.ID, partsSupplyRepo)
 	if err != nil {
 		return err
@@ -560,17 +557,17 @@ func releaseReservedPartsSupply(ctx context.Context, request entities.PartsSuppl
 	current.QuantityReserve -= quantity
 	current.QuantityTotal -= quantity
 
-	err = partsSupplyRepo.Update(ctx, current)
-	if err != nil {
-		logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error releasing reserved parts supply")
-		return err
-	}
+	// err = partsSupplyRepo.Update(ctx, current)
+	// if err != nil {
+	// 	logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error releasing reserved parts supply")
+	// 	return err
+	// }
 
 	logs.Logger().Info().Any("parts_supply_id", current.ID).Msg("Reserved parts supply released successfully")
 	return nil
 }
 
-func unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyRepo) error {
+func unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
 	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
 	if err != nil {
 		return err
@@ -589,19 +586,19 @@ func unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply,
 		return errors.New("no quantity to unreserve")
 	}
 
-	err = partsSupplyRepo.Update(ctx, current)
-	if err != nil {
-		logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error unreserving parts supply")
-		return err
-	}
+	// err = partsSupplyRepo.Update(ctx, current)
+	// if err != nil {
+	// 	logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error unreserving parts supply")
+	// 	return err
+	// }
 	logs.Logger().Info().Any("parts_supply_id", current.ID).Msg("Parts supply unreserved successfully")
 	return nil
 }
 
-func (u *ServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
-	serviceOrderRecord, err := u.repo.GetByID(serviceOrder.ID)
+	serviceOrderRecord, err := u.repo.GetByID(ctx, serviceOrder.ID, isFullData)
 	if err != nil {
 		logger.Error().Err(err).Any("service_order_id", serviceOrder.ID).Msg("error finding service order")
 		return nil, err
@@ -616,7 +613,7 @@ func (u *ServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder 
 func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
-	serviceOrders, err := u.repo.List()
+	serviceOrders, err := u.repo.List(ctx)
 	if err != nil {
 		logger.Error().Err(err).Msg("error listing service orders")
 		return nil, err
@@ -668,7 +665,7 @@ func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entitie
 	return filtered, nil
 }
 
-func getServicesByIDs(ctx context.Context, services []entities.Service, serviceRepo interfaces.IServiceRepo) ([]entities.Service, error) {
+func getServicesByIDs(ctx context.Context, services []entities.Service, serviceRepo interfaces.IServiceGateway) ([]entities.Service, error) {
 	if len(services) == 0 {
 		return nil, errors.New("no services provided")
 	}
@@ -680,14 +677,14 @@ func getServicesByIDs(ctx context.Context, services []entities.Service, serviceR
 			logs.Logger().Error().Err(err).Any("service_id", s.ID).Msg("error getting service by ID")
 			return nil, err
 		}
-		serviceDb = append(serviceDb, item)
+		serviceDb = append(serviceDb, *item)
 	}
 
 	// Assuming we have a service repository to get the services by IDs
 	return serviceDb, nil
 }
 
-func getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupply, psRepo interfaces.IPartsSupplyRepo) ([]entities.PartsSupply, error) {
+func getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupply, psRepo interfaces.IPartsSupplyGateway) ([]entities.PartsSupply, error) {
 	if len(partsSupplies) == 0 {
 		return nil, errors.New("no services provided")
 	}
@@ -699,13 +696,13 @@ func getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupp
 			logs.Logger().Error().Err(err).Any("parts_supply_id", ps.ID).Msg("error getting Parts Supplies by ID")
 			return nil, err
 		}
-		psDb = append(psDb, item)
+		psDb = append(psDb, *item)
 	}
 
 	return psDb, nil
 }
 
-func getPartsSuppliesByServiceOrderID(ctx context.Context, serviceOrderID uint, partsSupplyRepo interfaces.IPartsSupplyRepo) ([]entities.PartsSupply, error) {
+func getPartsSuppliesByServiceOrderID(ctx context.Context, serviceOrderID uint, partsSupplyRepo interfaces.IPartsSupplyGateway) ([]entities.PartsSupply, error) {
 	if serviceOrderID == 0 {
 		return nil, ErrInvalidID
 	}

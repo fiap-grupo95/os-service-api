@@ -9,7 +9,9 @@ import (
 type ServiceOrderResponse struct {
 	ID                       uint                                   `json:"id"`
 	CustomerID               uint                                   `json:"customer_id"`
+	Customer                 *CustomerResponse                      `json:"customer,omitempty"`
 	VehicleID                uint                                   `json:"vehicle_id"`
+	Vehicle                  *VehicleResponse                       `json:"vehicle,omitempty"`
 	Status                   string                                 `json:"status"`
 	Estimate                 float64                                `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                             `json:"started_execution_date,omitempty"`
@@ -58,7 +60,9 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 	return ServiceOrderResponse{
 		ID:                       entity.ID,
 		CustomerID:               entity.CustomerID,
+		Customer:                 mapCustomerResponse(entity.Customer),
 		VehicleID:                entity.VehicleID,
+		Vehicle:                  mapVehicleResponse(entity.Vehicle),
 		Status:                   entity.ServiceOrderStatus.String(),
 		Estimate:                 entity.Estimate,
 		StartedExecutionDate:     entity.StartedExecutionDate,
@@ -134,4 +138,34 @@ func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []Service
 		})
 	}
 	return result
+}
+
+func mapCustomerResponse(customer *entities.Customer) *CustomerResponse {
+	if customer == nil {
+		return nil
+	}
+
+	return &CustomerResponse{
+		ID:          customer.ID,
+		UserID:      customer.UserID,
+		FullName:    customer.FullName,
+		Email:       customer.Email,
+		PhoneNumber: customer.PhoneNumber,
+		Document:    customer.CpfCnpj.String(),
+	}
+}
+
+func mapVehicleResponse(vehicle *entities.Vehicle) *VehicleResponse {
+	if vehicle == nil {
+		return nil
+	}
+
+	return &VehicleResponse{
+		ID:         vehicle.ID,
+		CustomerID: vehicle.CustomerID,
+		Brand:      vehicle.Brand,
+		Model:      vehicle.Model,
+		Year:       vehicle.Year,
+		Plate:      vehicle.Plate.String(),
+	}
 }

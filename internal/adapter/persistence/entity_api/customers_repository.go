@@ -18,8 +18,8 @@ type CustomerRepository struct {
 	http *http.Client
 }
 
-func NewCustomerRepository(http *http.Client) interfaces.ICustomerRepository {
-	return &CustomerRepository{http: http}
+func NewCustomerRepository() interfaces.ICustomerRepository {
+	return &CustomerRepository{http: http.DefaultClient}
 }
 
 func (r *CustomerRepository) Create(customer *request.CustomerCreateRequest) error {

@@ -1,7 +1,6 @@
 package gateway
 
 import (
-	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
@@ -33,46 +32,6 @@ func (g *CustomerGateway) GetByDocument(CpfCnpj string) (*entities.Customer, err
 
 	customer := mapSearchReponseToDomain(response)
 	return customer, nil
-}
-func (g *CustomerGateway) Create(customer *entities.Customer) error {
-	request := &request.CustomerCreateRequest{
-		FullName:    customer.FullName,
-		Email:       customer.Email,
-		PhoneNumber: customer.PhoneNumber,
-		Document:    customer.CpfCnpj.String(),
-	}
-	err := g.repo.Create(request)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *CustomerGateway) Update(customer *entities.Customer) error {
-	request := &request.CustomerUpdateRequest{
-		FullName:    customer.FullName,
-		Email:       customer.Email,
-		PhoneNumber: customer.PhoneNumber,
-	}
-	err := g.repo.Update(request, customer.ID)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *CustomerGateway) List() ([]entities.Customer, error) {
-	response, err := g.repo.List()
-	if err != nil {
-		return nil, err
-	}
-
-	customers := make([]entities.Customer, len(response))
-	for _, customer := range response {
-		c := mapSearchReponseToDomain(&customer)
-		customers = append(customers, *c)
-	}
-	return customers, nil
 }
 
 func mapSearchReponseToDomain(customer *response.CustomerResponse) *entities.Customer {

@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"net/http"
 	"strconv"
 
 	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
@@ -73,28 +72,37 @@ func InitApp() {
 	// Auth routes
 	addAuthRoutes(router, authHandler)
 
-	partsSupplyRepository := repository.NewPartsSupplyRepository(db)
-	serviceRepository := repository.NewServiceRepository(db)
+	partsSupplyRepository := entityapi.NewPartsSupplyRepository()
+	serviceRepository := entityapi.NewServiceRepository()
 	vehiclesRepository := entityapi.NewVehicleRepository()
-	customerRepository := entityapi.NewCustomerRepository(&http.Client{})
+	customerRepository := entityapi.NewCustomerRepository()
 	serviceOrderRepository := repository.NewServiceOrderRepository(db)
 	// additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
 
-	serviceOrderGateway := gateway.NewServiceOrderGateway(serviceOrderRepository)
 	vehiclesGateway := gateway.NewVehicleGateway(vehiclesRepository)
 	customerGateway := gateway.NewCustomerGateway(customerRepository)
+	partsSupplyGateway := gateway.NewPartsSupplyGateway(partsSupplyRepository)
+	serviceGateway := gateway.NewServiceGateway(serviceRepository)
+	serviceOrderGateway := gateway.NewServiceOrderGateway(
+		serviceOrderRepository,
+		vehiclesGateway,
+		customerGateway,
+		partsSupplyGateway,
+		serviceGateway,
+	)
 
 	serviceOrderUsecase := usecase.NewServiceOrderUseCase(
 		serviceOrderGateway,
 		vehiclesGateway,
 		customerGateway,
-		serviceRepository,
-		partsSupplyRepository)
+		serviceGateway,
+		partsSupplyGateway,
+	)
 	// additionalRepairUsecase := usecase.NewSOAdditionalRepairUseCase(
 	// 	additionalRepairGateway,
 	// 	serviceOrderGateway,
-	// 	serviceRepository,
-	// 	partsSupplyRepository)
+	// 	serviceGateway,
+	// 	partsSupplyGateway)
 
 	serviceOrderHandler := handlers.NewServiceOrderHandler(serviceOrderUsecase)
 	// additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)

@@ -344,8 +344,10 @@ func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 		return
 	}
 
+	isFullData := parseIsFullDataParam(c)
+
 	serviceOrder := entities.ServiceOrder{ID: id}
-	result, err := h.serviceOrderUseCase.GetServiceOrder(ctx, serviceOrder)
+	result, err := h.serviceOrderUseCase.GetServiceOrder(ctx, serviceOrder, isFullData)
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, getFlow, "", strconv.Itoa(getStatusError(err)))
 
@@ -396,6 +398,18 @@ func parseServiceOrderIDParam(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
+func parseIsFullDataParam(c *gin.Context) bool {
+	logger := logs.Logger()
+	isFullData := c.Query("full_data")
+	logger.Debug().Str("full_data", isFullData).Msg("Full data parameter")
+	if isFullData == "true" {
+		logger.Debug().Msg("Full data parameter is true")
+		return true
+	}
+	logger.Debug().Msg("Full data parameter is false")
+	return false
+}
+
 func writeBindingError(c *gin.Context, err error) {
 	c.JSON(http.StatusBadRequest, gin.H{
 		"error":   "Invalid input",
@@ -415,8 +429,7 @@ func writeServiceOrderError(c *gin.Context, err error, fallbackMessage string) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 	case errors.Is(err, usecase.ErrPartsSupplyNotFound):
 		c.JSON(http.StatusNotFound, gin.H{"error": "Parts supply not found"})
-	case errors.Is(err, usecase.ErrInvalidCustomerID),
-		errors.Is(err, usecase.ErrInvalidID):
+	case errors.Is(err, usecase.ErrInvalidID):
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	case isBadRequestServiceOrderError(err):
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -474,8 +487,7 @@ func getStatusError(err error) int {
 		return http.StatusNotFound
 	case errors.Is(err, usecase.ErrPartsSupplyNotFound):
 		return http.StatusNotFound
-	case errors.Is(err, usecase.ErrInvalidCustomerID),
-		errors.Is(err, usecase.ErrInvalidID):
+	case errors.Is(err, usecase.ErrInvalidID):
 		return http.StatusBadRequest
 	case isBadRequestServiceOrderError(err):
 		return http.StatusBadRequest

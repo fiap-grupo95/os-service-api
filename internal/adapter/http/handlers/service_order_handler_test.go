@@ -35,8 +35,8 @@ func (m *MockServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, servic
 	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
 }
 
-func (m *MockServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	args := m.Called(ctx, serviceOrder)
+func (m *MockServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrder, isFullData)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -94,13 +94,13 @@ func TestGetServiceOrder(t *testing.T) {
 	mockUC, h, r := setupServiceOrderHandlerTest(t)
 	r.GET("/os/:id", h.GetServiceOrder)
 
-	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 1}).Return(&entities.ServiceOrder{ID: 1}, nil).Once()
+	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 1}, false).Return(&entities.ServiceOrder{ID: 1}, nil).Once()
 	req, _ := http.NewRequest("GET", "/os/1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 2}).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 2}, false).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
 	req, _ = http.NewRequest("GET", "/os/2", nil)
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)

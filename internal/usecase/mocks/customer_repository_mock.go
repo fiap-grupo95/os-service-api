@@ -5,118 +5,27 @@
 package mocks
 
 import (
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
-	reflect "reflect"
-
-	gomock "github.com/golang/mock/gomock"
+	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	mock "github.com/stretchr/testify/mock"
 )
 
-// MockICustomerRepository is a mock of ICustomerRepository interface.
-type MockICustomerRepository struct {
-	ctrl     *gomock.Controller
-	recorder *MockICustomerRepositoryMockRecorder
+// Mock Customer Repository
+type MockCustomerGateway struct {
+	mock.Mock
 }
 
-// MockICustomerRepositoryMockRecorder is the mock recorder for MockICustomerRepository.
-type MockICustomerRepositoryMockRecorder struct {
-	mock *MockICustomerRepository
+func (m *MockCustomerGateway) GetByID(id uint) (*entities.Customer, error) {
+	args := m.Called(id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.Customer), args.Error(1)
 }
 
-// NewMockICustomerRepository creates a new mock instance.
-func NewMockICustomerRepository(ctrl *gomock.Controller) *MockICustomerRepository {
-	mock := &MockICustomerRepository{ctrl: ctrl}
-	mock.recorder = &MockICustomerRepositoryMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockICustomerRepository) EXPECT() *MockICustomerRepositoryMockRecorder {
-	return m.recorder
-}
-
-// Create mocks base method.
-func (m *MockICustomerRepository) Create(customer *dto.CustomerModel) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", customer)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Create indicates an expected call of Create.
-func (mr *MockICustomerRepositoryMockRecorder) Create(customer interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockICustomerRepository)(nil).Create), customer)
-}
-
-// Delete mocks base method.
-func (m *MockICustomerRepository) Delete(id uint) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Delete indicates an expected call of Delete.
-func (mr *MockICustomerRepositoryMockRecorder) Delete(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockICustomerRepository)(nil).Delete), id)
-}
-
-// GetByDocument mocks base method.
-func (m *MockICustomerRepository) GetByDocument(CpfCnpj string) (*dto.CustomerModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByDocument", CpfCnpj)
-	ret0, _ := ret[0].(*dto.CustomerModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByDocument indicates an expected call of GetByDocument.
-func (mr *MockICustomerRepositoryMockRecorder) GetByDocument(CpfCnpj interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByDocument", reflect.TypeOf((*MockICustomerRepository)(nil).GetByDocument), CpfCnpj)
-}
-
-// GetByID mocks base method.
-func (m *MockICustomerRepository) GetByID(id uint) (*dto.CustomerModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", id)
-	ret0, _ := ret[0].(*dto.CustomerModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetByID indicates an expected call of GetByID.
-func (mr *MockICustomerRepositoryMockRecorder) GetByID(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockICustomerRepository)(nil).GetByID), id)
-}
-
-// List mocks base method.
-func (m *MockICustomerRepository) List() ([]dto.CustomerModel, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List")
-	ret0, _ := ret[0].([]dto.CustomerModel)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// List indicates an expected call of List.
-func (mr *MockICustomerRepositoryMockRecorder) List() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockICustomerRepository)(nil).List))
-}
-
-// Update mocks base method.
-func (m *MockICustomerRepository) Update(customer *dto.CustomerModel) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", customer)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockICustomerRepositoryMockRecorder) Update(customer interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockICustomerRepository)(nil).Update), customer)
+func (m *MockCustomerGateway) GetByDocument(CpfCnpj string) (*entities.Customer, error) {
+	args := m.Called(CpfCnpj)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.Customer), args.Error(1)
 }
