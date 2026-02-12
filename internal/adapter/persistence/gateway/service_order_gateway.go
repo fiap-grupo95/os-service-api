@@ -78,21 +78,18 @@ func (s *ServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData b
 	}
 
 	serviceOrder := serviceOrderModel.ToDomain()
-	logger.Debug().Interface("serviceOrder", serviceOrder).Msg("Service order retrieved successfully")
 
 	vehicle, err := s.vehicleRepo.FindByID(serviceOrderModel.VehicleID)
 	if err != nil {
 		logger.Error().Msg(err.Error())
 		return nil, err
 	}
-	logger.Debug().Interface("vehicle", vehicle).Msg("Vehicle retrieved successfully")
 
 	customer, err := s.customerRepo.GetByID(serviceOrderModel.CustomerID)
 	if err != nil {
 		logger.Error().Msg(err.Error())
 		return nil, err
 	}
-	logger.Debug().Interface("customer", customer).Msg("Customer retrieved successfully")
 
 	partsSupplies, err := s.getPartsSupplies(ctx, serviceOrderModel.PartsSupplies)
 	if err != nil {
@@ -125,7 +122,6 @@ func (s *ServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData b
 	serviceOrder.PartsSupplies = partsSupplies
 	serviceOrder.Services = services
 
-	logger.Debug().Interface("serviceOrder", serviceOrder).Msg("Service order retrieved successfully")
 	return serviceOrder, nil
 }
 
@@ -141,7 +137,7 @@ func (s *ServiceOrderGateway) getPartsSupplies(ctx context.Context, partsSupplie
 		}
 		partsSuppliesList = append(partsSuppliesList, *partsSupply)
 	}
-	logger.Debug().Interface("partsSuppliesList", partsSuppliesList).Msg("Parts supplies retrieved successfully")
+	
 	return partsSuppliesList, nil
 }
 
@@ -157,7 +153,6 @@ func (s *ServiceOrderGateway) getService(ctx context.Context, services []dto.Ser
 		}
 		servicesList = append(servicesList, *service)
 	}
-	logger.Debug().Interface("servicesList", servicesList).Msg("Services retrieved successfully")
 	return servicesList, nil
 }
 

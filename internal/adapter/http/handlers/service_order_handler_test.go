@@ -114,6 +114,30 @@ func TestGetServiceOrder(t *testing.T) {
 	mockUC.AssertExpectations(t)
 }
 
+func TestGetServiceOrderFullData(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.GET("/os/:id", h.GetServiceOrder)
+
+	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 1}, true).Return(&entities.ServiceOrder{ID: 1, Customer: &entities.Customer{ID: 1}, Vehicle: &entities.Vehicle{ID: 1}, PartsSupplies: []entities.PartsSupply{{ID: 1}}, Services: []entities.Service{{ID: 1}}}, nil).Once()
+	req, _ := http.NewRequest("GET", "/os/1?full_data=true", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: 2}, true).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+	req, _ = http.NewRequest("GET", "/os/2?full_data=true", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	req, _ = http.NewRequest("GET", "/os/abc?full_data=true", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	mockUC.AssertExpectations(t)
+}
+
 func TestListServiceOrders(t *testing.T) {
 	mockUC, h, r := setupServiceOrderHandlerTest(t)
 	r.GET("/os", h.ListServiceOrders)

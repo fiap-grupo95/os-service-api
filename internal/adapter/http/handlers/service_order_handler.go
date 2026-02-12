@@ -399,15 +399,7 @@ func parseServiceOrderIDParam(c *gin.Context) (uint, bool) {
 }
 
 func parseIsFullDataParam(c *gin.Context) bool {
-	logger := logs.Logger()
-	isFullData := c.Query("full_data")
-	logger.Debug().Str("full_data", isFullData).Msg("Full data parameter")
-	if isFullData == "true" {
-		logger.Debug().Msg("Full data parameter is true")
-		return true
-	}
-	logger.Debug().Msg("Full data parameter is false")
-	return false
+	return c.Query("full_data") == "true"
 }
 
 func writeBindingError(c *gin.Context, err error) {
