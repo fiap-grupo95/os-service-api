@@ -27,13 +27,13 @@ type IAdditionalRepairUseCase interface {
 type AdditionalRepairUseCase struct {
 	repo            interfaces.IAdditionalRepairRepository
 	repoOS          interfaces.IServiceOrderGateway
-	serviceRepo     interfaces.IServiceRepo
-	partsSupplyRepo interfaces.IPartsSupplyRepo
+	serviceRepo     interfaces.IServiceGateway
+	partsSupplyRepo interfaces.IPartsSupplyGateway
 }
 
 var _ IAdditionalRepairUseCase = (*AdditionalRepairUseCase)(nil)
 
-func NewSOAdditionalRepairUseCase(repo interfaces.IAdditionalRepairRepository, repoOS interfaces.IServiceOrderGateway, serviceRepo interfaces.IServiceRepo, partsSupplyRepo interfaces.IPartsSupplyRepo) *AdditionalRepairUseCase {
+func NewSOAdditionalRepairUseCase(repo interfaces.IAdditionalRepairRepository, repoOS interfaces.IServiceOrderGateway, serviceRepo interfaces.IServiceGateway, partsSupplyRepo interfaces.IPartsSupplyGateway) *AdditionalRepairUseCase {
 	return &AdditionalRepairUseCase{
 		repo:            repo,
 		repoOS:          repoOS,
@@ -45,7 +45,7 @@ func NewSOAdditionalRepairUseCase(repo interfaces.IAdditionalRepairRepository, r
 func (u *AdditionalRepairUseCase) CreateAdditionalRepair(ctx context.Context, adr entities.AdditionalRepair) (entities.AdditionalRepair, error) {
 	logger := logs.LoggerWithContext(ctx)
 
-	_, err := u.repoOS.GetByID(adr.ServiceOrderID)
+	_, err := u.repoOS.GetByID(ctx, adr.ServiceOrderID, false)
 	if err != nil {
 		logger.Error().Err(err).Any("service_order_id", adr.ServiceOrderID).Msg("error finding service order with id")
 		return entities.AdditionalRepair{}, err
@@ -205,7 +205,7 @@ func (u *AdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, ad
 		return err
 	}
 
-	if err := u.repoOS.UpdateEstimate(additionalRepair.ServiceOrderID, additionalRepair.Estimate); err != nil {
+	if err := u.repoOS.UpdateEstimate(ctx, additionalRepair.ServiceOrderID, additionalRepair.Estimate); err != nil {
 		logger.Error().Err(err).Any("service_order_id", additionalRepair.ServiceOrderID).Msg("error updating service order estimate with id")
 		return err
 	}
@@ -236,7 +236,7 @@ func (u *AdditionalRepairUseCase) addPartsSupplyToAdditionalRepair(ctx context.C
 			psDto.QuantityTotal = ps.QuantityTotal
 		}
 		estimatedPrice += psDto.Price * float64(psDto.QuantityReserve)
-		listPartsSupply = append(listPartsSupply, psDto)
+		listPartsSupply = append(listPartsSupply, *psDto)
 	}
 	return listPartsSupply, estimatedPrice, nil
 }
@@ -255,7 +255,7 @@ func (u *AdditionalRepairUseCase) addServiceToAdditionalRepair(ctx context.Conte
 			return listServices, estimatedPrice, ErrServiceNotFound
 		}
 		estimatedPrice += serviceDto.Price
-		listServices = append(listServices, serviceDto)
+		listServices = append(listServices, *serviceDto)
 	}
 	return listServices, estimatedPrice, nil
 }

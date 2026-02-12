@@ -29,13 +29,5 @@ func (m *ServiceModel) ToDomain() entities.Service {
 		Name:        m.Name,
 		Description: m.Description,
 		Price:       m.Price,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		DeletedAt: func() *time.Time {
-			if m.DeletedAt.Valid {
-				return &m.DeletedAt.Time
-			}
-			return nil
-		}(),
 	}
 }

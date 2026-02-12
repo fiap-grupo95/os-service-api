@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"errors"
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
@@ -14,16 +15,24 @@ const (
 )
 
 type ServiceOrderGateway struct {
-	repo interfaces.IServiceOrderRepository
+	repo            interfaces.IServiceOrderRepository
+	vehicleRepo     interfaces.IVehicleGateway
+	customerRepo    interfaces.ICustomerGateway
+	partsSupplyRepo interfaces.IPartsSupplyGateway
+	serviceRepo     interfaces.IServiceGateway
 }
 
-func NewServiceOrderGateway(repository interfaces.IServiceOrderRepository) *ServiceOrderGateway {
+func NewServiceOrderGateway(repository interfaces.IServiceOrderRepository, vehicleRepo interfaces.IVehicleGateway, customerRepo interfaces.ICustomerGateway, partsSupplyRepo interfaces.IPartsSupplyGateway, serviceRepo interfaces.IServiceGateway) *ServiceOrderGateway {
 	return &ServiceOrderGateway{
-		repo: repository,
+		repo:            repository,
+		vehicleRepo:     vehicleRepo,
+		customerRepo:    customerRepo,
+		partsSupplyRepo: partsSupplyRepo,
+		serviceRepo:     serviceRepo,
 	}
 }
 
-func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+func (s *ServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
 	if !serviceOrder.ServiceOrderStatus.IsRecebida() {
 		return nil, errors.New(ErrInvalidStatus)
@@ -43,7 +52,7 @@ func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*enti
 		UpdatedAt:            serviceOrder.UpdatedAt,
 	}
 
-	createdServiceOrder, err := s.repo.Create(serviceOrderDto)
+	createdServiceOrder, err := s.repo.Create(ctx, serviceOrderDto)
 	if err != nil {
 		logger.Error().Msg(err.Error())
 		return nil, err
@@ -51,27 +60,130 @@ func (s *ServiceOrderGateway) Create(serviceOrder *entities.ServiceOrder) (*enti
 	return createdServiceOrder.ToDomain(), nil
 }
 
-func (s *ServiceOrderGateway) GetByID(id uint) (*entities.ServiceOrder, error) {
-	// TODO: Implement me
-	return nil, nil
+func (s *ServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData bool) (*entities.ServiceOrder, error) {
+	logger := logs.Logger()
+
+	serviceOrderModel, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+
+	if serviceOrderModel == nil {
+		return nil, nil
+	}
+
+	if !isFullData {
+		return serviceOrderModel.ToDomain(), nil
+	}
+
+	serviceOrder := serviceOrderModel.ToDomain()
+
+	vehicle, err := s.vehicleRepo.FindByID(serviceOrderModel.VehicleID)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+
+	customer, err := s.customerRepo.GetByID(serviceOrderModel.CustomerID)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+
+	partsSupplies, err := s.getPartsSupplies(ctx, serviceOrderModel.PartsSupplies)
+	if err != nil {
+		return nil, err
+	}
+
+	services, err := s.getService(ctx, serviceOrderModel.Services)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(serviceOrderModel.AdditionalRepairs) > 0 {
+		for i, ar := range serviceOrderModel.AdditionalRepairs {
+			partsSupplies, err := s.getPartsSupplies(ctx, ar.PartsSupplies)
+			if err != nil {
+				return nil, err
+			}
+			services, err := s.getService(ctx, ar.Services)
+			if err != nil {
+				return nil, err
+			}
+
+			serviceOrder.AdditionalRepairs[i].PartsSupplies = partsSupplies
+			serviceOrder.AdditionalRepairs[i].Services = services
+		}
+	}
+
+	serviceOrder.Vehicle = vehicle
+	serviceOrder.Customer = customer
+	serviceOrder.PartsSupplies = partsSupplies
+	serviceOrder.Services = services
+
+	return serviceOrder, nil
 }
 
-func (s *ServiceOrderGateway) Update(serviceOrder *entities.ServiceOrder) error {
+func (s *ServiceOrderGateway) getPartsSupplies(ctx context.Context, partsSupplies []dto.PartsSupplyModel) (partsSuppliesList []entities.PartsSupply, err error) {
+	logger := logs.Logger()
+
+	// TODO: Revisar modelo de dados de PartsSupplies do Model para armazenas apenas IDs
+	for _, ps := range partsSupplies {
+		partsSupply, err := s.partsSupplyRepo.GetByID(ctx, ps.ID)
+		if err != nil {
+			logger.Error().Msg(err.Error())
+			return nil, err
+		}
+		partsSuppliesList = append(partsSuppliesList, *partsSupply)
+	}
+	
+	return partsSuppliesList, nil
+}
+
+func (s *ServiceOrderGateway) getService(ctx context.Context, services []dto.ServiceModel) (servicesList []entities.Service, err error) {
+	logger := logs.Logger()
+
+	// TODO: Revisar modelo de dados de Services do Model para armazenas apenas IDs
+	for _, svc := range services {
+		service, err := s.serviceRepo.GetByID(ctx, svc.ID)
+		if err != nil {
+			logger.Error().Msg(err.Error())
+			return nil, err
+		}
+		servicesList = append(servicesList, *service)
+	}
+	return servicesList, nil
+}
+
+func (s *ServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
 	// TODO: Implement me
 	return nil
 }
 
-func (s *ServiceOrderGateway) List() ([]*entities.ServiceOrder, error) {
-	// TODO: Implement me
-	return nil, nil
+func (s *ServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrder, error) {
+	logger := logs.Logger()
+	var serviceOrders []*entities.ServiceOrder
+
+	dtoList, err := s.repo.List(ctx)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+
+	for _, s := range dtoList {
+		serviceOrders = append(serviceOrders, s.ToDomain())
+	}
+
+	return serviceOrders, nil
 }
 
-func (s *ServiceOrderGateway) UpdateEstimate(id uint, estimate float64) error {
+func (s *ServiceOrderGateway) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
 	// TODO: Implement me
 	return nil
 }
 
-func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
+func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
 	// TODO: Implement me
 	return nil, nil
 }

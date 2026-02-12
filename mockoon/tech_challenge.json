@@ -69,6 +69,68 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "b05f1aec-d467-456a-900b-a25af61c62b9",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "v1/service/:id",
+      "responses": [
+        {
+          "uuid": "03a234d4-83d3-4260-b324-3ccbdd7f59fa",
+          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"name\": \"Troca de óleo 6475878656851560\",\n\t\"description\": \"Trocar de óleo\",\n\t\"price\": 250\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "d35394c5-d8c3-49ed-bb60-0c9ea6c7d810",
+      "type": "http",
+      "documentation": "",
+      "method": "get",
+      "endpoint": "v1/parts-supply/:id",
+      "responses": [
+        {
+          "uuid": "cd8769b3-9b4e-488d-a515-62c23877a333",
+          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"name\": \"Pneus 1521933804342756\",\n\t\"description\": \"Pneus\",\n\t\"price\": 250,\n\t\"quantity_total\": 100,\n\t\"quantity_reserve\": 20\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -79,6 +141,14 @@
     {
       "type": "route",
       "uuid": "c9f36b44-eef2-4068-81c6-8180856b4dc8"
+    },
+    {
+      "type": "route",
+      "uuid": "b05f1aec-d467-456a-900b-a25af61c62b9"
+    },
+    {
+      "type": "route",
+      "uuid": "d35394c5-d8c3-49ed-bb60-0c9ea6c7d810"
     }
   ],
   "proxyMode": false,

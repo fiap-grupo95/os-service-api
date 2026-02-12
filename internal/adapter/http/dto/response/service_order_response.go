@@ -9,7 +9,9 @@ import (
 type ServiceOrderResponse struct {
 	ID                       uint                                   `json:"id"`
 	CustomerID               uint                                   `json:"customer_id"`
+	Customer                 *CustomerResponse                      `json:"customer,omitempty"`
 	VehicleID                uint                                   `json:"vehicle_id"`
+	Vehicle                  *VehicleResponse                       `json:"vehicle,omitempty"`
 	Status                   string                                 `json:"status"`
 	Estimate                 float64                                `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                             `json:"started_execution_date,omitempty"`
@@ -17,9 +19,9 @@ type ServiceOrderResponse struct {
 	ExecutionDurationInHours float64                                `json:"execution_duration_in_hours,omitempty"`
 	CreatedAt                *time.Time                             `json:"created_at,omitempty"`
 	UpdatedAt                *time.Time                             `json:"updated_at,omitempty"`
-	Services                 []ServiceOrderServiceResponse          `json:"services"`
-	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies"`
-	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs"`
+	Services                 []ServiceOrderServiceResponse          `json:"services,omitempty"`
+	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies,omitempty"`
+	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs,omitempty"`
 	PaymentID                *uint                                  `json:"payment_id,omitempty"`
 }
 
@@ -58,7 +60,9 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 	return ServiceOrderResponse{
 		ID:                       entity.ID,
 		CustomerID:               entity.CustomerID,
+		Customer:                 mapCustomerResponse(entity.Customer),
 		VehicleID:                entity.VehicleID,
+		Vehicle:                  mapVehicleResponse(entity.Vehicle),
 		Status:                   entity.ServiceOrderStatus.String(),
 		Estimate:                 entity.Estimate,
 		StartedExecutionDate:     entity.StartedExecutionDate,
@@ -87,7 +91,7 @@ func NewServiceOrderListResponse(orders []*entities.ServiceOrder) []ServiceOrder
 
 func mapServiceResponses(services []entities.Service) []ServiceOrderServiceResponse {
 	if len(services) == 0 {
-		return []ServiceOrderServiceResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderServiceResponse, 0, len(services))
@@ -103,7 +107,7 @@ func mapServiceResponses(services []entities.Service) []ServiceOrderServiceRespo
 
 func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrderPartsSupplyResponse {
 	if len(partsSupplies) == 0 {
-		return []ServiceOrderPartsSupplyResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderPartsSupplyResponse, 0, len(partsSupplies))
@@ -121,7 +125,7 @@ func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrde
 
 func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []ServiceOrderAdditionalRepairResponse {
 	if len(repairs) == 0 {
-		return []ServiceOrderAdditionalRepairResponse{}
+		return nil
 	}
 
 	result := make([]ServiceOrderAdditionalRepairResponse, 0, len(repairs))
@@ -134,4 +138,34 @@ func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []Service
 		})
 	}
 	return result
+}
+
+func mapCustomerResponse(customer *entities.Customer) *CustomerResponse {
+	if customer == nil {
+		return nil
+	}
+
+	return &CustomerResponse{
+		ID:          customer.ID,
+		UserID:      customer.UserID,
+		FullName:    customer.FullName,
+		Email:       customer.Email,
+		PhoneNumber: customer.PhoneNumber,
+		Document:    customer.CpfCnpj.String(),
+	}
+}
+
+func mapVehicleResponse(vehicle *entities.Vehicle) *VehicleResponse {
+	if vehicle == nil {
+		return nil
+	}
+
+	return &VehicleResponse{
+		ID:         vehicle.ID,
+		CustomerID: vehicle.CustomerID,
+		Brand:      vehicle.Brand,
+		Model:      vehicle.Model,
+		Year:       vehicle.Year,
+		Plate:      vehicle.Plate.String(),
+	}
 }

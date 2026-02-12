@@ -7,3 +7,4 @@ type ServiceResponse struct {
 	Description string  `json:"description"`
 	Price       float64 `json:"price"`
 }
+

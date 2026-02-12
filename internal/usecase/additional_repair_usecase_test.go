@@ -10,24 +10,21 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestCreateAdditionalRepair_ServiceOrderNotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
-	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
-	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
+	mockRepo := new(mocks.MockAdditionalRepairGateway)
+	mockRepoOS := new(mocks.MockServiceOrderGateway)
+	mockServiceRepo := new(mocks.MockServiceGateway)
+	mockPartsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)
 
 	adr := entities.AdditionalRepair{ServiceOrderID: 2}
 
-	mockRepoOS.EXPECT().GetByID(uint(2)).Return(nil, errors.New("not found"))
+	mockRepoOS.On("GetByID", uint(2), false).Return(nil, errors.New("not found"))
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)
 	assert.Error(t, err)
@@ -35,13 +32,10 @@ func TestCreateAdditionalRepair_ServiceOrderNotFound(t *testing.T) {
 }
 
 func TestCreateAdditionalRepair_ServiceNotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
-	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
-	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
+	mockRepo := new(mocks.MockAdditionalRepairGateway)
+	mockRepoOS := new(mocks.MockServiceOrderGateway)
+	mockServiceRepo := new(mocks.MockServiceGateway)
+	mockPartsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)
 
@@ -50,8 +44,8 @@ func TestCreateAdditionalRepair_ServiceNotFound(t *testing.T) {
 		Services:       []entities.Service{{ID: 99}},
 	}
 
-	mockRepoOS.EXPECT().GetByID(uint(1)).Return((&dto.ServiceOrderModel{ID: 1}).ToDomain(), nil)
-	mockServiceRepo.EXPECT().GetByID(gomock.Any(), uint(99)).Return(entities.Service{}, nil)
+	mockRepoOS.On("GetByID", uint(1), false).Return((&dto.ServiceOrderModel{ID: 1}).ToDomain(), nil)
+	mockServiceRepo.On("GetByID", mock.Anything, uint(99)).Return(&entities.Service{}, nil)
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)
 	assert.Error(t, err)
@@ -59,13 +53,10 @@ func TestCreateAdditionalRepair_ServiceNotFound(t *testing.T) {
 }
 
 func TestCreateAdditionalRepair_PartsSupplyNotFound(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockIAdditionalRepairRepository(ctrl)
-	mockRepoOS := mocks.NewMockIServiceOrderRepository(ctrl)
-	mockServiceRepo := mocks.NewMockIServiceGateway(ctrl)
-	mockPartsSupplyRepo := mocks.NewMockIPartsSupplyRepo(ctrl)
+	mockRepo := new(mocks.MockAdditionalRepairGateway)
+	mockRepoOS := new(mocks.MockServiceOrderGateway)
+	mockServiceRepo := new(mocks.MockServiceGateway)
+	mockPartsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 
 	uc := usecase.NewSOAdditionalRepairUseCase(mockRepo, mockRepoOS, mockServiceRepo, mockPartsSupplyRepo)
 
@@ -74,8 +65,8 @@ func TestCreateAdditionalRepair_PartsSupplyNotFound(t *testing.T) {
 		PartsSupplies:  []entities.PartsSupply{{ID: 88}},
 	}
 
-	mockRepoOS.EXPECT().GetByID(uint(1)).Return((&dto.ServiceOrderModel{ID: 1}).ToDomain(), nil)
-	mockPartsSupplyRepo.EXPECT().GetByID(gomock.Any(), uint(88)).Return(entities.PartsSupply{}, nil)
+	mockRepoOS.On("GetByID", uint(1), false).Return((&dto.ServiceOrderModel{ID: 1}).ToDomain(), nil)
+	mockPartsSupplyRepo.On("GetByID", mock.Anything, uint(88)).Return(&entities.PartsSupply{}, nil)
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)
 	assert.Error(t, err)

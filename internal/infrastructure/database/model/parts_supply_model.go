@@ -35,15 +35,5 @@ func (m *PartsSupplyModel) ToDomain() entities.PartsSupply {
 		Price:           m.Price,
 		QuantityTotal:   m.QuantityTotal,
 		QuantityReserve: m.QuantityReserve,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
-		DeletedAt: func() *time.Time {
-			if m.DeletedAt.Valid {
-				return &m.DeletedAt.Time
-			}
-			return nil
-		}(),
-		AdditionalRepairs: nil, // This will be populated by the repository layer
-		ServiceOrders:     nil, // This will be populated by the repository layer
 	}
 }

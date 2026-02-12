@@ -5,119 +5,125 @@
 package mocks
 
 import (
+	"context"
 	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
-
-	gomock "github.com/golang/mock/gomock"
+	mock "github.com/stretchr/testify/mock"
+	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 )
 
-// MockIServiceOrderRepository is a mock of IServiceOrderRepository interface.
-type MockIServiceOrderRepository struct {
-	ctrl     *gomock.Controller
-	recorder *MockIServiceOrderRepositoryMockRecorder
+// Mock Service Order Repository
+type MockServiceOrderGateway struct {
+	mock.Mock
 }
 
-// MockIServiceOrderRepositoryMockRecorder is the mock recorder for MockIServiceOrderRepository.
-type MockIServiceOrderRepositoryMockRecorder struct {
-	mock *MockIServiceOrderRepository
+func NewMockServiceOrderGateway() *MockServiceOrderGateway {
+	return &MockServiceOrderGateway{}
 }
 
-// NewMockIServiceOrderRepository creates a new mock instance.
-func NewMockIServiceOrderRepository(ctrl *gomock.Controller) *MockIServiceOrderRepository {
-	mock := &MockIServiceOrderRepository{ctrl: ctrl}
-	mock.recorder = &MockIServiceOrderRepositoryMockRecorder{mock}
-	return mock
+func (m *MockServiceOrderGateway) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
+	args := m.Called(id, estimate)
+	return args.Error(0)
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIServiceOrderRepository) EXPECT() *MockIServiceOrderRepositoryMockRecorder {
-	return m.recorder
+func (m *MockServiceOrderGateway) GetByName(ctx context.Context, name string) (entities.Service, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return entities.Service{}, args.Error(1)
+	}
+	return args.Get(0).(entities.Service), args.Error(1)
+}
+func (m *MockServiceOrderGateway) Delete(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return args.Error(1)
+	}
+	return args.Error(0)
 }
 
-// Create mocks base method.
-func (m *MockIServiceOrderRepository) Create(serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", serviceOrder)
-	ret0, _ := ret[0].(*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+func (m *MockServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	args := m.Called(serviceOrder)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), nil
 }
 
-// Create indicates an expected call of Create.
-func (mr *MockIServiceOrderRepositoryMockRecorder) Create(serviceOrder interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockIServiceOrderRepository)(nil).Create), serviceOrder)
+func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData bool) (*entities.ServiceOrder, error) {
+	args := m.Called(id, isFullData)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	switch value := args.Get(0).(type) {
+	case *entities.ServiceOrder:
+		return value, args.Error(1)
+	case entities.ServiceOrder:
+		return &value, args.Error(1)
+	case *dto.ServiceOrderModel:
+		return value.ToDomain(), args.Error(1)
+	case dto.ServiceOrderModel:
+		copy := value
+		return copy.ToDomain(), args.Error(1)
+	default:
+		return nil, args.Error(1)
+	}
 }
 
-// GetByID mocks base method.
-func (m *MockIServiceOrderRepository) GetByID(id uint) (*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByID", id)
-	ret0, _ := ret[0].(*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+func (m *MockServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
+	args := m.Called(serviceOrder)
+	return args.Error(0)
 }
 
-// GetByID indicates an expected call of GetByID.
-func (mr *MockIServiceOrderRepositoryMockRecorder) GetByID(id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockIServiceOrderRepository)(nil).GetByID), id)
+func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrder, error) {
+	args := m.Called()
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	switch value := args.Get(0).(type) {
+	case []*entities.ServiceOrder:
+		return value, args.Error(1)
+	case []entities.ServiceOrder:
+		result := make([]*entities.ServiceOrder, 0, len(value))
+		for _, item := range value {
+			itemCopy := item
+			result = append(result, &itemCopy)
+		}
+		return result, args.Error(1)
+	case []dto.ServiceOrderModel:
+		result := make([]*entities.ServiceOrder, 0, len(value))
+		for _, item := range value {
+			itemCopy := item
+			result = append(result, itemCopy.ToDomain())
+		}
+		return result, args.Error(1)
+	default:
+		return nil, args.Error(1)
+	}
 }
 
-// GetPartsSupplyServiceOrder mocks base method.
-func (m *MockIServiceOrderRepository) GetPartsSupplyServiceOrder(partsSupplyID, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPartsSupplyServiceOrder", partsSupplyID, serviceOrderID)
-	ret0, _ := ret[0].(*entities.ServiceOrderPartsSupply)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPartsSupplyServiceOrder indicates an expected call of GetPartsSupplyServiceOrder.
-func (mr *MockIServiceOrderRepositoryMockRecorder) GetPartsSupplyServiceOrder(partsSupplyID, serviceOrderID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPartsSupplyServiceOrder", reflect.TypeOf((*MockIServiceOrderRepository)(nil).GetPartsSupplyServiceOrder), partsSupplyID, serviceOrderID)
-}
-
-// List mocks base method.
-func (m *MockIServiceOrderRepository) List() ([]*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "List")
-	ret0, _ := ret[0].([]*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// List indicates an expected call of List.
-func (mr *MockIServiceOrderRepositoryMockRecorder) List() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockIServiceOrderRepository)(nil).List))
-}
-
-// Update mocks base method.
-func (m *MockIServiceOrderRepository) Update(serviceOrder *entities.ServiceOrder) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", serviceOrder)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Update indicates an expected call of Update.
-func (mr *MockIServiceOrderRepositoryMockRecorder) Update(serviceOrder interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockIServiceOrderRepository)(nil).Update), serviceOrder)
-}
-
-// UpdateEstimate mocks base method.
-func (m *MockIServiceOrderRepository) UpdateEstimate(id uint, estimate float64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEstimate", id, estimate)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEstimate indicates an expected call of UpdateEstimate.
-func (mr *MockIServiceOrderRepositoryMockRecorder) UpdateEstimate(id, estimate interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEstimate", reflect.TypeOf((*MockIServiceOrderRepository)(nil).UpdateEstimate), id, estimate)
+func (m *MockServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
+	args := m.Called(partsSupplyID, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	switch value := args.Get(0).(type) {
+	case *entities.ServiceOrderPartsSupply:
+		return value, args.Error(1)
+	case entities.ServiceOrderPartsSupply:
+		return &value, args.Error(1)
+	case *dto.PartsSupplyServiceOrder:
+		return &entities.ServiceOrderPartsSupply{
+			PartsSupplyID:  value.PartsSupplyID,
+			ServiceOrderID: value.ServiceOrderID,
+			Quantity:       value.Quantity,
+		}, args.Error(1)
+	case dto.PartsSupplyServiceOrder:
+		return &entities.ServiceOrderPartsSupply{
+			PartsSupplyID:  value.PartsSupplyID,
+			ServiceOrderID: value.ServiceOrderID,
+			Quantity:       value.Quantity,
+		}, args.Error(1)
+	default:
+		return nil, args.Error(1)
+	}
 }

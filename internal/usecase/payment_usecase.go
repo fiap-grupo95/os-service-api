@@ -18,7 +18,6 @@ var (
 type IPaymentUseCase interface {
 	CreatePayment(ctx context.Context, payment *entities.Payment) (*entities.Payment, error)
 	GetPaymentByID(ctx context.Context, id uint) (*entities.Payment, error)
-	ListPayments(ctx context.Context) ([]entities.Payment, error)
 }
 
 type PaymentUseCase struct {
@@ -36,7 +35,7 @@ func NewPaymentUseCase(repo interfaces.IPaymentRepo, serviceOrderRepo interfaces
 }
 
 func (p *PaymentUseCase) CreatePayment(ctx context.Context, payment *entities.Payment) (*entities.Payment, error) {
-	serviceOrder, err := p.serviceOrderRepo.GetByID(payment.ServiceOrderID)
+	serviceOrder, err := p.serviceOrderRepo.GetByID(ctx, payment.ServiceOrderID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -68,11 +67,7 @@ func (p *PaymentUseCase) GetPaymentByID(ctx context.Context, id uint) (*entities
 		return nil, err
 	}
 	if payment.ID == 0 {
-		return &entities.Payment{}, ErrorPaymentNotFound
+		return nil, ErrorPaymentNotFound
 	}
 	return &payment, nil
-}
-
-func (p *PaymentUseCase) ListPayments(ctx context.Context) ([]entities.Payment, error) {
-	return p.repo.List(ctx)
 }

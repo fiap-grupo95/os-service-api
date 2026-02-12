@@ -1,9 +1,11 @@
 package repository
 
 import (
+	"context"
+	"strings"
+
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -20,12 +22,12 @@ func NewServiceOrderRepository(db *gorm.DB) *ServiceOrderRepository {
 	return &ServiceOrderRepository{db: db}
 }
 
-func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) (*dto.ServiceOrderModel, error) {
+func (r *ServiceOrderRepository) Create(ctx context.Context, serviceOrderDto *dto.ServiceOrderModel) (*dto.ServiceOrderModel, error) {
 	if serviceOrderDto == nil {
 		return nil, gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(serviceOrderDto.ServiceOrderStatus)
+	dtoStatus, err := r.getStatus(ctx, serviceOrderDto.ServiceOrderStatus)
 	if err != nil {
 		return nil, gorm.ErrInvalidData
 	}
@@ -48,20 +50,14 @@ func (r *ServiceOrderRepository) Create(serviceOrderDto *dto.ServiceOrderModel) 
 	return serviceOrderDto, nil
 }
 
-func (r *ServiceOrderRepository) GetByID(id uint) (*dto.ServiceOrderModel, error) {
+func (r *ServiceOrderRepository) GetByID(ctx context.Context, id uint) (*dto.ServiceOrderModel, error) {
 	var serviceOrder dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
-	err := r.db.Preload("Customer").
-		Preload("Customer.User").
-		Preload("Vehicle").
-		Preload("ServiceOrderStatus").
+	err := r.db.Preload("ServiceOrderStatus").
 		Preload("AdditionalRepairs").
 		Preload("AdditionalRepairs.ARStatus").
 		Preload("AdditionalRepairs.Services").
 		Preload("AdditionalRepairs.PartsSupplies").
-		Preload("Payment").
-		Preload("PartsSupplies").
-		Preload("Services").
 		First(&serviceOrder, id).Error
 	if err != nil {
 		log.Error().Msgf("Error finding service order with id %d: %v", id, err)
@@ -73,7 +69,7 @@ func (r *ServiceOrderRepository) GetByID(id uint) (*dto.ServiceOrderModel, error
 	return &serviceOrder, nil
 }
 
-func (r *ServiceOrderRepository) UpdateEstimate(id uint, estimate float64) error {
+func (r *ServiceOrderRepository) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
 	var dtoDB dto.ServiceOrderModel
 	if err := r.db.First(&dtoDB, id).Error; err != nil {
 		return err
@@ -85,12 +81,12 @@ func (r *ServiceOrderRepository) UpdateEstimate(id uint, estimate float64) error
 		Update("estimate", newEstimate).Error
 }
 
-func (r *ServiceOrderRepository) Update(serviceOrder *dto.ServiceOrderModel) error {
+func (r *ServiceOrderRepository) Update(ctx context.Context, serviceOrder *dto.ServiceOrderModel) error {
 	if serviceOrder == nil {
 		return gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(serviceOrder.ServiceOrderStatus)
+	dtoStatus, err := r.getStatus(ctx, serviceOrder.ServiceOrderStatus)
 	if err != nil {
 		return gorm.ErrInvalidData
 	}
@@ -155,21 +151,15 @@ func (r *ServiceOrderRepository) Update(serviceOrder *dto.ServiceOrderModel) err
 	return tx.Commit().Error
 }
 
-func (r *ServiceOrderRepository) List() ([]*dto.ServiceOrderModel, error) {
+func (r *ServiceOrderRepository) List(ctx context.Context) ([]*dto.ServiceOrderModel, error) {
 	var serviceOrders []dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
 	err := r.db.
-		Preload("Customer").
-		Preload("Customer.User").
-		Preload("Vehicle").
 		Preload("ServiceOrderStatus").
 		Preload("AdditionalRepairs").
 		Preload("AdditionalRepairs.ARStatus").
 		Preload("AdditionalRepairs.Services").
 		Preload("AdditionalRepairs.PartsSupplies").
-		Preload("Payment").
-		Preload("PartsSupplies").
-		Preload("Services").
 		Find(&serviceOrders).Error
 	if err != nil {
 		return nil, err
@@ -182,7 +172,7 @@ func (r *ServiceOrderRepository) List() ([]*dto.ServiceOrderModel, error) {
 	return result, nil
 }
 
-func (r *ServiceOrderRepository) getStatus(status dto.ServiceOrderStatus) (*dto.ServiceOrderStatus, error) {
+func (r *ServiceOrderRepository) getStatus(ctx context.Context, status dto.ServiceOrderStatus) (*dto.ServiceOrderStatus, error) {
 	var serviceOrderStatuses dto.ServiceOrderStatus
 	err := r.db.Where("description = ?", status.Description).First(&serviceOrderStatuses).Error
 	if err != nil {
@@ -191,7 +181,7 @@ func (r *ServiceOrderRepository) getStatus(status dto.ServiceOrderStatus) (*dto.
 	return &serviceOrderStatuses, nil
 }
 
-func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(partsSupplyID uint, serviceOrderID uint) (*dto.PartsSupplyServiceOrder, error) {
+func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*dto.PartsSupplyServiceOrder, error) {
 	var relation dto.PartsSupplyServiceOrder
 	err := r.db.Where("parts_supply_id = ? AND service_order_id = ?", partsSupplyID, serviceOrderID).First(&relation).Error
 	if err != nil {
