@@ -19,7 +19,6 @@ func addServiceOrderRoutes(rg *gin.Engine, serviceOrderHandler *handlers.Service
 
 	// Diagnosis OS
 	rg.POST(PostServiceOrderDiagnosis, serviceOrderHandler.DiagnosisServiceOrder)
-	rg.POST(PostServiceOrderDiagnosisFinish, serviceOrderHandler.FinishServiceOrderDiagnosis)
 
 	// Estimate OS
 	rg.POST(PostServiceOrderEstimateApprove, serviceOrderHandler.ApproveServiceOrderEstimate)

@@ -47,20 +47,29 @@ func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrd
 }
 
 func (s *PartsSupplyGateway) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error{
-	return s.repo.Reserve(ctx, partsSupply)
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.Reserve(ctx, partsSupplyRequest)
 }
 
 func (s *PartsSupplyGateway) Release(ctx context.Context, partsSupply []entities.PartsSupply) error{
-	return s.repo.Release(ctx, partsSupply)
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.Release(ctx, partsSupplyRequest)
+}
+
+func (s *PartsSupplyGateway) AuthorizeReserve(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.AuthorizeReserve(ctx, partsSupplyRequest)
+}
+
+func (s *PartsSupplyGateway) WriteOff(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.WriteOff(ctx, partsSupplyRequest)
 }
 
 func mapPartsSupplyResponseToDomain(ctx context.Context, response response.PartsSupplyResponse) *entities.PartsSupply{
 	return &entities.PartsSupply{
 		ID: response.ID,
-		Name: response.Name,
-		Description: response.Description,
 		Price: response.Price,
-		QuantityTotal: response.QuantityTotal,
-		QuantityReserve: response.QuantityReserve,
+		Quantity: response.QuantityTotal,
 	}
 }

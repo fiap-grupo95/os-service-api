@@ -80,7 +80,7 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		CustomerID:               m.CustomerID,
 		VehicleID:                m.VehicleID,
 		Status:                   m.ServiceOrderStatus.ToDomain(),
-		Estimate:                 m.Estimate,
+		// Estimate:                 m.Estimate,
 		StartedExecutionDate:     m.StartedExecutionDate,
 		FinalExecutionDate:       m.FinalExecutionDate,
 		ExecutionDurationInHours: m.ExecutionDurationInHours,

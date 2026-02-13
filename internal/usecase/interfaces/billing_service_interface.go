@@ -9,9 +9,15 @@ import (
 )
 
 type IBillingServiceGateway interface {
-	CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*float64, error)
+	CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
+	ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
+	RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
+	CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
 }
 
 type IBillingServiceRepository interface {
 	CreateEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
+	ApproveEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
+	RejectEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
+	CancelEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
 }

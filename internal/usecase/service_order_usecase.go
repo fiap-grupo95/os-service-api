@@ -11,6 +11,7 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/adapter/operations"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
@@ -22,6 +23,9 @@ const (
 	ESTIMATE  = "estimate"
 	EXECUTION = "execution"
 	DELIVERY  = "delivery"
+	ESTIMATE_APPROVE = "estimate_approve"
+	ESTIMATE_REJECT  = "estimate_reject"
+	ESTIMATE_CANCEL  = "estimate_cancel"
 )
 
 var (
@@ -44,6 +48,11 @@ var (
 type IServiceOrderUseCase interface {
 	CreateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
 	DiagnosisServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error)
+	// ExecutionServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// FinishServiceOrderExecution(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// PaymentServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// DeliveryServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
 	UpdateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error)
 	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error)
 	ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error)
@@ -132,7 +141,7 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 }
 
 // UpdateServiceOrder updates an existing service order.
-func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error){
 	logger := logs.Logger()
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		logger = logs.LoggerWithContext(ctx)
@@ -157,18 +166,6 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *e
 	}
 
 	switch flow {
-	case DIAGNOSIS:
-		update, err = u.validateDiagnosis(ctx, request)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error validating diagnosis")
-			return nil, err
-		}
-	case ESTIMATE:
-		update, err = u.validateEstimate(ctx, request, serviceOrderRecord, update)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error validating estimate")
-			return nil, err
-		}
 	case EXECUTION:
 		update, err = u.validateExecution(ctx, request, serviceOrderRecord, update)
 		if err != nil {
@@ -210,22 +207,30 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		logger = logs.LoggerWithContext(ctx)
 	}
 
-	serviceOrder, err := u.repo.GetByID(ctx, request.ID, false)
-	if err != nil {
-		logger.Error().Err(err).Any("OS_ID", request.ID).Msg("Error finding service order with id")
+	if _, err := u.checkIfServiceOrderExists(ctx, request.ID); err != nil {
+		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
 	}
 
-	if serviceOrder == nil {
-		logger.Error().Any("OS_ID", request.ID).Msg("Service order with id not found")
-		return nil, ErrServiceOrderNotFound
-	}
-
-	serviceOrder, err = u.validateDiagnosis(ctx, request)
+	serviceOrder, err := u.validateDiagnosis(ctx, request)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error validating diagnosis")
 		return nil, err
 	}
+
+	var estimate *entities.Estimate
+	estimate, err = u.billingServiceRepo.CreateEstimate(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error calculating estimate")
+		return nil, err
+	}
+
+	if estimate == nil {
+		logger.Error().Msg("Error calculating estimate: the value from estimate creation is nil")
+		return nil, ErrInvalidEstimateValue
+	}
+
+	serviceOrder.Status = valueobject.StatusAguardandoAprovacao
 
 	err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
@@ -273,9 +278,9 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		return nil, err
 	}
 
-	err = u.validateStockPartsSupply(ctx, serviceOrder.PartsSupplies)
+	err = u.partsSupplyRepo.AuthorizeReserve(ctx, serviceOrder.PartsSupplies)
 	if err != nil {
-		logs.Logger().Error().Err(err).Any("parts_supply", serviceOrder.PartsSupplies).Msg("Error validating parts supply")
+		logs.Logger().Error().Err(err).Msg("Error authorizing reserve parts supply")
 		return nil, err
 	}
 
@@ -284,94 +289,33 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		logger.Error().Err(err).Any("parts_supply", serviceOrder.PartsSupplies).Msg("Error reserving parts supply")
 		return nil, err
 	}
+	return serviceOrder, nil
+}
 
-	// Será uma chamada para billing service, seguirá quando gerar o orçamento
-	value, err := u.billingServiceRepo.CreateEstimate(ctx, serviceOrder)
+func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error) {
+	logger := logs.LoggerWithContext(ctx)
+
+	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
-		logger.Error().Err(err).Msg("Error calculating estimate")
+		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
 	}
 
-	if value == nil {
-		logger.Error().Msg("Error calculating estimate: the value from estimate creation is nil")
-		return nil, ErrInvalidEstimateValue
-	}
-
-	serviceOrder.Estimate = *value
-	serviceOrder.Status = valueobject.StatusAguardandoAprovacao
-	return serviceOrder, nil
-
-}
-
-func (u *ServiceOrderUseCase) validateEstimate(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	logger := logs.LoggerWithContext(ctx)
-
-	oldStatus := current.Status
-
-	if !request.Status.IsValid() {
+	if !serviceOrder.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
-
-	if oldStatus.IsAguardandoAprovacao() && request.Status.IsAprovada() {
-		// update.Status = valueobject.StatusAprovada
-		// // If the status is "Aprovada", we can subtract the total available quantity of PartsSupplies from the quantity reserve
-		// partsSupplies, err := u.getPartsSuppliesByServiceOrderID(ctx, current.ID)
-		// if err != nil {
-		// 	logger.Error().Err(err).Any("service_order_id", current.ID).Msg("Error getting parts supplies by service order ID")
-		// 	return nil, err
-		// }
-
-		// for _, ps := range partsSupplies {
-		// relation, err := u.repo.GetPartsSupplyServiceOrder(ctx, ps.ID, current.ID)
-		// if err != nil {
-		// 	logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error getting parts supply service order relation")
-		// 	return nil, err
-		// }
-
-		// entity := entities.PartsSupply{
-		// 	ID:              ps.ID,
-		// 	QuantityReserve: relation.Quantity, // Use the quantity from the relationship
-		// 	QuantityTotal:   relation.Quantity,
-		// }
-		// err = u.releaseReservedPartsSupply(ctx, entity)
-		// if err != nil {
-		// 	logs.Logger().Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error releasing reserved parts supply")
-		// 	return nil, err
-		// }
-		// }
-		return update, nil
+	
+	if serviceOrder.Status.IsAguardandoAprovacao() {
+		return nil, ErrInvalidTransitionStatusToEstimate
 	}
-	if oldStatus.IsAguardandoAprovacao() && request.Status.IsRejeitada() {
-		update.Status = valueobject.StatusRejeitada
-		// If the status is "Rejeitada", we can reset the PartsSupplies reserve
-		partsSupplies, err := u.getPartsSuppliesByServiceOrderID(ctx, current.ID)
-		if err != nil {
-			logs.Logger().Error().Err(err).Any("service_order_id", current.ID).Msg("Error getting parts supplies by service order ID")
-			return nil, err
-
-		}
-		for _, ps := range partsSupplies {
-			err := u.unreservePartsSupply(ctx, ps)
-			if err != nil {
-				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error unreserving parts supply")
-				return nil, err
-			}
-		}
-		return update, nil
-	}
-	if oldStatus.IsAguardandoAprovacao() && request.Status.IsEmDiagnostico() {
-		update.Status = valueobject.StatusEmDiagnostico
-		// If the status is "EmDiagnostico", we can reset the PartsSupplies reserve
-		for _, ps := range request.PartsSupplies {
-			err := u.unreservePartsSupply(ctx, ps)
-			if err != nil {
-				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error unreserving parts supply")
-				return nil, err
-			}
-		}
-		return update, nil
-	}
-	return nil, ErrInvalidTransitionStatusToEstimate
+ 
+    factory := operations.NewEstimateStrategyFactory()
+    strategy, err := factory.GetStrategy(operation)
+    if err != nil {
+        return nil, err
+    }
+ 
+    return strategy.Execute(ctx, serviceOrder)
 }
 
 func (u *ServiceOrderUseCase) validateExecution(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
@@ -491,22 +435,6 @@ func (u *ServiceOrderUseCase) validateIfServicesExists(ctx context.Context, serv
 	return nil
 }
 
-func (u *ServiceOrderUseCase) validateStockPartsSupply(ctx context.Context, partsSupply []entities.PartsSupply) error {
-	for _, ps := range partsSupply {
-		current, err := u.getPartsSupplyByID(ctx, ps.ID)
-		if err != nil {
-			return err
-		}
-
-		totalAvailable := current.QuantityTotal - current.QuantityReserve
-		if ps.QuantityReserve > totalAvailable || ps.QuantityTotal > totalAvailable {
-			logs.Logger().Error().Any("parts_supply_id", ps.ID).Msg("parts supply with id has insufficient quantity available")
-			return ErrInsufficientPartsSupply
-		}
-	}
-	return nil
-}
-
 // releaseReservedPartsSupply is when a service order is approved - Baixa de estoque
 func (u *ServiceOrderUseCase) releaseReservedPartsSupply(ctx context.Context, partsSupply []entities.PartsSupply) error {
 	err := u.partsSupplyRepo.Release(ctx, partsSupply)
@@ -514,34 +442,6 @@ func (u *ServiceOrderUseCase) releaseReservedPartsSupply(ctx context.Context, pa
 		logs.Logger().Error().Err(err).Msg("error releasing reserved parts supply")
 		return err
 	}
-	return nil
-}
-
-func (u *ServiceOrderUseCase) unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply) error {
-	current, err := u.getPartsSupplyByID(ctx, partsSupply.ID)
-	if err != nil {
-		return err
-	}
-
-	if partsSupply.QuantityReserve > 0 {
-		if current.QuantityReserve < partsSupply.QuantityReserve {
-			return errors.New("cannot unreserve more than reserved")
-		}
-		if partsSupply.QuantityReserve > 0 {
-			current.QuantityReserve -= partsSupply.QuantityReserve
-		} else if partsSupply.QuantityTotal > 0 {
-			current.QuantityReserve -= partsSupply.QuantityTotal
-		}
-	} else {
-		return errors.New("no quantity to unreserve")
-	}
-
-	// err = partsSupplyRepo.Update(ctx, current)
-	// if err != nil {
-	// 	logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error unreserving parts supply")
-	// 	return err
-	// }
-	logs.Logger().Info().Any("parts_supply_id", current.ID).Msg("Parts supply unreserved successfully")
 	return nil
 }
 
@@ -664,6 +564,21 @@ func (u *ServiceOrderUseCase) getPartsSuppliesByServiceOrderID(ctx context.Conte
 	}
 
 	return partsSupplies, nil
+}
+
+func (u *ServiceOrderUseCase) checkIfServiceOrderExists(ctx context.Context, id uint) (*entities.ServiceOrder, error) {
+	logger := logs.LoggerWithContext(ctx)
+		serviceOrder, err := u.repo.GetByID(ctx, id, false)
+	if err != nil {
+		logger.Error().Err(err).Any("OS_ID", id).Msg("Error finding service order with id")
+		return nil, err
+	}
+
+	if serviceOrder == nil {
+		logger.Error().Any("OS_ID", id).Msg("Service order with id not found")
+		return nil, ErrServiceOrderNotFound
+	}
+	return serviceOrder, nil
 }
 
 func (u *ServiceOrderUseCase) serviceOrderPriority(status valueobject.ServiceOrderStatus) int {

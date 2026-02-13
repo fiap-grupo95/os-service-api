@@ -53,3 +53,15 @@ func (r *BillingServiceRepository) CreateEstimate(ctx context.Context, request *
 	}
 	return &response, nil
 }
+
+func (r *BillingServiceRepository) RejectEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error){
+	return nil, nil
+}
+
+func (r *BillingServiceRepository) ApproveEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error){
+	return nil, nil
+}
+
+func (r *BillingServiceRepository) CancelEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error){
+	return nil, nil
+}

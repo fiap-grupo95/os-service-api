@@ -9,6 +9,7 @@ import (
 	request "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	response "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
@@ -19,13 +20,16 @@ import (
 )
 
 const (
-	diagnosisFlow = "diagnosis"
-	estimateFlow  = "estimate"
-	executionFlow = "execution"
-	deliveryFlow  = "delivery"
-	getFlow       = "get"
-	listFlow      = "list"
-	createFlow    = "create"
+	diagnosisFlow       = "diagnosis"
+	estimateFlow        = "estimate"
+	executionFlow       = "execution"
+	deliveryFlow        = "delivery"
+	getFlow             = "get"
+	listFlow            = "list"
+	createFlow          = "create"
+	estimateApproveFlow = "estimate_approve"
+	estimateRejectFlow  = "estimate_reject"
+	estimateCancelFlow  = "estimate_cancel"
 )
 
 const (
@@ -39,7 +43,6 @@ type IServiceOrderHandler interface {
 	CreateServiceOrder(c *gin.Context)
 	CancelServiceOrder(c *gin.Context)
 	DiagnosisServiceOrder(c *gin.Context)
-	FinishServiceOrderDiagnosis(c *gin.Context)
 	ApproveServiceOrderEstimate(c *gin.Context)
 	RejectServiceOrderEstimate(c *gin.Context)
 	CancelServiceOrderEstimate(c *gin.Context)
@@ -48,7 +51,6 @@ type IServiceOrderHandler interface {
 	PaymentServiceOrder(c *gin.Context)
 	DeliveryServiceOrder(c *gin.Context)
 	GetServiceOrder(c *gin.Context)
-	GetServiceOrderHistory(c *gin.Context)
 	ListServiceOrders(c *gin.Context)
 }
 
@@ -66,20 +68,105 @@ func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
 	// TODO: Implement this method
 }
 
-func (h *ServiceOrderHandler) FinishServiceOrderDiagnosis(c *gin.Context) {
-	// TODO: Implement this method
-}
-
+// UpdateServiceOrderEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /service-orders/{id}/approve-estimate [post]
 func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateApproveFlow, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, estimateApproveFlow)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateApproveFlow, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to approve service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to approve service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, estimateApproveFlow, string(valueobject.StatusAprovada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
+// UpdateServiceOrderEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /service-orders/{id}/reject-estimate [post]
 func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
-}
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateRejectFlow, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, estimateRejectFlow)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateRejectFlow, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
 
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to reject service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to reject service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, estimateRejectFlow, string(valueobject.StatusRejeitada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+// UpdateServiceOrderCancelEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /service-orders/{id}/cancel-estimate [post]
 func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateCancelFlow, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, estimateCancelFlow)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateCancelFlow, string(valueobject.StatusEmDiagnostico), strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to cancel service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, estimateCancelFlow, string(valueobject.StatusCancelada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
 func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
@@ -87,10 +174,6 @@ func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
 }
 
 func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) GetServiceOrderHistory(c *gin.Context) {
 	// TODO: Implement this method
 }
 

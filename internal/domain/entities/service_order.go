@@ -12,7 +12,7 @@ type ServiceOrder struct {
 	VehicleID                uint                           `json:"vehicle_id"`
 	Vehicle                  *Vehicle                       `json:"vehicle"`
 	Status                   valueobject.ServiceOrderStatus `json:"service_order_status"`
-	Estimate                 float64                        `json:"estimate,omitempty"`
+	Estimate                 *Estimate                        `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                     `json:"started_execution_date,omitempty"`
 	FinalExecutionDate       *time.Time                     `json:"final_execution_date,omitempty"`
 	ExecutionDurationInHours float64                        `json:"execution_duration_in_hours,omitempty"`

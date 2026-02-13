@@ -41,17 +41,11 @@ func (s *ServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities
 	}
 
 	serviceOrderDto := &dto.ServiceOrderModel{
-		ID:         serviceOrder.ID,
 		CustomerID: serviceOrder.CustomerID,
 		VehicleID:  serviceOrder.VehicleID,
-		Estimate:   serviceOrder.Estimate,
 		ServiceOrderStatus: dto.ServiceOrderStatus{
 			Description: serviceOrder.Status.String(),
 		},
-		StartedExecutionDate: serviceOrder.StartedExecutionDate,
-		FinalExecutionDate:   serviceOrder.FinalExecutionDate,
-		CreatedAt:            serviceOrder.CreatedAt,
-		UpdatedAt:            serviceOrder.UpdatedAt,
 	}
 
 	createdServiceOrder, err := s.repo.Create(ctx, serviceOrderDto)
