@@ -7,6 +7,7 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type PartsSupplyGateway struct {
@@ -19,6 +20,9 @@ func NewPartsSupplyGateway(repo interfaces.IPartsSupplyRepository) *PartsSupplyG
 
 func (s *PartsSupplyGateway) GetByID(ctx context.Context, id uint) (*entities.PartsSupply, error) {
 	logger := logs.Logger()
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
+	}
 	reponse, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		logger.Error().Err(err).Uint("ID", id).Msg("failed to find parts supply by id")
@@ -40,6 +44,14 @@ func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrd
 		partsSupplies = append(partsSupplies, *mapPartsSupplyResponseToDomain(ctx, r))
 	}
 	return partsSupplies, nil
+}
+
+func (s *PartsSupplyGateway) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	return s.repo.Reserve(ctx, partsSupply)
+}
+
+func (s *PartsSupplyGateway) Release(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	return s.repo.Release(ctx, partsSupply)
 }
 
 func mapPartsSupplyResponseToDomain(ctx context.Context, response response.PartsSupplyResponse) *entities.PartsSupply{

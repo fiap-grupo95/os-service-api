@@ -38,14 +38,14 @@ const (
 type IServiceOrderHandler interface {
 	CreateServiceOrder(c *gin.Context)
 	CancelServiceOrder(c *gin.Context)
-	UpdateServiceOrderDiagnosis(c *gin.Context)
+	DiagnosisServiceOrder(c *gin.Context)
 	FinishServiceOrderDiagnosis(c *gin.Context)
 	ApproveServiceOrderEstimate(c *gin.Context)
 	RejectServiceOrderEstimate(c *gin.Context)
 	CancelServiceOrderEstimate(c *gin.Context)
-	CreateServiceOrderExecution(c *gin.Context)
+	ExecutionServiceOrder(c *gin.Context)
 	FinishServiceOrderExecution(c *gin.Context)
-	CreateServiceOrderPayment(c *gin.Context)
+	PaymentServiceOrder(c *gin.Context)
 	DeliveryServiceOrder(c *gin.Context)
 	GetServiceOrder(c *gin.Context)
 	GetServiceOrderHistory(c *gin.Context)
@@ -82,19 +82,11 @@ func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	// TODO: Implement this method
 }
 
-func (h *ServiceOrderHandler) CreateServiceOrderExecution(c *gin.Context) {
-	// TODO: Implement this method
-}
-
 func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
 	// TODO: Implement this method
 }
 
-func (h *ServiceOrderHandler) CreateServiceOrderPayment(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
+func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
 	// TODO: Implement this method
 }
 
@@ -156,10 +148,10 @@ func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/diagnosis [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderDiagnosis(c *gin.Context) {
+// @Router /service-orders/{id}/diagnosis [post]
+func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateDiagnosis")
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Diagnosis")
 	id, ok := parseServiceOrderIDParam(c)
 	if !ok {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, "", strconv.Itoa(http.StatusBadRequest))
@@ -168,7 +160,7 @@ func (h *ServiceOrderHandler) UpdateServiceOrderDiagnosis(c *gin.Context) {
 
 	var req request.ServiceOrderDiagnosisUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, "", strconv.Itoa(http.StatusBadRequest))
 
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
 
@@ -176,16 +168,16 @@ func (h *ServiceOrderHandler) UpdateServiceOrderDiagnosis(c *gin.Context) {
 		return
 	}
 
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), diagnosisFlow)
+	result, err := h.serviceOrderUseCase.DiagnosisServiceOrder(ctx, req.ToEntity(id))
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, "", strconv.Itoa(getStatusError(err)))
 
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order diagnosis")
 
 		writeServiceOrderError(c, err, "Failed to update service order diagnosis")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, diagnosisFlow, "", strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
@@ -194,18 +186,18 @@ func (h *ServiceOrderHandler) UpdateServiceOrderDiagnosis(c *gin.Context) {
 // @Description Update the estimate information of a service order
 // @Tags Service Orders
 // @Security Bearer
-// @Accept json
-// @Produce json
+// @Accept JSON
+// @Produce JSON
 // @Param id path int true "Service Order ID"
 // @Param order body request.ServiceOrderEstimateUpdateRequest true "Service Order Estimate Information"
 // @Success 200 {object} response.ServiceOrderResponse
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/estimate [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderEstimate(c *gin.Context) {
+// @Router /service-orders/{id}/estimate [post]
+func (h *ServiceOrderHandler) EstimateServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateEstimate")
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
 	id, ok := parseServiceOrderIDParam(c)
 	if !ok {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateFlow, "", strconv.Itoa(http.StatusBadRequest))
@@ -248,10 +240,10 @@ func (h *ServiceOrderHandler) UpdateServiceOrderEstimate(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/execution [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderExecution(c *gin.Context) {
+// @Router /service-orders/{id}/execution [post]
+func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateExecution")
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
 	id, ok := parseServiceOrderIDParam(c)
 	if !ok {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, executionFlow, "", strconv.Itoa(http.StatusBadRequest))
@@ -292,10 +284,10 @@ func (h *ServiceOrderHandler) UpdateServiceOrderExecution(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/delivery [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderDelivery(c *gin.Context) {
+// @Router /service-orders/{id}/delivery [post]
+func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateDelivery")
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Delivery")
 	id, ok := parseServiceOrderIDParam(c)
 	if !ok {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, deliveryFlow, "", strconv.Itoa(http.StatusBadRequest))
@@ -490,7 +482,7 @@ func getStatusError(err error) int {
 
 func sendToMetric(ctx context.Context, metricName string, result string, flow string, status string, code string) {
 	tags := make(map[string]string)
-	
+
 	if result != "" {
 		tags["result"] = result
 	}

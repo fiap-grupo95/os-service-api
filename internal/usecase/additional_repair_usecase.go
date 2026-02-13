@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
@@ -266,4 +267,16 @@ func (u *AdditionalRepairUseCase) ValidateAdditionalRepairStatus(status string) 
 		return ErrStatusNotPermitted
 	}
 	return nil
+}
+
+func reservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, repo interfaces.IPartsSupplyGateway) error {
+	return repo.Reserve(ctx, []entities.PartsSupply{partsSupply})
+}
+
+func unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, repo interfaces.IPartsSupplyGateway) error {
+	return repo.Release(ctx, []entities.PartsSupply{partsSupply})
+}
+
+func releaseReservedPartsSupply(ctx context.Context, partsSupply entities.PartsSupply, repo interfaces.IPartsSupplyGateway) error {
+	return repo.Release(ctx, []entities.PartsSupply{partsSupply})
 }

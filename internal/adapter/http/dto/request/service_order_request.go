@@ -11,7 +11,6 @@ type ServiceOrderCreateRequest struct {
 }
 
 type ServiceOrderDiagnosisUpdateRequest struct {
-	ServiceOrderStatus string                        `json:"service_order_status" binding:"required"`
 	Services           []ServiceOrderServiceItem     `json:"services" binding:"omitempty,dive"`
 	PartsSupplies      []ServiceOrderPartsSupplyItem `json:"parts_supplies" binding:"omitempty,dive"`
 }
@@ -40,42 +39,41 @@ type ServiceOrderPartsSupplyItem struct {
 	QuantityTotal   int  `json:"quantity_total,omitempty"`
 }
 
-func (r ServiceOrderCreateRequest) ToEntity() entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderCreateRequest) ToEntity() *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		CustomerID: r.CustomerID,
 		VehicleID:  r.VehicleID,
 	}
 }
 
-func (r ServiceOrderDiagnosisUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderDiagnosisUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 		Services:           mapServiceItemsToEntities(r.Services),
 		PartsSupplies:      mapPartsSupplyItemsToEntities(r.PartsSupplies),
 	}
 }
 
-func (r ServiceOrderEstimateUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderEstimateUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+		Status:             valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 		Services:           mapServiceItemsToEntities(r.Services),
 		PartsSupplies:      mapPartsSupplyItemsToEntities(r.PartsSupplies),
 	}
 }
 
-func (r ServiceOrderExecutionUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderExecutionUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+		Status:             valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 	}
 }
 
-func (r ServiceOrderDeliveryUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderDeliveryUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+		Status:             valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 	}
 }
 

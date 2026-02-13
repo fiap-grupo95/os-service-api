@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 )
@@ -55,4 +56,11 @@ func (s *PartsSupplyRepository) GetByServiceOrderID(ctx context.Context, service
 		return nil, err
 	}
 	return partsSupply, nil
+}
+
+func (s *PartsSupplyRepository) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	return nil
+}
+func (s *PartsSupplyRepository) Release(ctx context.Context, partsSupply []entities.PartsSupply) error{
+	return nil
 }

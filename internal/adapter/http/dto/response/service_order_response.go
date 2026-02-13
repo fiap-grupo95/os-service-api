@@ -63,7 +63,7 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 		Customer:                 mapCustomerResponse(entity.Customer),
 		VehicleID:                entity.VehicleID,
 		Vehicle:                  mapVehicleResponse(entity.Vehicle),
-		Status:                   entity.ServiceOrderStatus.String(),
+		Status:                   entity.Status.String(),
 		Estimate:                 entity.Estimate,
 		StartedExecutionDate:     entity.StartedExecutionDate,
 		FinalExecutionDate:       entity.FinalExecutionDate,

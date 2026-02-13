@@ -1,9 +1,10 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
-	"time"
 )
 
 // N:N relationship between PartsSupply and ServiceOrder
@@ -78,7 +79,7 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		ID:                       m.ID,
 		CustomerID:               m.CustomerID,
 		VehicleID:                m.VehicleID,
-		ServiceOrderStatus:       m.ServiceOrderStatus.ToDomain(),
+		Status:                   m.ServiceOrderStatus.ToDomain(),
 		Estimate:                 m.Estimate,
 		StartedExecutionDate:     m.StartedExecutionDate,
 		FinalExecutionDate:       m.FinalExecutionDate,
