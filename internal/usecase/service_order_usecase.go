@@ -19,10 +19,10 @@ import (
 
 // operation flow
 const (
-	DIAGNOSIS = "diagnosis"
-	ESTIMATE  = "estimate"
-	EXECUTION = "execution"
-	DELIVERY  = "delivery"
+	DIAGNOSIS        = "diagnosis"
+	ESTIMATE         = "estimate"
+	EXECUTION        = "execution"
+	DELIVERY         = "delivery"
 	ESTIMATE_APPROVE = "estimate_approve"
 	ESTIMATE_REJECT  = "estimate_reject"
 	ESTIMATE_CANCEL  = "estimate_cancel"
@@ -142,7 +142,8 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 }
 
 // UpdateServiceOrder updates an existing service order.
-func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error){
+// TODO: Deprecate this method
+func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		logger = logs.LoggerWithContext(ctx)
@@ -204,19 +205,30 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *e
 
 func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
+
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		logger = logs.LoggerWithContext(ctx)
+		startSegment := txn.StartSegment("ServiceOrderUseCase.DiagnosisServiceOrder")
+		defer startSegment.End()
 	}
 
-	if _, err := u.checkIfServiceOrderExists(ctx, request.ID); err != nil {
+	result, err := u.checkIfServiceOrderExists(ctx, request.ID)
+	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
 	}
+
+	actualStatus := result.Status
+	request.Status = actualStatus
 
 	serviceOrder, err := u.validateDiagnosis(ctx, request)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error validating diagnosis")
 		return nil, err
+	}
+
+	if serviceOrder.Status.IsEmDiagnostico() {
+		return serviceOrder, nil
 	}
 
 	var estimate *entities.Estimate
@@ -247,7 +259,11 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 // it updates the service order status to "Em Diagnostico".
 func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
-
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
+		startSegment := txn.StartSegment("ServiceOrderUseCase.validateDiagnosis")
+		defer startSegment.End()
+	}
 	if !serviceOrder.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
@@ -305,18 +321,18 @@ func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceO
 	if !serviceOrder.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
-	
+
 	if serviceOrder.Status.IsAguardandoAprovacao() {
 		return nil, ErrInvalidTransitionStatusToEstimate
 	}
- 
-    factory := operations.NewEstimateStrategyFactory()
-    strategy, err := factory.GetStrategy(operation)
-    if err != nil {
-        return nil, err
-    }
- 
-    return strategy.Execute(ctx, serviceOrder)
+
+	factory := operations.NewEstimateStrategyFactory()
+	strategy, err := factory.GetStrategy(operation)
+	if err != nil {
+		return nil, err
+	}
+
+	return strategy.Execute(ctx, serviceOrder)
 }
 
 func (u *ServiceOrderUseCase) validateExecution(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
@@ -569,7 +585,7 @@ func (u *ServiceOrderUseCase) getPartsSuppliesByServiceOrderID(ctx context.Conte
 
 func (u *ServiceOrderUseCase) checkIfServiceOrderExists(ctx context.Context, id uint) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
-		serviceOrder, err := u.repo.GetByID(ctx, id, false)
+	serviceOrder, err := u.repo.GetByID(ctx, id, false)
 	if err != nil {
 		logger.Error().Err(err).Any("OS_ID", id).Msg("Error finding service order with id")
 		return nil, err

@@ -58,18 +58,23 @@ func (s *PartsSupplyRepository) GetByServiceOrderID(ctx context.Context, service
 	return partsSupply, nil
 }
 
-func (s *PartsSupplyRepository) Reserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error{
+func (s *PartsSupplyRepository) Reserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
 	return nil
 }
 
-func (s *PartsSupplyRepository) Release(ctx context.Context, partsSupply []request.PartsSupplyRequest) error{
+func (s *PartsSupplyRepository) Release(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
 	return nil
 }
 
-func (s *PartsSupplyRepository) WriteOff(ctx context.Context, partsSupply []request.PartsSupplyRequest) error{
+func (s *PartsSupplyRepository) WriteOff(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
 	return nil
 }
 
-func (s *PartsSupplyRepository) AuthorizeReserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error{
+func (s *PartsSupplyRepository) AuthorizeReserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
+	//logger := logs.Logger()
+	//if txn := newrelic.FromContext(ctx); txn != nil {
+	//	startSegment := txn.StartSegment("PartsSupplyRepository.AuthorizeReserve")
+	//	defer startSegment.End()
+	//}
 	return nil
 }

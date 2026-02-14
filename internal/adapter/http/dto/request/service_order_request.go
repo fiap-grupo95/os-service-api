@@ -34,9 +34,8 @@ type ServiceOrderServiceItem struct {
 }
 
 type ServiceOrderPartsSupplyItem struct {
-	ID              uint `json:"id" binding:"required"`
-	QuantityReserve int  `json:"quantity_reserve,omitempty"`
-	QuantityTotal   int  `json:"quantity_total,omitempty"`
+	ID       uint `json:"id" binding:"required"`
+	Quantity int  `json:"quantity,omitempty"`
 }
 
 func (r ServiceOrderCreateRequest) ToEntity() *entities.ServiceOrder {
@@ -97,9 +96,8 @@ func mapPartsSupplyItemsToEntities(items []ServiceOrderPartsSupplyItem) []entiti
 	result := make([]entities.PartsSupply, 0, len(items))
 	for _, item := range items {
 		result = append(result, entities.PartsSupply{
-			ID: item.ID,
-			// QuantityReserve: item.QuantityReserve,
-			// QuantityTotal:   item.QuantityTotal,
+			ID:       item.ID,
+			Quantity: item.Quantity,
 		})
 	}
 	return result

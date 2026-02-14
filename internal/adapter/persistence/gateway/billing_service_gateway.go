@@ -41,9 +41,10 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 	}
 
 	return &entities.Estimate{
-		ID:     response.ID,
-		Value:  response.Value,
-		Status: response.Status,
+		ID:             response.ID,
+		ServiceOrderID: response.ServiceOrderID,
+		Value:          response.Value,
+		Status:         response.Status,
 	}, nil
 }
 
