@@ -22,7 +22,7 @@ func NewBillingServiceGateway(repo interfaces.IBillingServiceRepository) *Billin
 	}
 }
 
-func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*float64,
+func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate,
 	error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
@@ -40,10 +40,14 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 		logger.Error().Err(err).Msg("error creating estimate")
 	}
 
-	return response.Value, nil
+	return &entities.Estimate{
+		ID:     response.ID,
+		Value:  response.Value,
+		Status: response.Status,
+	}, nil
 }
 
-func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error){
+func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
@@ -55,7 +59,7 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 		Services:       mapServicesDomainToRequest(serviceOrder.Services),
 		PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
 	}
-	
+
 	response, err := g.repo.ApproveEstimate(ctx, estimate)
 	if err != nil {
 		logger.Error().Err(err).Msg("error approving estimate")
@@ -74,7 +78,7 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 	}, nil
 }
 
-func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error){
+func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
@@ -86,7 +90,7 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 		Services:       mapServicesDomainToRequest(serviceOrder.Services),
 		PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
 	}
-	
+
 	response, err := g.repo.RejectEstimate(ctx, estimate)
 	if err != nil {
 		logger.Error().Err(err).Msg("error rejecting estimate")
@@ -105,8 +109,8 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 	}, nil
 }
 
-func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error){
-		logger := logs.Logger()
+func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
+	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
 	}
@@ -117,7 +121,7 @@ func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder
 		Services:       mapServicesDomainToRequest(serviceOrder.Services),
 		PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
 	}
-	
+
 	response, err := g.repo.CancelEstimate(ctx, estimate)
 	if err != nil {
 		logger.Error().Err(err).Msg("error cancelling estimate")
@@ -193,9 +197,9 @@ func mapPartsSupplyDomainToRequest(partsSupplies []entities.PartsSupply) []reque
 	partsSuppliesRequest := make([]request.PartsSupplyRequest, len(partsSupplies))
 	for _, s := range partsSupplies {
 		ps := request.PartsSupplyRequest{
-			ID:          s.ID,
-			Price:       s.Price,
-			Quantity:    s.Quantity,
+			ID:       s.ID,
+			Price:    s.Price,
+			Quantity: s.Quantity,
 		}
 		partsSuppliesRequest = append(partsSuppliesRequest, ps)
 	}

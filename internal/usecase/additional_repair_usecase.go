@@ -183,16 +183,16 @@ func (u *AdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, ad
 		logger.Info().Any("additional_repair_id", additionalRepairId).Msg("Customer rejected additional repair")
 	} else {
 		for _, ps := range additionalRepair.PartsSupplies {
-			quantity, err := u.repo.GetPartsSupplyQuantity(ctx, ps.ID, additionalRepair.ID)
-			if err != nil {
-				logger.Error().Err(err).Msg("Error getting parts supply additional repair relation")
-				return err
-			}
+			// quantity, err := u.repo.GetPartsSupplyQuantity(ctx, ps.ID, additionalRepair.ID)
+			// if err != nil {
+			// 	logger.Error().Err(err).Msg("Error getting parts supply additional repair relation")
+			// 	return err
+			// }
 
 			entity := entities.PartsSupply{
 				ID:              ps.ID,
-				QuantityReserve: quantity,
-				QuantityTotal:   quantity,
+				// QuantityReserve: quantity,
+				// QuantityTotal:   quantity,
 			}
 			if err := releaseReservedPartsSupply(ctx, entity, u.partsSupplyRepo); err != nil {
 				logger.Error().Err(err).Msg("Error releasing reserved parts supply")
@@ -232,11 +232,11 @@ func (u *AdditionalRepairUseCase) addPartsSupplyToAdditionalRepair(ctx context.C
 			logs.Logger().Error().Msg("parts supply with id not found")
 			return listPartsSupply, estimatedPrice, ErrServiceNotFound
 		}
-		psDto.QuantityReserve = ps.QuantityReserve
-		if ps.QuantityTotal > 0 {
-			psDto.QuantityTotal = ps.QuantityTotal
-		}
-		estimatedPrice += psDto.Price * float64(psDto.QuantityReserve)
+		// psDto.QuantityReserve = ps.QuantityReserve
+		// if ps.QuantityTotal > 0 {
+		// 	psDto.QuantityTotal = ps.QuantityTotal
+		// }
+		// estimatedPrice += psDto.Price * float64(psDto.QuantityReserve)
 		listPartsSupply = append(listPartsSupply, *psDto)
 	}
 	return listPartsSupply, estimatedPrice, nil

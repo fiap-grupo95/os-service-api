@@ -85,22 +85,22 @@ func (r *AdditionalRepairRepository) AddPartSupplyAndService(ctx context.Context
 		}
 	}
 
-	for _, ps := range partsSupplies {
-		relation := dto.PartsSupplyAdditionalRepair{
-			PartsSupplyID:      ps.ID,
-			AdditionalRepairID: additionalRepairID,
-		}
-		if err := tx.Create(&relation).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-		if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
-			Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
-			Update("quantity", ps.QuantityReserve).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
+	// for _, ps := range partsSupplies {
+	// 	relation := dto.PartsSupplyAdditionalRepair{
+	// 		PartsSupplyID:      ps.ID,
+	// 		AdditionalRepairID: additionalRepairID,
+	// 	}
+	// 	if err := tx.Create(&relation).Error; err != nil {
+	// 		tx.Rollback()
+	// 		return err
+	// 	}
+	// 	if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
+	// 		Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
+	// 		Update("quantity", ps.QuantityReserve).Error; err != nil {
+	// 		tx.Rollback()
+	// 		return err
+	// 	}
+	// }
 
 	if err := tx.Model(&dto.AdditionalRepairModel{}).
 		Where("id = ?", additionalRepairID).
@@ -138,22 +138,22 @@ func (r *AdditionalRepairRepository) ReplacePartSupplyAndService(ctx context.Con
 		}
 	}
 
-	for _, ps := range partsSupplies {
-		relation := dto.PartsSupplyAdditionalRepair{
-			PartsSupplyID:      ps.ID,
-			AdditionalRepairID: additionalRepairID,
-		}
-		if err := tx.Create(&relation).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-		if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
-			Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
-			Update("quantity", ps.QuantityReserve).Error; err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
+	// for _, ps := range partsSupplies {
+	// 	relation := dto.PartsSupplyAdditionalRepair{
+	// 		PartsSupplyID:      ps.ID,
+	// 		AdditionalRepairID: additionalRepairID,
+	// 	}
+	// 	if err := tx.Create(&relation).Error; err != nil {
+	// 		tx.Rollback()
+	// 		return err
+	// 	}
+	// 	if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
+	// 		Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
+	// 		Update("quantity", ps.QuantityReserve).Error; err != nil {
+	// 		tx.Rollback()
+	// 		return err
+	// 	}
+	// }
 
 	if err := tx.Model(&dto.AdditionalRepairModel{}).
 		Where("id = ?", additionalRepairID).
@@ -226,26 +226,26 @@ func mapPartsSuppliesToModels(partsSupplies []entities.PartsSupply) []dto.PartsS
 		return nil
 	}
 	result := make([]dto.PartsSupplyModel, 0, len(partsSupplies))
-	for _, ps := range partsSupplies {
-		result = append(result, dto.PartsSupplyModel{
-			ID:              ps.ID,
-			Name:            ps.Name,
-			Price:           ps.Price,
-			QuantityTotal:   ps.QuantityTotal,
-			QuantityReserve: ps.QuantityReserve,
-		})
-	}
+	// for _, ps := range partsSupplies {
+	// 	result = append(result, dto.PartsSupplyModel{
+	// 		ID:              ps.ID,
+	// 		Name:            ps.Name,
+	// 		Price:           ps.Price,
+	// 		QuantityTotal:   ps.QuantityTotal,
+	// 		QuantityReserve: ps.QuantityReserve,
+	// 	})
+	// }
 	return result
 }
 
 func updatePartsSupplyQuantities(tx *gorm.DB, additionalRepairID uint, partsSupplies []entities.PartsSupply) error {
-	for _, ps := range partsSupplies {
-		if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
-			Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
-			Update("quantity", ps.QuantityReserve).Error; err != nil {
-			return err
-		}
-	}
+	// for _, ps := range partsSupplies {
+	// 	if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
+	// 		Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).
+	// 		Update("quantity", ps.QuantityReserve).Error; err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 

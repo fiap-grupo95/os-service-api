@@ -9,7 +9,6 @@ import (
 func addServiceOrderRoutes(rg *gin.Engine, serviceOrderHandler *handlers.ServiceOrderHandler) {
 	// Search OS
 	rg.GET(GetServiceOrder, serviceOrderHandler.GetServiceOrder)
-	rg.GET(GetServiceOrderHistory, serviceOrderHandler.GetServiceOrderHistory)
 
 	// Create OS
 	rg.POST(PostServiceOrderCreate, serviceOrderHandler.CreateServiceOrder)

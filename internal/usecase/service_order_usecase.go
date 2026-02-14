@@ -78,11 +78,12 @@ func NewServiceOrderUseCase(
 	billingServiceRepo interfaces.IBillingServiceGateway,
 ) *ServiceOrderUseCase {
 	return &ServiceOrderUseCase{
-		repo:            repo,
-		vehicleRepo:     vehicleRepo,
-		customerRepo:    customerRepo,
-		serviceRepo:     serviceRepo,
-		partsSupplyRepo: partsSupplyRepo,
+		repo:               repo,
+		vehicleRepo:        vehicleRepo,
+		customerRepo:       customerRepo,
+		serviceRepo:        serviceRepo,
+		partsSupplyRepo:    partsSupplyRepo,
+		billingServiceRepo: billingServiceRepo,
 	}
 }
 
