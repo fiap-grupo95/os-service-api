@@ -6,13 +6,10 @@ import (
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 )
 
-const(
-	ESTIMATE_APPROVE = "estimate_approve"
-	ESTIMATE_REJECT  = "estimate_reject"
-	ESTIMATE_CANCEL  = "estimate_cancel"
-	
+const(	
 	ErrInvalidEstimateOperation = "invalid estimate operation"
 )
 
@@ -30,9 +27,9 @@ type EstimateStrategyFactory struct {
 func NewEstimateStrategyFactory() *EstimateStrategyFactory {
     return &EstimateStrategyFactory{
         strategies: map[string]EstimateOperationStrategy{
-            ESTIMATE_APPROVE: &ApproveEstimateStrategy{},
-            ESTIMATE_REJECT:  &RejectEstimateStrategy{},
-            ESTIMATE_CANCEL:  &CancelEstimateStrategy{},
+            constants.ESTIMATE_APPROVE: &ApproveEstimateStrategy{},
+            constants.ESTIMATE_REJECT:  &RejectEstimateStrategy{},
+            constants.ESTIMATE_CANCEL:  &CancelEstimateStrategy{},
         },
     }
 }

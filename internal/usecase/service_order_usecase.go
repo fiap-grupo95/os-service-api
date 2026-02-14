@@ -12,20 +12,10 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/adapter/operations"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
-)
-
-// operation flow
-const (
-	DIAGNOSIS        = "diagnosis"
-	ESTIMATE         = "estimate"
-	EXECUTION        = "execution"
-	DELIVERY         = "delivery"
-	ESTIMATE_APPROVE = "estimate_approve"
-	ESTIMATE_REJECT  = "estimate_reject"
-	ESTIMATE_CANCEL  = "estimate_cancel"
 )
 
 var (
@@ -168,13 +158,13 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *e
 	}
 
 	switch flow {
-	case EXECUTION:
+	case constants.EXECUTION:
 		update, err = u.validateExecution(ctx, request, serviceOrderRecord, update)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error validating execution")
 			return nil, err
 		}
-	case DELIVERY:
+	case constants.DELIVERY:
 		update, err = u.validateDelivery(ctx, request, serviceOrderRecord, update)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error validating delivery")
@@ -260,7 +250,6 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 	if txn := newrelic.FromContext(ctx); txn != nil {
-		logger = logs.LoggerWithContext(ctx)
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateDiagnosis")
 		defer startSegment.End()
 	}
@@ -322,7 +311,7 @@ func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceO
 		return nil, ErrInvalidStatus
 	}
 
-	if serviceOrder.Status.IsAguardandoAprovacao() {
+	if !serviceOrder.Status.IsAguardandoAprovacao() {
 		return nil, ErrInvalidTransitionStatusToEstimate
 	}
 
@@ -332,7 +321,19 @@ func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceO
 		return nil, err
 	}
 
-	return strategy.Execute(ctx, serviceOrder)
+	result, err := strategy.Execute(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error approving estimate")
+		return nil, err
+	}
+
+	err = u.repo.Update(ctx, result)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error updating service order")
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (u *ServiceOrderUseCase) validateExecution(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
