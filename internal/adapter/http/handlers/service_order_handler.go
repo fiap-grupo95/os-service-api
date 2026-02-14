@@ -312,14 +312,6 @@ func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
-}
-
 // UpdateServiceOrderExecution godoc
 // @Summary Update service order execution
 // @Description Update the execution information of a service order
@@ -362,6 +354,14 @@ func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 	}
 	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
+	// TODO: Implement this method
+}
+
+func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
+	// TODO: Implement this method
 }
 
 // UpdateServiceOrderDelivery godoc
