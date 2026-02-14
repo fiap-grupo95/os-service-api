@@ -3,23 +3,19 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
+	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/adapter/operations"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
 
 	"github.com/newrelic/go-agent/v3/newrelic"
-)
-
-// operation flow
-const (
-	DIAGNOSIS = "diagnosis"
-	ESTIMATE  = "estimate"
-	EXECUTION = "execution"
-	DELIVERY  = "delivery"
 )
 
 var (
@@ -36,21 +32,29 @@ var (
 	ErrVehicleNotFound                    = errors.New("vehicle not found")
 	ErrServiceNotFound                    = errors.New("service not found")
 	ErrPartsSupplyNotFound                = errors.New("parts supply not found")
+	ErrInvalidEstimateValue               = errors.New("invalid estimate value")
 )
 
 type IServiceOrderUseCase interface {
-	CreateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error)
-	UpdateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, flow string) (*entities.ServiceOrder, error)
+	CreateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	DiagnosisServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error)
+	// ExecutionServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// FinishServiceOrderExecution(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// PaymentServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	// DeliveryServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
+	UpdateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error)
 	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error)
 	ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error)
 }
 
 type ServiceOrderUseCase struct {
-	repo            interfaces.IServiceOrderGateway
-	vehicleRepo     interfaces.IVehicleGateway
-	customerRepo    interfaces.ICustomerGateway
-	serviceRepo     interfaces.IServiceGateway
-	partsSupplyRepo interfaces.IPartsSupplyGateway
+	repo               interfaces.IServiceOrderGateway
+	vehicleRepo        interfaces.IVehicleGateway
+	customerRepo       interfaces.ICustomerGateway
+	serviceRepo        interfaces.IServiceGateway
+	partsSupplyRepo    interfaces.IPartsSupplyGateway
+	billingServiceRepo interfaces.IBillingServiceGateway
 }
 
 var _ IServiceOrderUseCase = (*ServiceOrderUseCase)(nil)
@@ -61,20 +65,22 @@ func NewServiceOrderUseCase(
 	customerRepo interfaces.ICustomerGateway,
 	serviceRepo interfaces.IServiceGateway,
 	partsSupplyRepo interfaces.IPartsSupplyGateway,
+	billingServiceRepo interfaces.IBillingServiceGateway,
 ) *ServiceOrderUseCase {
 	return &ServiceOrderUseCase{
-		repo:            repo,
-		vehicleRepo:     vehicleRepo,
-		customerRepo:    customerRepo,
-		serviceRepo:     serviceRepo,
-		partsSupplyRepo: partsSupplyRepo,
+		repo:               repo,
+		vehicleRepo:        vehicleRepo,
+		customerRepo:       customerRepo,
+		serviceRepo:        serviceRepo,
+		partsSupplyRepo:    partsSupplyRepo,
+		billingServiceRepo: billingServiceRepo,
 	}
 }
 
 // CreateServiceOrder creates a new service order after validating the vehicle and customer.
 // It sets the initial status of the service order to "Recebida".
 // If the vehicle or customer validation fails, it logs the error and returns it.
-func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
 	txn := newrelic.FromContext(ctx)
 	if txn != nil {
@@ -88,23 +94,26 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 		defer seg.End()
 	}
 
-	err := validateVehicle(ctx, serviceOrder, u.vehicleRepo)
+	if serviceOrder == nil {
+		return nil, ErrInvalidID
+	}
+
+	err := u.validateVehicle(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Uint("vehicle_id", serviceOrder.VehicleID).Msg("Error validating vehicle")
 		return nil, err
 	}
 
-	err = validateCustomer(ctx, serviceOrder, u.customerRepo)
+	err = u.validateCustomer(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Uint("customer_id", serviceOrder.CustomerID).Msg("Error validating customer")
 		return nil, err
 	}
 
-
 	newServiceOrder := &entities.ServiceOrder{
-		CustomerID:         serviceOrder.CustomerID,
-		VehicleID:          serviceOrder.VehicleID,
-		ServiceOrderStatus: valueobject.StatusRecebida,
+		CustomerID: serviceOrder.CustomerID,
+		VehicleID:  serviceOrder.VehicleID,
+		Status:     valueobject.StatusRecebida,
 	}
 
 	// Repository operation segment - track database operations separately
@@ -123,7 +132,8 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 }
 
 // UpdateServiceOrder updates an existing service order.
-func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request entities.ServiceOrder, flow string) (*entities.ServiceOrder, error) {
+// TODO: Deprecate this method
+func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request *entities.ServiceOrder, flow string) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		logger = logs.LoggerWithContext(ctx)
@@ -148,26 +158,14 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request en
 	}
 
 	switch flow {
-	case DIAGNOSIS:
-		update, err = ValidateDiagnosis(ctx, &request, serviceOrderRecord, update, u.serviceRepo, u.partsSupplyRepo, u.repo)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error validating diagnosis")
-			return nil, err
-		}
-	case ESTIMATE:
-		update, err = ValidateEstimate(ctx, &request, serviceOrderRecord, update, u.partsSupplyRepo, u.repo)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error validating estimate")
-			return nil, err
-		}
-	case EXECUTION:
-		update, err = ValidateExecution(ctx, &request, serviceOrderRecord, update)
+	case constants.EXECUTION:
+		update, err = u.validateExecution(ctx, request, serviceOrderRecord, update)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error validating execution")
 			return nil, err
 		}
-	case DELIVERY:
-		update, err = ValidateDelivery(ctx, &request, serviceOrderRecord, update)
+	case constants.DELIVERY:
+		update, err = u.validateDelivery(ctx, request, serviceOrderRecord, update)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error validating delivery")
 			return nil, err
@@ -195,217 +193,167 @@ func (u *ServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, request en
 	return updatedSO, nil
 }
 
+func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	logger := logs.Logger()
+
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
+		startSegment := txn.StartSegment("ServiceOrderUseCase.DiagnosisServiceOrder")
+		defer startSegment.End()
+	}
+
+	result, err := u.checkIfServiceOrderExists(ctx, request.ID)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error finding service order with id")
+		return nil, err
+	}
+
+	actualStatus := result.Status
+	request.Status = actualStatus
+
+	serviceOrder, err := u.validateDiagnosis(ctx, request)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error validating diagnosis")
+		return nil, err
+	}
+
+	if serviceOrder.Status.IsEmDiagnostico() {
+		return serviceOrder, nil
+	}
+
+	var estimate *entities.Estimate
+	estimate, err = u.billingServiceRepo.CreateEstimate(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error calculating estimate")
+		return nil, err
+	}
+
+	if estimate == nil {
+		logger.Error().Msg("Error calculating estimate: the value from estimate creation is nil")
+		return nil, ErrInvalidEstimateValue
+	}
+
+	serviceOrder.Status = valueobject.StatusAguardandoAprovacao
+
+	err = u.repo.Update(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error updating service order")
+		return nil, err
+	}
+
+	return serviceOrder, nil
+}
+
 // ValidateDiagnosis checks if the service order status is valid for diagnosis.
-// If the status is "Recebida" or "EmDiagnostico" and the request status is "EmDiagnostico",
-// it updates the service order status to "EmDiagnostico".
-func ValidateDiagnosis(ctx context.Context,
-	request *entities.ServiceOrder,
-	current *entities.ServiceOrder,
-	update *entities.ServiceOrder,
-	serviceRepo interfaces.IServiceGateway,
-	partsSupplyRepo interfaces.IPartsSupplyGateway,
-	serviceOrderRepo interfaces.IServiceOrderGateway) (*entities.ServiceOrder, error) {
+// If the status is "Recebida" or "Em Diagnostico" and the request status is "Em Diagnostico",
+// it updates the service order status to "Em Diagnostico".
+func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
-
-	newStatus := request.ServiceOrderStatus
-	oldStatus := current.ServiceOrderStatus
-
-	if !newStatus.IsValid() {
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		startSegment := txn.StartSegment("ServiceOrderUseCase.validateDiagnosis")
+		defer startSegment.End()
+	}
+	if !serviceOrder.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
 
-	if (oldStatus.IsRecebida() || oldStatus.IsEmDiagnostico()) && newStatus.IsCancelada() {
-		update.ServiceOrderStatus = valueobject.StatusCancelada
-		return update, nil
+	if !(serviceOrder.Status.IsRecebida() || serviceOrder.Status.IsEmDiagnostico()) {
+		return nil, ErrInvalidTransitionStatusToDiagnosis
 	}
 
-	if (oldStatus.IsRecebida() && newStatus.IsEmDiagnostico()) || oldStatus.IsEmDiagnostico() {
-		update.ServiceOrderStatus = valueobject.StatusEmDiagnostico
+	serviceOrder.Status = valueobject.StatusEmDiagnostico
 
-		if len(request.Services) <= 0 && len(request.PartsSupplies) <= 0 {
-			return update, nil
-		}
-
-		if len(request.Services) > 0 {
-			update.Services = request.Services
-
-			// Validate if each Service exists
-			for _, s := range request.Services {
-				_, err := getSeviceById(ctx, s, serviceRepo)
-				if err != nil {
-					return nil, err
-				}
-			}
-		} else {
-			return nil, errors.New("no services provided for diagnosis")
-		}
-
-		if len(request.PartsSupplies) > 0 {
-			update.PartsSupplies = request.PartsSupplies
-
-			// Validate if each PartsSupplies are available
-			// if all exists and ara available, reserve each PartsSupplies
-			for _, ps := range request.PartsSupplies {
-				err := validateQttPartsSupply(ctx, ps, partsSupplyRepo)
-				if err != nil {
-					logs.Logger().Error().Err(err).Any("parts_supply", ps.ID).Msg("Error validating parts supply")
-					return nil, err
-				}
-			}
-
-			// Reserve each PartsSupply
-			for _, ps := range request.PartsSupplies {
-				// Reserve the parts supply
-				err := reservePartsSupply(ctx, ps, partsSupplyRepo)
-				if err != nil {
-					logger.Error().Err(err).Any("parts_supply", ps.ID).Msg("Error reserving parts supply")
-					return nil, err
-				}
-			}
-		} else {
-			return nil, errors.New("no parts supplies provided for diagnosis")
-		}
-		var err error
-
-		// Calculate the total cost of PartsSupplies and Services and set it to the estimate
-		update.Estimate, err = CalculateEstimate(ctx, update.Services, update.PartsSupplies, serviceRepo, partsSupplyRepo)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error calculating estimate")
-			return nil, err
-		}
-
-		// If OK, set a new status to "AguardandoAprovacao"
-		update.ServiceOrderStatus = valueobject.StatusAguardandoAprovacao
-		return update, nil
+	if len(serviceOrder.Services) == 0 && len(serviceOrder.PartsSupplies) == 0 {
+		observability.IncrementCounter(ctx, "service_order_diagnosis_pending_services_parts_supplies", nil)
+		return serviceOrder, nil
 	}
 
-	return nil, ErrInvalidTransitionStatusToDiagnosis
+	if len(serviceOrder.Services) == 0 || len(serviceOrder.PartsSupplies) == 0 {
+		observability.IncrementCounter(ctx,
+			"service_order_diagnosis_no_services_or_no_parts_supplies",
+			map[string]string{
+				"services":       fmt.Sprint(len(serviceOrder.Services)),
+				"parts_supplies": fmt.Sprint(len(serviceOrder.PartsSupplies)),
+			},
+		)
+	}
 
+	err := u.validateIfServicesExists(ctx, serviceOrder.Services)
+	if err != nil {
+		logs.Logger().Error().Err(err).Any("services", serviceOrder.Services).Msg("Error validating services")
+		return nil, err
+	}
+
+	err = u.partsSupplyRepo.AuthorizeReserve(ctx, serviceOrder.PartsSupplies)
+	if err != nil {
+		logs.Logger().Error().Err(err).Msg("Error authorizing reserve parts supply")
+		return nil, err
+	}
+
+	err = u.partsSupplyRepo.Reserve(ctx, serviceOrder.PartsSupplies)
+	if err != nil {
+		logger.Error().Err(err).Any("parts_supply", serviceOrder.PartsSupplies).Msg("Error reserving parts supply")
+		return nil, err
+	}
+	return serviceOrder, nil
 }
 
-func CalculateEstimate(ctx context.Context, services []entities.Service, partsSupplies []entities.PartsSupply, serviceRepo interfaces.IServiceGateway, psRepo interfaces.IPartsSupplyGateway) (float64, error) {
-	var totalEstimate float64
-
-	servicesRegistered, err := getServicesByIDs(ctx, services, serviceRepo)
-	if err != nil {
-		return 0, err
-	}
-
-	partsSuppliesRegistered, err := getPartsSupplyByIDs(ctx, partsSupplies, psRepo)
-	if err != nil {
-		return 0, err
-	}
-
-	// Calculate services total
-	for _, s := range servicesRegistered {
-		totalEstimate = totalEstimate + s.Price
-	}
-
-	// Get the price of each partsSupplies from partsSuppliesRegistered and set it to partsSupplies
-	for _, ps := range partsSuppliesRegistered {
-		for _, reqPS := range partsSupplies {
-			if ps.ID == reqPS.ID {
-				quantity := reqPS.QuantityReserve // Use reserve quantity by default
-				if reqPS.QuantityTotal > 0 {      // If total quantity is specified, use that instead
-					quantity = reqPS.QuantityTotal
-				}
-				totalEstimate = totalEstimate + (ps.Price * float64(quantity))
-				break
-			}
-		}
-	}
-	return totalEstimate, nil
-}
-
-func ValidateEstimate(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder, partsSupplyRepo interfaces.IPartsSupplyGateway, serviceOrderRepo interfaces.IServiceOrderGateway) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
-	oldStatus := current.ServiceOrderStatus
+	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error finding service order with id")
+		return nil, err
+	}
 
-	if !request.ServiceOrderStatus.IsValid() {
+	if !serviceOrder.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
 
-	if oldStatus.IsAguardandoAprovacao() && request.ServiceOrderStatus.IsAprovada() {
-		update.ServiceOrderStatus = valueobject.StatusAprovada
-		// If the status is "Aprovada", we can subtract the total available quantity of PartsSupplies from the quantity reserve
-		partsSupplies, err := getPartsSuppliesByServiceOrderID(ctx, current.ID, partsSupplyRepo)
-		if err != nil {
-			logger.Error().Err(err).Any("service_order_id", current.ID).Msg("Error getting parts supplies by service order ID")
-			return nil, err
-		}
-
-		for _, ps := range partsSupplies {
-			relation, err := serviceOrderRepo.GetPartsSupplyServiceOrder(ctx, ps.ID, current.ID)
-			if err != nil {
-				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error getting parts supply service order relation")
-				return nil, err
-			}
-
-			entity := entities.PartsSupply{
-				ID:              ps.ID,
-				QuantityReserve: relation.Quantity, // Use the quantity from the relationship
-				QuantityTotal:   relation.Quantity,
-			}
-			err = releaseReservedPartsSupply(ctx, entity, partsSupplyRepo)
-			if err != nil {
-				logs.Logger().Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error releasing reserved parts supply")
-				return nil, err
-			}
-		}
-		return update, nil
+	if !serviceOrder.Status.IsAguardandoAprovacao() {
+		return nil, ErrInvalidTransitionStatusToEstimate
 	}
-	if oldStatus.IsAguardandoAprovacao() && request.ServiceOrderStatus.IsRejeitada() {
-		update.ServiceOrderStatus = valueobject.StatusRejeitada
-		// If the status is "Rejeitada", we can reset the PartsSupplies reserve
-		partsSupplies, err := getPartsSuppliesByServiceOrderID(ctx, current.ID, partsSupplyRepo)
-		if err != nil {
-			logs.Logger().Error().Err(err).Any("service_order_id", current.ID).Msg("Error getting parts supplies by service order ID")
-			return nil, err
 
-		}
-		for _, ps := range partsSupplies {
-			err := unreservePartsSupply(ctx, ps, partsSupplyRepo)
-			if err != nil {
-				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error unreserving parts supply")
-				return nil, err
-			}
-		}
-		return update, nil
+	factory := operations.NewEstimateStrategyFactory()
+	strategy, err := factory.GetStrategy(operation)
+	if err != nil {
+		return nil, err
 	}
-	if oldStatus.IsAguardandoAprovacao() && request.ServiceOrderStatus.IsEmDiagnostico() {
-		update.ServiceOrderStatus = valueobject.StatusEmDiagnostico
-		// If the status is "EmDiagnostico", we can reset the PartsSupplies reserve
-		for _, ps := range request.PartsSupplies {
-			err := unreservePartsSupply(ctx, ps, partsSupplyRepo)
-			if err != nil {
-				logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("Error unreserving parts supply")
-				return nil, err
-			}
-		}
-		return update, nil
+
+	result, err := strategy.Execute(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error approving estimate")
+		return nil, err
 	}
-	return nil, ErrInvalidTransitionStatusToEstimate
+
+	err = u.repo.Update(ctx, result)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error updating service order")
+		return nil, err
+	}
+
+	return result, nil
 }
 
-func ValidateExecution(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	oldStatus := current.ServiceOrderStatus
+func (u *ServiceOrderUseCase) validateExecution(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	oldStatus := current.Status
 	currentTime := time.Now()
 
-	if !request.ServiceOrderStatus.IsValid() {
+	if !request.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
-	if oldStatus.IsAprovada() && request.ServiceOrderStatus.IsEmExecucao() {
-		update.ServiceOrderStatus = valueobject.StatusEmExecucao
+	if oldStatus.IsAprovada() && request.Status.IsEmExecucao() {
+		update.Status = valueobject.StatusEmExecucao
 		update.StartedExecutionDate = &currentTime
 		return update, nil
 	}
-	if oldStatus.IsEmExecucao() && request.ServiceOrderStatus.IsFinalizada() {
+	if oldStatus.IsEmExecucao() && request.Status.IsFinalizada() {
 		executionDuration, err := CalculateExecutionDurationInHours(current.StartedExecutionDate, &currentTime)
 		if err != nil {
 			return nil, err
 		}
-		update.ServiceOrderStatus = valueobject.StatusFinalizada
+		update.Status = valueobject.StatusFinalizada
 		update.FinalExecutionDate = &currentTime
 		update.ExecutionDurationInHours = executionDuration
 		return update, nil
@@ -413,28 +361,28 @@ func ValidateExecution(ctx context.Context, request *entities.ServiceOrder, curr
 	return nil, ErrInvalidTransitionStatusToExecution
 }
 
-func ValidateDelivery(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	oldStatus := current.ServiceOrderStatus
+func (u *ServiceOrderUseCase) validateDelivery(ctx context.Context, request *entities.ServiceOrder, current *entities.ServiceOrder, update *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	oldStatus := current.Status
 
-	if !request.ServiceOrderStatus.IsValid() {
+	if !request.Status.IsValid() {
 		return nil, ErrInvalidStatus
 	}
 
-	if oldStatus.IsFinalizada() && request.ServiceOrderStatus.IsEntregue() {
+	if oldStatus.IsFinalizada() && request.Status.IsEntregue() {
 		if current.PaymentID == nil {
 			return nil, errors.New("payment information is required for delivery")
 		}
-		update.ServiceOrderStatus = valueobject.StatusEntregue
+		update.Status = valueobject.StatusEntregue
 		return update, nil
 	}
 	return nil, ErrInvalidTransitionStatusToDelivery
 }
 
-func validateVehicle(ctx context.Context, serviceOrder entities.ServiceOrder, vehicleRepo interfaces.IVehicleGateway) error {
+func (u *ServiceOrderUseCase) validateVehicle(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
 	logger := logs.LoggerWithContext(ctx)
 
 	if serviceOrder.VehicleID != 0 {
-		vehicle, err := vehicleRepo.FindByID(serviceOrder.VehicleID)
+		vehicle, err := u.vehicleRepo.FindByID(serviceOrder.VehicleID)
 		if err != nil {
 			logger.Error().Err(err).Any("vehicle_id", serviceOrder.VehicleID).Msg("error finding vehicle with id")
 			return err
@@ -447,11 +395,11 @@ func validateVehicle(ctx context.Context, serviceOrder entities.ServiceOrder, ve
 	return ErrInvalidID
 }
 
-func validateCustomer(ctx context.Context, serviceOrder entities.ServiceOrder, customerRepo interfaces.ICustomerGateway) error {
+func (u *ServiceOrderUseCase) validateCustomer(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
 	logger := logs.LoggerWithContext(ctx)
 
 	if serviceOrder.CustomerID != 0 {
-		customer, err := customerRepo.GetByID(serviceOrder.CustomerID)
+		customer, err := u.customerRepo.GetByID(serviceOrder.CustomerID)
 		if err != nil {
 			logger.Error().Err(err).Any("customer_id", serviceOrder.CustomerID).Msg("error finding customer with id")
 			return err
@@ -464,13 +412,13 @@ func validateCustomer(ctx context.Context, serviceOrder entities.ServiceOrder, c
 	return ErrInvalidID
 }
 
-func getSeviceById(ctx context.Context, s entities.Service, serviceRepo interfaces.IServiceGateway) (*entities.Service, error) {
+func (u *ServiceOrderUseCase) getSeviceById(ctx context.Context, s entities.Service) (*entities.Service, error) {
 	logger := logs.LoggerWithContext(ctx)
 
 	if s.ID == 0 {
 		return nil, ErrInvalidID
 	}
-	result, err := serviceRepo.GetByID(ctx, s.ID)
+	result, err := u.serviceRepo.GetByID(ctx, s.ID)
 	if err != nil {
 		logger.Error().Err(err).Any("service_id", s.ID).Msg("error finding service with id")
 		return nil, err
@@ -482,11 +430,8 @@ func getSeviceById(ctx context.Context, s entities.Service, serviceRepo interfac
 	return result, nil
 }
 
-func getPartsSupplyByID(ctx context.Context, id uint, partsSupplyRepo interfaces.IPartsSupplyGateway) (*entities.PartsSupply, error) {
-	if id == 0 {
-		return nil, ErrInvalidID
-	}
-	result, err := partsSupplyRepo.GetByID(ctx, id)
+func (u *ServiceOrderUseCase) getPartsSupplyByID(ctx context.Context, id uint) (*entities.PartsSupply, error) {
+	result, err := u.partsSupplyRepo.GetByID(ctx, id)
 	if err != nil {
 		logs.Logger().Error().Err(err).Any("parts_supply_id", id).Msg("error finding parts supply with id")
 		return nil, err
@@ -498,100 +443,23 @@ func getPartsSupplyByID(ctx context.Context, id uint, partsSupplyRepo interfaces
 	return result, nil
 }
 
-func validateQttPartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
-	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
-	if err != nil {
-		return err
+func (u *ServiceOrderUseCase) validateIfServicesExists(ctx context.Context, services []entities.Service) error {
+	for _, s := range services {
+		_, err := u.getSeviceById(ctx, s)
+		if err != nil {
+			return err
+		}
 	}
-
-	totalAvailable := current.QuantityTotal - current.QuantityReserve
-	if (partsSupply.QuantityReserve > totalAvailable) || (partsSupply.QuantityTotal > totalAvailable) {
-		logs.Logger().Error().Any("parts_supply_id", partsSupply.ID).Msg("parts supply with id has insufficient quantity available")
-		return ErrInsufficientPartsSupply
-	}
-	return nil
-}
-
-func reservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
-	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
-	if err != nil {
-		return err
-	}
-
-	if partsSupply.QuantityReserve > 0 {
-		current.QuantityReserve += partsSupply.QuantityReserve
-	} else if partsSupply.QuantityTotal > 0 {
-		current.QuantityReserve += partsSupply.QuantityTotal
-	} else {
-		return errors.New("no quantity to reserve")
-	}
-
-	// err = partsSupplyRepo.Update(ctx, current)
-	// if err != nil {
-	// 	return err
-	// }
 	return nil
 }
 
 // releaseReservedPartsSupply is when a service order is approved - Baixa de estoque
-func releaseReservedPartsSupply(ctx context.Context, request entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
-	current, err := getPartsSupplyByID(ctx, request.ID, partsSupplyRepo)
+func (u *ServiceOrderUseCase) releaseReservedPartsSupply(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	err := u.partsSupplyRepo.Release(ctx, partsSupply)
 	if err != nil {
+		logs.Logger().Error().Err(err).Msg("error releasing reserved parts supply")
 		return err
 	}
-
-	quantity := request.QuantityReserve
-	if request.QuantityTotal > 0 {
-		quantity = request.QuantityTotal
-	}
-
-	if quantity <= 0 {
-		return errors.New("no quantity to release")
-	}
-
-	if current.QuantityReserve < quantity {
-		return errors.New("cannot release more than reserved")
-	}
-
-	// Atualiza a quantidade reservada e total
-	current.QuantityReserve -= quantity
-	current.QuantityTotal -= quantity
-
-	// err = partsSupplyRepo.Update(ctx, current)
-	// if err != nil {
-	// 	logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error releasing reserved parts supply")
-	// 	return err
-	// }
-
-	logs.Logger().Info().Any("parts_supply_id", current.ID).Msg("Reserved parts supply released successfully")
-	return nil
-}
-
-func unreservePartsSupply(ctx context.Context, partsSupply entities.PartsSupply, partsSupplyRepo interfaces.IPartsSupplyGateway) error {
-	current, err := getPartsSupplyByID(ctx, partsSupply.ID, partsSupplyRepo)
-	if err != nil {
-		return err
-	}
-
-	if partsSupply.QuantityReserve > 0 {
-		if current.QuantityReserve < partsSupply.QuantityReserve {
-			return errors.New("cannot unreserve more than reserved")
-		}
-		if partsSupply.QuantityReserve > 0 {
-			current.QuantityReserve -= partsSupply.QuantityReserve
-		} else if partsSupply.QuantityTotal > 0 {
-			current.QuantityReserve -= partsSupply.QuantityTotal
-		}
-	} else {
-		return errors.New("no quantity to unreserve")
-	}
-
-	// err = partsSupplyRepo.Update(ctx, current)
-	// if err != nil {
-	// 	logs.Logger().Error().Err(err).Any("parts_supply_id", current.ID).Msg("error unreserving parts supply")
-	// 	return err
-	// }
-	logs.Logger().Info().Any("parts_supply_id", current.ID).Msg("Parts supply unreserved successfully")
 	return nil
 }
 
@@ -625,7 +493,7 @@ func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entitie
 			continue
 		}
 
-		status := so.ServiceOrderStatus
+		status := so.Status
 		if status.IsFinalizada() || status.IsEntregue() {
 			// Skip finalized or delivered orders from the listing.
 			continue
@@ -638,8 +506,8 @@ func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entitie
 		si := filtered[i]
 		sj := filtered[j]
 
-		pi := serviceOrderPriority(si.ServiceOrderStatus)
-		pj := serviceOrderPriority(sj.ServiceOrderStatus)
+		pi := u.serviceOrderPriority(si.Status)
+		pj := u.serviceOrderPriority(sj.Status)
 		if pi != pj {
 			return pi < pj
 		}
@@ -665,14 +533,14 @@ func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entitie
 	return filtered, nil
 }
 
-func getServicesByIDs(ctx context.Context, services []entities.Service, serviceRepo interfaces.IServiceGateway) ([]entities.Service, error) {
+func (u *ServiceOrderUseCase) getServicesByIDs(ctx context.Context, services []entities.Service) ([]entities.Service, error) {
 	if len(services) == 0 {
 		return nil, errors.New("no services provided")
 	}
 
 	var serviceDb []entities.Service
 	for _, s := range services {
-		item, err := serviceRepo.GetByID(ctx, s.ID)
+		item, err := u.serviceRepo.GetByID(ctx, s.ID)
 		if err != nil {
 			logs.Logger().Error().Err(err).Any("service_id", s.ID).Msg("error getting service by ID")
 			return nil, err
@@ -684,14 +552,14 @@ func getServicesByIDs(ctx context.Context, services []entities.Service, serviceR
 	return serviceDb, nil
 }
 
-func getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupply, psRepo interfaces.IPartsSupplyGateway) ([]entities.PartsSupply, error) {
+func (u *ServiceOrderUseCase) getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupply) ([]entities.PartsSupply, error) {
 	if len(partsSupplies) == 0 {
 		return nil, errors.New("no services provided")
 	}
 
 	var psDb []entities.PartsSupply
 	for _, ps := range partsSupplies {
-		item, err := psRepo.GetByID(ctx, ps.ID)
+		item, err := u.partsSupplyRepo.GetByID(ctx, ps.ID)
 		if err != nil {
 			logs.Logger().Error().Err(err).Any("parts_supply_id", ps.ID).Msg("error getting Parts Supplies by ID")
 			return nil, err
@@ -702,12 +570,12 @@ func getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupp
 	return psDb, nil
 }
 
-func getPartsSuppliesByServiceOrderID(ctx context.Context, serviceOrderID uint, partsSupplyRepo interfaces.IPartsSupplyGateway) ([]entities.PartsSupply, error) {
+func (u *ServiceOrderUseCase) getPartsSuppliesByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error) {
 	if serviceOrderID == 0 {
 		return nil, ErrInvalidID
 	}
 
-	partsSupplies, err := partsSupplyRepo.GetByServiceOrderID(ctx, serviceOrderID)
+	partsSupplies, err := u.partsSupplyRepo.GetByServiceOrderID(ctx, serviceOrderID)
 	if err != nil {
 		logs.Logger().Error().Err(err).Any("service_order_id", serviceOrderID).Msg("error getting Parts Supplies by Service Order ID")
 		return nil, err
@@ -716,7 +584,22 @@ func getPartsSuppliesByServiceOrderID(ctx context.Context, serviceOrderID uint, 
 	return partsSupplies, nil
 }
 
-func serviceOrderPriority(status valueobject.ServiceOrderStatus) int {
+func (u *ServiceOrderUseCase) checkIfServiceOrderExists(ctx context.Context, id uint) (*entities.ServiceOrder, error) {
+	logger := logs.LoggerWithContext(ctx)
+	serviceOrder, err := u.repo.GetByID(ctx, id, false)
+	if err != nil {
+		logger.Error().Err(err).Any("OS_ID", id).Msg("Error finding service order with id")
+		return nil, err
+	}
+
+	if serviceOrder == nil {
+		logger.Error().Any("OS_ID", id).Msg("Service order with id not found")
+		return nil, ErrServiceOrderNotFound
+	}
+	return serviceOrder, nil
+}
+
+func (u *ServiceOrderUseCase) serviceOrderPriority(status valueobject.ServiceOrderStatus) int {
 	switch {
 	case status.IsEmExecucao():
 		return 0

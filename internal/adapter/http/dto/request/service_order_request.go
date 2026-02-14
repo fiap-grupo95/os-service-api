@@ -11,9 +11,8 @@ type ServiceOrderCreateRequest struct {
 }
 
 type ServiceOrderDiagnosisUpdateRequest struct {
-	ServiceOrderStatus string                        `json:"service_order_status" binding:"required"`
-	Services           []ServiceOrderServiceItem     `json:"services" binding:"omitempty,dive"`
-	PartsSupplies      []ServiceOrderPartsSupplyItem `json:"parts_supplies" binding:"omitempty,dive"`
+	Services      []ServiceOrderServiceItem     `json:"services" binding:"omitempty,dive"`
+	PartsSupplies []ServiceOrderPartsSupplyItem `json:"parts_supplies" binding:"omitempty,dive"`
 }
 
 type ServiceOrderEstimateUpdateRequest struct {
@@ -35,47 +34,45 @@ type ServiceOrderServiceItem struct {
 }
 
 type ServiceOrderPartsSupplyItem struct {
-	ID              uint `json:"id" binding:"required"`
-	QuantityReserve int  `json:"quantity_reserve,omitempty"`
-	QuantityTotal   int  `json:"quantity_total,omitempty"`
+	ID       uint `json:"id" binding:"required"`
+	Quantity int  `json:"quantity,omitempty"`
 }
 
-func (r ServiceOrderCreateRequest) ToEntity() entities.ServiceOrder {
-	return entities.ServiceOrder{
+func (r ServiceOrderCreateRequest) ToEntity() *entities.ServiceOrder {
+	return &entities.ServiceOrder{
 		CustomerID: r.CustomerID,
 		VehicleID:  r.VehicleID,
 	}
 }
 
-func (r ServiceOrderDiagnosisUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
-		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
-		Services:           mapServiceItemsToEntities(r.Services),
-		PartsSupplies:      mapPartsSupplyItemsToEntities(r.PartsSupplies),
+func (r ServiceOrderDiagnosisUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
+		ID:            id,
+		Services:      mapServiceItemsToEntities(r.Services),
+		PartsSupplies: mapPartsSupplyItemsToEntities(r.PartsSupplies),
 	}
 }
 
-func (r ServiceOrderEstimateUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
-		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
-		Services:           mapServiceItemsToEntities(r.Services),
-		PartsSupplies:      mapPartsSupplyItemsToEntities(r.PartsSupplies),
+func (r ServiceOrderEstimateUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
+		ID:            id,
+		Status:        valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+		Services:      mapServiceItemsToEntities(r.Services),
+		PartsSupplies: mapPartsSupplyItemsToEntities(r.PartsSupplies),
 	}
 }
 
-func (r ServiceOrderExecutionUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
-		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+func (r ServiceOrderExecutionUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
+		ID:     id,
+		Status: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 	}
 }
 
-func (r ServiceOrderDeliveryUpdateRequest) ToEntity(id uint) entities.ServiceOrder {
-	return entities.ServiceOrder{
-		ID:                 id,
-		ServiceOrderStatus: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
+func (r ServiceOrderDeliveryUpdateRequest) ToEntity(id uint) *entities.ServiceOrder {
+	return &entities.ServiceOrder{
+		ID:     id,
+		Status: valueobject.ParseServiceOrderStatus(r.ServiceOrderStatus),
 	}
 }
 
@@ -99,9 +96,8 @@ func mapPartsSupplyItemsToEntities(items []ServiceOrderPartsSupplyItem) []entiti
 	result := make([]entities.PartsSupply, 0, len(items))
 	for _, item := range items {
 		result = append(result, entities.PartsSupply{
-			ID:              item.ID,
-			QuantityReserve: item.QuantityReserve,
-			QuantityTotal:   item.QuantityTotal,
+			ID:       item.ID,
+			Quantity: item.Quantity,
 		})
 	}
 	return result

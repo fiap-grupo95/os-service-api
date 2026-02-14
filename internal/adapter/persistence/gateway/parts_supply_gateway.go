@@ -7,6 +7,7 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 type PartsSupplyGateway struct {
@@ -19,6 +20,9 @@ func NewPartsSupplyGateway(repo interfaces.IPartsSupplyRepository) *PartsSupplyG
 
 func (s *PartsSupplyGateway) GetByID(ctx context.Context, id uint) (*entities.PartsSupply, error) {
 	logger := logs.Logger()
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
+	}
 	reponse, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		logger.Error().Err(err).Uint("ID", id).Msg("failed to find parts supply by id")
@@ -27,7 +31,7 @@ func (s *PartsSupplyGateway) GetByID(ctx context.Context, id uint) (*entities.Pa
 	return mapPartsSupplyResponseToDomain(ctx, *reponse), nil
 }
 
-func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error){
+func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error) {
 	logger := logs.Logger()
 	partsSupplies := make([]entities.PartsSupply, 0)
 	response, err := s.repo.GetByServiceOrderID(ctx, serviceOrderID)
@@ -42,13 +46,34 @@ func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrd
 	return partsSupplies, nil
 }
 
-func mapPartsSupplyResponseToDomain(ctx context.Context, response response.PartsSupplyResponse) *entities.PartsSupply{
+func (s *PartsSupplyGateway) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.Reserve(ctx, partsSupplyRequest)
+}
+
+func (s *PartsSupplyGateway) Release(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.Release(ctx, partsSupplyRequest)
+}
+
+func (s *PartsSupplyGateway) AuthorizeReserve(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		startSegment := txn.StartSegment("PartsSupplyGateway.AuthorizeReserve")
+		defer startSegment.End()
+	}
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.AuthorizeReserve(ctx, partsSupplyRequest)
+}
+
+func (s *PartsSupplyGateway) WriteOff(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
+	return s.repo.WriteOff(ctx, partsSupplyRequest)
+}
+
+func mapPartsSupplyResponseToDomain(ctx context.Context, response response.PartsSupplyResponse) *entities.PartsSupply {
 	return &entities.PartsSupply{
-		ID: response.ID,
-		Name: response.Name,
-		Description: response.Description,
-		Price: response.Price,
-		QuantityTotal: response.QuantityTotal,
-		QuantityReserve: response.QuantityReserve,
+		ID:       response.ID,
+		Price:    response.Price,
+		Quantity: response.QuantityTotal,
 	}
 }

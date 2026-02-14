@@ -6,6 +6,7 @@ package mocks
 
 import (
 	context "context"
+
 	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -29,4 +30,19 @@ func (m *MockPartsSupplyGateway) GetByServiceOrderID(ctx context.Context, servic
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]entities.PartsSupply), args.Error(1)
+}
+
+func (m *MockPartsSupplyGateway) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
+}
+
+func (m *MockPartsSupplyGateway) Release(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
+}
+
+func (m *MockPartsSupplyGateway) Update(ctx context.Context, partsSupply *entities.PartsSupply) error {
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
 }

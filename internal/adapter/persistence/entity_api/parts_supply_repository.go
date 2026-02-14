@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
@@ -55,4 +56,25 @@ func (s *PartsSupplyRepository) GetByServiceOrderID(ctx context.Context, service
 		return nil, err
 	}
 	return partsSupply, nil
+}
+
+func (s *PartsSupplyRepository) Reserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
+	return nil
+}
+
+func (s *PartsSupplyRepository) Release(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
+	return nil
+}
+
+func (s *PartsSupplyRepository) WriteOff(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
+	return nil
+}
+
+func (s *PartsSupplyRepository) AuthorizeReserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error {
+	//logger := logs.Logger()
+	//if txn := newrelic.FromContext(ctx); txn != nil {
+	//	startSegment := txn.StartSegment("PartsSupplyRepository.AuthorizeReserve")
+	//	defer startSegment.End()
+	//}
+	return nil
 }

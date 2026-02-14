@@ -11,8 +11,8 @@ type ServiceOrder struct {
 	Customer                 *Customer                      `json:"customer"`
 	VehicleID                uint                           `json:"vehicle_id"`
 	Vehicle                  *Vehicle                       `json:"vehicle"`
-	ServiceOrderStatus       valueobject.ServiceOrderStatus `json:"service_order_status"`
-	Estimate                 float64                        `json:"estimate,omitempty"`
+	Status                   valueobject.ServiceOrderStatus `json:"service_order_status"`
+	Estimate                 *Estimate                        `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                     `json:"started_execution_date,omitempty"`
 	FinalExecutionDate       *time.Time                     `json:"final_execution_date,omitempty"`
 	ExecutionDurationInHours float64                        `json:"execution_duration_in_hours,omitempty"`

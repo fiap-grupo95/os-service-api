@@ -283,8 +283,8 @@ func mapAdditionalRepairPartsSupplies(partsSupplies []request.AdditionalRepairPa
 	result := make([]entities.PartsSupply, 0, len(partsSupplies))
 	for _, ps := range partsSupplies {
 		result = append(result, entities.PartsSupply{
-			ID:              ps.ID,
-			QuantityReserve: ps.QuantityReserve,
+			ID: ps.ID,
+			// QuantityReserve: ps.QuantityReserve,
 		})
 	}
 	return result
@@ -314,10 +314,8 @@ func toAdditionalRepairResponse(entity entities.AdditionalRepair) response.Addit
 	for _, ps := range entity.PartsSupplies {
 		res.PartsSupplies = append(res.PartsSupplies, response.AdditionalRepairPartsSupplyResponse{
 			ID:              ps.ID,
-			Name:            ps.Name,
 			Price:           ps.Price,
-			QuantityReserve: ps.QuantityReserve,
-			QuantityTotal:   ps.QuantityTotal,
+			// QuantityReserve: ps.QuantityReserve,
 		})
 	}
 

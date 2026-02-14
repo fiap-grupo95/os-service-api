@@ -9,9 +9,11 @@ import (
 	request "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	response "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 
 	"github.com/gin-gonic/gin"
 	"github.com/newrelic/go-agent/v3/integrations/nrgin"
@@ -19,13 +21,9 @@ import (
 )
 
 const (
-	diagnosisFlow = "diagnosis"
-	estimateFlow  = "estimate"
-	executionFlow = "execution"
-	deliveryFlow  = "delivery"
-	getFlow       = "get"
-	listFlow      = "list"
-	createFlow    = "create"
+	getFlow             = "get"
+	listFlow            = "list"
+	createFlow          = "create"
 )
 
 const (
@@ -36,20 +34,18 @@ const (
 )
 
 type IServiceOrderHandler interface {
-	CreateServiceOrder(c *gin.Context)
+	GetServiceOrder(c *gin.Context)
+	ListServiceOrders(c *gin.Context)
+	CreateServiceOrder(c *gin.	Context)
 	CancelServiceOrder(c *gin.Context)
-	UpdateServiceOrderDiagnosis(c *gin.Context)
-	FinishServiceOrderDiagnosis(c *gin.Context)
+	DiagnosisServiceOrder(c *gin.Context)
 	ApproveServiceOrderEstimate(c *gin.Context)
 	RejectServiceOrderEstimate(c *gin.Context)
 	CancelServiceOrderEstimate(c *gin.Context)
-	CreateServiceOrderExecution(c *gin.Context)
+	ExecutionServiceOrder(c *gin.Context)
 	FinishServiceOrderExecution(c *gin.Context)
-	CreateServiceOrderPayment(c *gin.Context)
+	PaymentServiceOrder(c *gin.Context)
 	DeliveryServiceOrder(c *gin.Context)
-	GetServiceOrder(c *gin.Context)
-	GetServiceOrderHistory(c *gin.Context)
-	ListServiceOrders(c *gin.Context)
 }
 
 type ServiceOrderHandler struct {
@@ -60,267 +56,6 @@ func NewServiceOrderHandler(useCase usecase.IServiceOrderUseCase) *ServiceOrderH
 	return &ServiceOrderHandler{
 		serviceOrderUseCase: useCase,
 	}
-}
-
-func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) FinishServiceOrderDiagnosis(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) CreateServiceOrderExecution(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) CreateServiceOrderPayment(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) GetServiceOrderHistory(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-// CreateServiceOrder godoc
-// @Summary Create a new service order
-// @Description Create a new service order record
-// @Tags Service Orders
-// @Security Bearer
-// @Accept json
-// @Produce json
-// @Param order body request.ServiceOrderCreateRequest true "Service Order Information"
-// @Success 201 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /v1/service-orders/create [post]
-func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
-	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Create")
-
-	var req request.ServiceOrderCreateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderCreate, resultError, "", "", strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Msg("Failed to bind JSON for create service order")
-
-		writeBindingError(c, err)
-		return
-	}
-	result, err := h.serviceOrderUseCase.CreateServiceOrder(ctx, req.ToEntity())
-	if err != nil {
-		sendToMetric(ctx, metricServiceOrderCreate, resultError, "", "", strconv.Itoa(getStatusError(err)))
-
-		logger.Error().Err(err).Msg("Failed to create service order")
-
-		writeServiceOrderError(c, err, "Failed to create service order")
-		return
-	}
-
-	sendToMetric(ctx, metricServiceOrderCreate, resultSuccess, "", "", strconv.Itoa(http.StatusCreated))
-
-	c.JSON(http.StatusCreated, response.NewServiceOrderResponse(result))
-}
-
-// UpdateServiceOrderDiagnosis godoc
-// @Summary Update service order diagnosis
-// @Description Update the diagnosis information of a service order
-// @Tags Service Orders
-// @Security Bearer
-// @Accept json
-// @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderDiagnosisUpdateRequest true "Service Order Diagnosis Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/diagnosis [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderDiagnosis(c *gin.Context) {
-	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateDiagnosis")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, "", strconv.Itoa(http.StatusBadRequest))
-		return
-	}
-
-	var req request.ServiceOrderDiagnosisUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), diagnosisFlow)
-	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order diagnosis")
-
-		writeServiceOrderError(c, err, "Failed to update service order diagnosis")
-		return
-	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, diagnosisFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
-	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
-}
-
-// UpdateServiceOrderEstimate godoc
-// @Summary Update service order estimate
-// @Description Update the estimate information of a service order
-// @Tags Service Orders
-// @Security Bearer
-// @Accept json
-// @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderEstimateUpdateRequest true "Service Order Estimate Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/estimate [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderEstimate(c *gin.Context) {
-	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateEstimate")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateFlow, "", strconv.Itoa(http.StatusBadRequest))
-		return
-	}
-
-	var req request.ServiceOrderEstimateUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order estimate")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), estimateFlow)
-	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, estimateFlow, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order estimate")
-
-		writeServiceOrderError(c, err, "Failed to update service order estimate")
-		return
-	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, estimateFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
-	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
-}
-
-// UpdateServiceOrderExecution godoc
-// @Summary Update service order execution
-// @Description Update the execution information of a service order
-// @Tags Service Orders
-// @Security Bearer
-// @Accept json
-// @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderExecutionUpdateRequest true "Service Order Execution Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/execution [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderExecution(c *gin.Context) {
-	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateExecution")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, executionFlow, "", strconv.Itoa(http.StatusBadRequest))
-		return
-	}
-
-	var req request.ServiceOrderExecutionUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, executionFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order execution")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), executionFlow)
-	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, executionFlow, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
-		writeServiceOrderError(c, err, "Failed to update service order execution")
-		return
-	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, executionFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
-	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
-}
-
-// UpdateServiceOrderDelivery godoc
-// @Summary Update service order delivery
-// @Description Update the delivery information of a service order
-// @Tags Service Orders
-// @Security Bearer
-// @Accept json
-// @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderDeliveryUpdateRequest true "Service Order Delivery Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/delivery [patch]
-func (h *ServiceOrderHandler) UpdateServiceOrderDelivery(c *gin.Context) {
-	logger := logs.Logger()
-	ctx := retrieveTransactioAndContext(c, "ServiceOrder/UpdateDelivery")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, deliveryFlow, "", strconv.Itoa(http.StatusBadRequest))
-		return
-	}
-
-	var req request.ServiceOrderDeliveryUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, deliveryFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order delivery")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), deliveryFlow)
-	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, deliveryFlow, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order delivery")
-		writeServiceOrderError(c, err, "Failed to update service order delivery")
-		return
-	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, deliveryFlow, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
-	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
 // GetServiceOrder godoc
@@ -335,7 +70,7 @@ func (h *ServiceOrderHandler) UpdateServiceOrderDelivery(c *gin.Context) {
 // @Failure 400 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /service-orders/{id} [get]
+// @Router /v1/service-orders/{id} [get]
 func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Get")
@@ -369,7 +104,7 @@ func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 // @Produce json
 // @Success 200 {array} response.ServiceOrderResponse
 // @Failure 500 {object} map[string]string
-// @Router /service-orders [get]
+// @Router /v1/service-orders [get]
 func (h *ServiceOrderHandler) ListServiceOrders(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/List")
@@ -384,6 +119,293 @@ func (h *ServiceOrderHandler) ListServiceOrders(c *gin.Context) {
 	}
 	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, listFlow, "", strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderListResponse(serviceOrders))
+}
+
+// CreateServiceOrder godoc
+// @Summary Create a new service order
+// @Description Create a new service order record
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param order body request.ServiceOrderCreateRequest true "Service Order Information"
+// @Success 201 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/create [post]
+func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Create")
+
+	var req request.ServiceOrderCreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		sendToMetric(ctx, metricServiceOrderCreate, resultError, createFlow, "", strconv.Itoa(http.StatusBadRequest))
+
+		logger.Error().Err(err).Msg("Failed to bind JSON for create service order")
+
+		writeBindingError(c, err)
+		return
+	}
+	result, err := h.serviceOrderUseCase.CreateServiceOrder(ctx, req.ToEntity())
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderCreate, resultError, createFlow, "", strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Msg("Failed to create service order")
+
+		writeServiceOrderError(c, err, "Failed to create service order")
+		return
+	}
+
+	sendToMetric(ctx, metricServiceOrderCreate, resultSuccess, createFlow, "", strconv.Itoa(http.StatusCreated))
+
+	c.JSON(http.StatusCreated, response.NewServiceOrderResponse(result))
+}
+
+func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
+	// TODO: Implement this method
+}
+
+// UpdateServiceOrderDiagnosis godoc
+// @Summary Update service order diagnosis
+// @Description Update the diagnosis information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID"
+// @Param order body request.ServiceOrderDiagnosisUpdateRequest true "Service Order Diagnosis Information"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /service-orders/{id}/diagnosis [post]
+func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Diagnosis")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+
+	var req request.ServiceOrderDiagnosisUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
+		writeBindingError(c, err)
+		return
+	}
+
+	result, err := h.serviceOrderUseCase.DiagnosisServiceOrder(ctx, req.ToEntity(id))
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order diagnosis")
+
+		writeServiceOrderError(c, err, "Failed to update service order diagnosis")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// UpdateServiceOrderEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/{id}/estimate/approve [post]
+func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_APPROVE)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to approve service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to approve service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_APPROVE, string(valueobject.StatusAprovada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// UpdateServiceOrderEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/{id}/estimate/reject [post]
+func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_REJECT)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to reject service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to reject service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_REJECT, string(valueobject.StatusRejeitada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// UpdateServiceOrderCancelEstimate godoc
+// @Summary Update service order estimate
+// @Description Update the estimate information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept JSON
+// @Produce JSON
+// @Param id path int true "Service Order ID"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/{id}/estimate/cancel [post]
+func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_CANCEL)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, string(valueobject.StatusEmDiagnostico), strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order estimate")
+
+		writeServiceOrderError(c, err, "Failed to cancel service order estimate")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_CANCEL, string(valueobject.StatusCancelada), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// UpdateServiceOrderExecution godoc
+// @Summary Update service order execution
+// @Description Update the execution information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID"
+// @Param order body request.ServiceOrderExecutionUpdateRequest true "Service Order Execution Information"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/{id}/execution [post]
+func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+
+	var req request.ServiceOrderExecutionUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order execution")
+
+		writeBindingError(c, err)
+		return
+	}
+
+	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), constants.EXECUTION)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
+		writeServiceOrderError(c, err, "Failed to update service order execution")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
+	// TODO: Implement this method
+}
+
+func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
+	// TODO: Implement this method
+}
+
+// UpdateServiceOrderDelivery godoc
+// @Summary Update service order delivery
+// @Description Update the delivery information of a service order
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID"
+// @Param order body request.ServiceOrderDeliveryUpdateRequest true "Service Order Delivery Information"
+// @Success 200 {object} response.ServiceOrderResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /v1/service-orders/{id}/delivery [post]
+func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Delivery")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+
+	var req request.ServiceOrderDeliveryUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order delivery")
+
+		writeBindingError(c, err)
+		return
+	}
+
+	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), constants.DELIVERY)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order delivery")
+		writeServiceOrderError(c, err, "Failed to update service order delivery")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
 func parseServiceOrderIDParam(c *gin.Context) (uint, bool) {
@@ -490,7 +512,7 @@ func getStatusError(err error) int {
 
 func sendToMetric(ctx context.Context, metricName string, result string, flow string, status string, code string) {
 	tags := make(map[string]string)
-	
+
 	if result != "" {
 		tags["result"] = result
 	}

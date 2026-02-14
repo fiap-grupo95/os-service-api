@@ -30,10 +30,6 @@ func (m *PartsSupplyModel) TableName() string {
 func (m *PartsSupplyModel) ToDomain() entities.PartsSupply {
 	return entities.PartsSupply{
 		ID:              m.ID,
-		Name:            m.Name,
-		Description:     m.Description,
 		Price:           m.Price,
-		QuantityTotal:   m.QuantityTotal,
-		QuantityReserve: m.QuantityReserve,
 	}
 }

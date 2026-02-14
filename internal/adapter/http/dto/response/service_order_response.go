@@ -35,8 +35,7 @@ type ServiceOrderPartsSupplyResponse struct {
 	ID              uint    `json:"id"`
 	Name            string  `json:"name"`
 	Price           float64 `json:"price"`
-	QuantityReserve int     `json:"quantity_reserve"`
-	QuantityTotal   int     `json:"quantity_total"`
+	Quantity        int     `json:"quantity"`
 }
 
 type ServiceOrderAdditionalRepairResponse struct {
@@ -63,8 +62,8 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 		Customer:                 mapCustomerResponse(entity.Customer),
 		VehicleID:                entity.VehicleID,
 		Vehicle:                  mapVehicleResponse(entity.Vehicle),
-		Status:                   entity.ServiceOrderStatus.String(),
-		Estimate:                 entity.Estimate,
+		Status:                   entity.Status.String(),
+		// Estimate:                 entity.Estimate,
 		StartedExecutionDate:     entity.StartedExecutionDate,
 		FinalExecutionDate:       entity.FinalExecutionDate,
 		ExecutionDurationInHours: entity.ExecutionDurationInHours,
@@ -113,11 +112,9 @@ func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrde
 	result := make([]ServiceOrderPartsSupplyResponse, 0, len(partsSupplies))
 	for _, ps := range partsSupplies {
 		result = append(result, ServiceOrderPartsSupplyResponse{
-			ID:              ps.ID,
-			Name:            ps.Name,
-			Price:           ps.Price,
-			QuantityReserve: ps.QuantityReserve,
-			QuantityTotal:   ps.QuantityTotal,
+			ID:    ps.ID,
+			Price: ps.Price,
+			Quantity: ps.Quantity,
 		})
 	}
 	return result

@@ -8,10 +8,12 @@ import (
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	"github.com/newrelic/go-agent/v3/newrelic"
 )
 
 const (
 	ErrInvalidStatus = "invalid status to create service order"
+	InvalidID        = "invalid id"
 )
 
 type ServiceOrderGateway struct {
@@ -34,22 +36,16 @@ func NewServiceOrderGateway(repository interfaces.IServiceOrderRepository, vehic
 
 func (s *ServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
-	if !serviceOrder.ServiceOrderStatus.IsRecebida() {
+	if !serviceOrder.Status.IsRecebida() {
 		return nil, errors.New(ErrInvalidStatus)
 	}
 
 	serviceOrderDto := &dto.ServiceOrderModel{
-		ID:         serviceOrder.ID,
 		CustomerID: serviceOrder.CustomerID,
 		VehicleID:  serviceOrder.VehicleID,
-		Estimate:   serviceOrder.Estimate,
 		ServiceOrderStatus: dto.ServiceOrderStatus{
-			Description: serviceOrder.ServiceOrderStatus.String(),
+			Description: serviceOrder.Status.String(),
 		},
-		StartedExecutionDate: serviceOrder.StartedExecutionDate,
-		FinalExecutionDate:   serviceOrder.FinalExecutionDate,
-		CreatedAt:            serviceOrder.CreatedAt,
-		UpdatedAt:            serviceOrder.UpdatedAt,
 	}
 
 	createdServiceOrder, err := s.repo.Create(ctx, serviceOrderDto)
@@ -62,6 +58,9 @@ func (s *ServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities
 
 func (s *ServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData bool) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
+	}
 
 	serviceOrderModel, err := s.repo.GetByID(ctx, id)
 	if err != nil {

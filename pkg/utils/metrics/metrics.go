@@ -6,7 +6,7 @@ import (
 )
 
 func BuildMetricName(base string, labels map[string]string) string {
-	if len(labels) == 0 {
+	if labels == nil || len(labels) == 0 {
 		return base
 	}
 
