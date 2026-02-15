@@ -319,7 +319,7 @@ func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceO
 		return nil, ErrInvalidTransitionStatusToEstimate
 	}
 
-	factory := operations.NewEstimateStrategyFactory()
+	factory := operations.NewEstimateStrategyFactory(u.partsSupplyRepo, u.billingServiceRepo)
 	strategy, err := factory.GetStrategy(operation)
 	if err != nil {
 		return nil, err

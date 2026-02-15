@@ -19,8 +19,56 @@ type MockServiceOrderUseCase struct {
 	mock.Mock
 }
 
-func (m *MockServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
+func (m *MockServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	args := m.Called(ctx, serviceOrder)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrder)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrderID, operation)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrderID, operation)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+}
+
+func (m *MockServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrderID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

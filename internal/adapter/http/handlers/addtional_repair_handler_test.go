@@ -103,7 +103,7 @@ func TestGetAdditionalRepair_Success(t *testing.T) {
 			{ID: 2, Name: "service", Price: 80},
 		},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 3, Name: "part", Price: 43.45, QuantityReserve: 2, QuantityTotal: 10},
+			{ID: 3, Price: 43.45, Quantity: 2},
 		},
 	}
 	mockUC.EXPECT().GetAdditionalRepair(gomock.Any(), uint(1)).Return(expected, nil)
@@ -162,7 +162,7 @@ func TestAddPartSupplyAndService_Success(t *testing.T) {
 		Description: "update",
 		Services:    []entities.Service{{ID: 4}},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 5, QuantityReserve: 3},
+			{ID: 5},
 		},
 	}
 	mockUC.EXPECT().AddPartSupplyAndService(gomock.Any(), uint(1), expected).Return(nil)
@@ -197,7 +197,7 @@ func TestAddPartSupplyAndService_Error(t *testing.T) {
 		Description: "update",
 		Services:    []entities.Service{{ID: 4}},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 5, QuantityReserve: 3},
+			{ID: 5},
 		},
 	}
 	mockUC.EXPECT().AddPartSupplyAndService(gomock.Any(), uint(1), expected).Return(errors.New("fail"))
@@ -228,7 +228,7 @@ func TestRemovePartSupplyAndService_Success(t *testing.T) {
 		Description: "remove",
 		Services:    []entities.Service{{ID: 4}},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 5, QuantityReserve: 1},
+			{ID: 5},
 		},
 	}
 	mockUC.EXPECT().RemovePartSupplyAndService(gomock.Any(), uint(1), expected).Return(nil)
@@ -263,7 +263,7 @@ func TestRemovePartSupplyAndService_Error(t *testing.T) {
 		Description: "remove",
 		Services:    []entities.Service{{ID: 4}},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 5, QuantityReserve: 1},
+			{ID: 5},
 		},
 	}
 	mockUC.EXPECT().RemovePartSupplyAndService(gomock.Any(), uint(1), expected).Return(errors.New("fail"))
