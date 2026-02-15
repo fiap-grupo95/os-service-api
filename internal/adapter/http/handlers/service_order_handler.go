@@ -162,8 +162,38 @@ func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
 	c.JSON(http.StatusCreated, response.NewServiceOrderResponse(result))
 }
 
+// CancelServiceOrder godoc
+// @Summary Cancel a service order
+// @Description Cancels a service order, transitioning status to 'CANCELLED'. This action can be performed on service orders that are not yet finalized, delivered, or already cancelled. Once cancelled, the service order cannot be resumed.
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Service order cancelled successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /v1/service-orders/{id}/cancel [post]
 func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Cancel")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.CANCEL, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+	result, err := h.serviceOrderUseCase.CancelServiceOrder(ctx, id)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.CANCEL, "", strconv.Itoa(getStatusError(err)))
+
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order")
+
+		writeServiceOrderError(c, err, "Failed to cancel service order")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.CANCEL, result.Status.String(), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
 // DiagnosisServiceOrder godoc

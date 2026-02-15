@@ -23,6 +23,7 @@ var (
 	ErrInvalidTransitionStatusToExecution = errors.New("invalid transition status to execution")
 	ErrInvalidTransitionStatusToDelivery  = errors.New("invalid transition status to delivery")
 	ErrInvalidTransitionStatusToEstimate  = errors.New("invalid transition status to estimate")
+	ErrInvalidTransitionStatusToCancel    = errors.New("invalid transition status to cancel")
 	ErrInvalidStatus                      = errors.New("invalid service order status")
 	ErrInsufficientPartsSupply            = errors.New("insufficient parts supply available")
 	ErrInvalidFlow                        = errors.New("invalid flow")
@@ -43,6 +44,7 @@ type IServiceOrderUseCase interface {
 	DeliveryServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error)
 	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error)
 	ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error)
+	CancelServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error)
 }
 
 type ServiceOrderUseCase struct {
@@ -457,6 +459,33 @@ func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOr
 		return nil, err
 	}
 
+	return serviceOrder, nil
+}
+
+func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error){
+	logger := logs.LoggerWithContext(ctx)
+	if txn := newrelic.FromContext(ctx); txn != nil {
+		startSegment := txn.StartSegment("ServiceOrderUseCase.validateExecution")
+		defer startSegment.End()
+	}
+
+	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error finding service order with id")
+		return nil, err
+	}
+
+	if serviceOrder.Status.IsFinalizada() || serviceOrder.Status.IsEntregue() || serviceOrder.Status.IsCancelada() {
+		return nil, ErrInvalidTransitionStatusToCancel
+	}
+
+	serviceOrder.Status = valueobject.StatusCancelada
+
+	err = u.repo.Update(ctx, serviceOrder)
+	if err != nil{
+		logger.Error().Err(err).Msg("Error updating service order")
+		return nil, err
+	}
 	return serviceOrder, nil
 }
 

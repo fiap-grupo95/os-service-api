@@ -11,4 +11,5 @@ const (
 	ESTIMATE_REJECT  = "estimate_reject"
 	ESTIMATE_CANCEL  = "estimate_cancel"
 	PAYMENT          = "payment"
+	CANCEL           = "cancel"
 )
