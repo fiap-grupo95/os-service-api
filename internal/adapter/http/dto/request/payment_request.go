@@ -9,9 +9,9 @@ import (
 
 // PaymentCreateRequest represents the payload to create a payment.
 type PaymentCreateRequest struct {
-	ServiceOrderID uint    `json:"service_order_id" binding:"required"`
-	PaymentDate    string  `json:"payment_date" binding:"required"`
-	Amount         float64 `json:"amount" binding:"required"`
+	EstimateID  string  `json:"estimate_id" binding:"required"`
+	PaymentDate string  `json:"payment_date" binding:"required"`
+	Amount      float64 `json:"amount" binding:"required"`
 }
 
 var paymentDateLayouts = []string{
@@ -29,9 +29,9 @@ func (r PaymentCreateRequest) ToEntity() (entities.Payment, error) {
 	}
 
 	return entities.Payment{
-		ServiceOrderID: r.ServiceOrderID,
-		PaymentDate:    paymentDate,
-		Amount:         r.Amount,
+		EstimateID:  r.EstimateID,
+		PaymentDate: paymentDate,
+		Amount:      r.Amount,
 	}, nil
 }
 

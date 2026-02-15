@@ -42,6 +42,16 @@ func (m *MockPartsSupplyGateway) Release(ctx context.Context, partsSupply []enti
 	return args.Error(0)
 }
 
+func (m *MockPartsSupplyGateway) WriteOff(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
+}
+
+func (m *MockPartsSupplyGateway) AuthorizeReserve(ctx context.Context, partsSupply []entities.PartsSupply) error {
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
+}
+
 func (m *MockPartsSupplyGateway) Update(ctx context.Context, partsSupply *entities.PartsSupply) error {
 	args := m.Called(ctx, partsSupply)
 	return args.Error(0)

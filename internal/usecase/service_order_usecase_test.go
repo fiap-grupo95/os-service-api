@@ -9,6 +9,8 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/adapter/operations"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 	mocks "github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,8 +47,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := entities.ServiceOrder{
 			CustomerID: 1,
@@ -74,8 +77,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := entities.ServiceOrder{
 			CustomerID: 1,
@@ -99,8 +103,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			CustomerID: 1,
@@ -122,8 +127,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			CustomerID: 1,
@@ -145,8 +151,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			CustomerID: 1,
@@ -169,8 +176,9 @@ func TestCreateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			CustomerID: 0,
@@ -195,8 +203,9 @@ func TestUpdateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			ID:     1,
@@ -206,11 +215,13 @@ func TestUpdateServiceOrder(t *testing.T) {
 			},
 			PartsSupplies: []entities.PartsSupply{
 				{
-					ID:              1,
-					QuantityReserve: 2,
+					ID:       1,
+					Quantity: 2,
 				},
 			},
 		}
+
+		executionRepo.On("CreateExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: 1, ServiceOrderID: 1}, nil)
 
 		serviceOrderRepo.On("GetByID", uint(1), false).Return(&dto.ServiceOrderModel{
 			ID: 1,
@@ -221,15 +232,15 @@ func TestUpdateServiceOrder(t *testing.T) {
 		}, nil)
 		serviceRepo.On("GetByID", mock.Anything, uint(1)).Return(&entities.Service{ID: 1}, nil)
 		partsSupplyRepo.On("GetByID", mock.Anything, uint(1)).Return(&entities.PartsSupply{
-			ID:              1,
-			QuantityTotal:   10,
-			QuantityReserve: 2,
+			ID:       1,
+			Quantity: 10,
 		}, nil)
+		partsSupplyRepo.On("AuthorizeReserve", mock.Anything, mock.Anything).Return(nil)
 		// Reserve is called inside validateDiagnosis to reserve parts supply
 		partsSupplyRepo.On("Reserve", mock.Anything, mock.Anything).Return(nil)
 		// Billing service is called to create an estimate during diagnosis
-		estimateValue := 100.0
-		billingServiceRepo.On("CreateEstimate", mock.Anything, mock.Anything).Return(&estimateValue, nil)
+		estimate := &entities.Estimate{ID: "estimate-1", ServiceOrderID: "1", Value: 100.0, Status: "created"}
+		billingServiceRepo.On("CreateEstimate", mock.Anything, mock.Anything).Return(estimate, nil)
 		partsSupplyRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
 		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
 
@@ -245,24 +256,24 @@ func TestUpdateServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			ID:     1,
 			Status: valueobject.StatusEntregue,
 		}
-		flow := DIAGNOSIS
 
 		serviceOrderRepo.On("GetByID", uint(1), false).Return(&dto.ServiceOrderModel{
 			ID: 1,
 			ServiceOrderStatus: dto.ServiceOrderStatus{
 				ID:          1,
-				Description: string(valueobject.StatusRecebida),
+				Description: string(valueobject.StatusEntregue),
 			},
 		}, nil)
 
-		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		r, err := useCase.DiagnosisServiceOrder(context.Background(), serviceOrder)
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidTransitionStatusToDiagnosis, err)
 		assert.Nil(t, r)
@@ -277,23 +288,15 @@ func TestValidateEstimate(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusAprovada,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: StatusAguardandoAprovacao,
-			},
-		}
+		serviceOrderID := uint(1)
 
 		// Mock get parts supplies by service order ID
 		partsSupplyRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
-			{ID: 1, QuantityTotal: 10, QuantityReserve: 2},
+			{ID: 1, Quantity: 2},
 		}, nil)
 
 		// Mock get parts supply service order relation
@@ -305,17 +308,27 @@ func TestValidateEstimate(t *testing.T) {
 
 		// Mock get parts supply by ID
 		partsSupplyRepo.On("GetByID", context.Background(), uint(1)).Return(&entities.PartsSupply{
-			ID:              1,
-			QuantityTotal:   10,
-			QuantityReserve: 2,
+			ID:       1,
+			Quantity: 10,
 		}, nil)
 
 		// Mock update parts supply
 		partsSupplyRepo.On("Update", context.Background(), mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateEstimate(context.Background(), request, current, update)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{
+			ID:     serviceOrderID,
+			Status: valueobject.StatusAguardandoAprovacao,
+			Estimate: &entities.Estimate{
+				ID: "estimate-1",
+			},
+			PartsSupplies: []entities.PartsSupply{{ID: 1, Quantity: 2}},
+			Services:      []entities.Service{{ID: 1}},
+		}, nil)
+		partsSupplyRepo.On("WriteOff", mock.Anything, mock.Anything).Return(nil)
+		billingServiceRepo.On("ApproveEstimate", mock.Anything, mock.Anything).Return(&entities.Estimate{ID: "estimate-1", ServiceOrderID: "1", Value: 100.0, Status: "approved"}, nil)
+		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+
+		result, err := useCase.EstimateServiceOrder(context.Background(), serviceOrderID, constants.ESTIMATE_APPROVE)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -329,32 +342,17 @@ func TestValidateEstimate(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusAprovada,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: StatusAguardandoAprovacao,
-			},
-		}
+		serviceOrderID := uint(1)
 
-		partsSupplyRepo.On("GetByServiceOrderID", context.Background(), uint(1)).Return([]entities.PartsSupply{
-			{ID: 1},
-		}, nil)
-
-		serviceOrderRepo.On("GetPartsSupplyServiceOrder", uint(1), uint(1)).Return(nil, errors.New("error getting relation"))
-
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateEstimate(context.Background(), request, current, update)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusAguardandoAprovacao}, nil)
+		result, err := useCase.EstimateServiceOrder(context.Background(), serviceOrderID, "invalid_flow")
 
 		assert.Error(t, err)
-		assert.Equal(t, "error getting relation", err.Error())
+		assert.Equal(t, operations.ErrInvalidEstimateOperation, err.Error())
 		assert.Nil(t, result)
 	})
 }
@@ -367,15 +365,16 @@ func TestCalculateEstimate(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 		services := []entities.Service{
 			{ID: 1},
 			{ID: 2},
 		}
 		partsSupplies := []entities.PartsSupply{
-			{ID: 1, QuantityReserve: 2},
-			{ID: 2, QuantityReserve: 3},
+			{ID: 1, Quantity: 2},
+			{ID: 2, Quantity: 3},
 		}
 
 		// Setup mocks for services
@@ -398,13 +397,14 @@ func TestCalculateEstimate(t *testing.T) {
 			Price: 25.0,
 		}, nil)
 
+		billingServiceRepo.On("CreateEstimate", mock.Anything, mock.Anything).Return(&entities.Estimate{ID: "estimate-350", ServiceOrderID: "1", Value: 350.0, Status: "created"}, nil)
 		result, err := useCase.billingServiceRepo.CreateEstimate(context.Background(), &entities.ServiceOrder{
 			ID:            1,
 			Services:      services,
 			PartsSupplies: partsSupplies,
 		})
 		assert.NoError(t, err)
-		assert.Equal(t, 350.0, result) // (100 + 75) + (50*2 + 25*3) = 175 + 175 = 350
+		assert.Equal(t, 350.0, result.Value) // (100 + 75) + (50*2 + 25*3) = 175 + 175 = 350
 	})
 }
 
@@ -416,27 +416,20 @@ func TestValidateExecution(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusEmExecucao,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusAprovada),
-			},
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusAprovada}, nil)
+		executionRepo.On("CreateExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: 1, ServiceOrderID: 1, Status: "started"}, nil)
+		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateExecution(context.Background(), request, current, update)
+		result, err := useCase.ExecutionServiceOrder(context.Background(), serviceOrderID, constants.EXECUTION_START)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, valueobject.StatusEmExecucao, result.Status)
-		assert.NotNil(t, result.StartedExecutionDate)
+		assert.NotNil(t, result.Execution)
 	})
 
 	t.Run("Success - Finish Execution", func(t *testing.T) {
@@ -446,29 +439,20 @@ func TestValidateExecution(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusFinalizada,
-		}
-		start := time.Now().Add(-75 * time.Minute) // 1.25 horas no passado
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusEmExecucao),
-			},
-			StartedExecutionDate: &start,
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusEmExecucao}, nil)
+		executionRepo.On("FinishExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: 1, ServiceOrderID: 1, Status: "finished"}, nil)
+		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateExecution(context.Background(), request, current, update)
+		result, err := useCase.ExecutionServiceOrder(context.Background(), serviceOrderID, constants.EXECUTION_FINISH)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, valueobject.StatusFinalizada, result.Status)
-		assert.InDelta(t, 1.25, result.ExecutionDurationInHours, 0.01)
+		assert.NotNil(t, result.Execution)
 	})
 
 	t.Run("Error - Invalid Status Transition", func(t *testing.T) {
@@ -478,22 +462,13 @@ func TestValidateExecution(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusFinalizada,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusRecebida),
-			},
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusRecebida}, nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateExecution(context.Background(), request, current, update)
+		result, err := useCase.ExecutionServiceOrder(context.Background(), serviceOrderID, constants.EXECUTION_FINISH)
 
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidTransitionStatusToExecution, err)
@@ -509,23 +484,15 @@ func TestValidateDelivery(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusEntregue,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusFinalizada),
-			},
-			PaymentID: UintPointer(1),
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusFinalizada, Estimate: &entities.Estimate{ID: "estimate-1"}}, nil)
+		billingServiceRepo.On("GetPaymentByEstimateID", mock.Anything, "estimate-1").Return(&entities.Payment{ID: 1, EstimateID: "estimate-1", Amount: 100.0, PaymentDate: time.Now()}, nil)
+		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateDelivery(context.Background(), request, current, update)
+		result, err := useCase.DeliveryServiceOrder(context.Background(), serviceOrderID)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -539,22 +506,14 @@ func TestValidateDelivery(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusEntregue,
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusFinalizada),
-			},
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusFinalizada, Estimate: &entities.Estimate{ID: "estimate-1"}}, nil)
+		billingServiceRepo.On("GetPaymentByEstimateID", mock.Anything, "estimate-1").Return(nil, nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateDelivery(context.Background(), request, current, update)
+		result, err := useCase.DeliveryServiceOrder(context.Background(), serviceOrderID)
 
 		assert.Error(t, err)
 		assert.Equal(t, "payment information is required for delivery", err.Error())
@@ -568,23 +527,13 @@ func TestValidateDelivery(t *testing.T) {
 		serviceOrderRepo := new(mocks.MockServiceOrderGateway)
 		serviceRepo := new(mocks.MockServiceGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
-		request := &entities.ServiceOrder{
-			ID:        1,
-			Status:    valueobject.StatusEntregue,
-			PaymentID: UintPointer(1),
-		}
-		serviceOrderDTO := &dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusEmDiagnostico),
-			},
-		}
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
+		serviceOrderID := uint(1)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusEmDiagnostico}, nil)
 
-		update := &entities.ServiceOrder{}
-		current := toServiceOrderEntity(serviceOrderDTO)
-		result, err := useCase.validateDelivery(context.Background(), request, current, update)
+		result, err := useCase.DeliveryServiceOrder(context.Background(), serviceOrderID)
 
 		assert.Error(t, err)
 		assert.Equal(t, ErrInvalidTransitionStatusToDelivery, err)
@@ -600,18 +549,16 @@ func TestInvalidServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 		serviceOrder := &entities.ServiceOrder{
 			ID:     999,
 			Status: valueobject.StatusEmDiagnostico,
 		}
-		flow := DIAGNOSIS
-
 		serviceOrderRepo.On("GetByID", uint(999), false).Return(nil, ErrServiceOrderNotFound)
-
-		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		r, err := useCase.DiagnosisServiceOrder(context.Background(), serviceOrder)
 		assert.Error(t, err)
 		assert.Equal(t, ErrServiceOrderNotFound, err)
 		assert.Nil(t, r)
@@ -624,25 +571,16 @@ func TestInvalidServiceOrder(t *testing.T) {
 		serviceRepo := new(mocks.MockServiceGateway)
 		partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 		billingServiceRepo := new(mocks.MockBillingServiceGateway)
+		executionRepo := new(mocks.MockExecutionGateway)
 
-		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+		useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
-		serviceOrder := &entities.ServiceOrder{
-			ID:     1,
-			Status: valueobject.StatusEmDiagnostico,
-		}
-		flow := "invalid_flow"
+		serviceOrderID := uint(1)
 
-		serviceOrderRepo.On("GetByID", uint(1), false).Return(&dto.ServiceOrderModel{
-			ID: 1,
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				Description: string(valueobject.StatusRecebida),
-			},
-		}, nil)
-
-		r, err := useCase.UpdateServiceOrder(context.Background(), serviceOrder, flow)
+		serviceOrderRepo.On("GetByID", serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusAguardandoAprovacao}, nil)
+		r, err := useCase.EstimateServiceOrder(context.Background(), serviceOrderID, "invalid_flow")
 		assert.Error(t, err)
-		assert.Equal(t, ErrInvalidFlow, err)
+		assert.Equal(t, operations.ErrInvalidEstimateOperation, err.Error())
 		assert.Nil(t, r)
 	})
 }
@@ -654,7 +592,8 @@ func TestGetServiceOrder(t *testing.T) {
 	serviceRepo := new(mocks.MockServiceGateway)
 	partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 	billingServiceRepo := new(mocks.MockBillingServiceGateway)
-	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+	executionRepo := new(mocks.MockExecutionGateway)
+	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 	ctx := context.Background()
 	validID := uint(1)
@@ -687,7 +626,8 @@ func TestListServiceOrders(t *testing.T) {
 	serviceRepo := new(mocks.MockServiceGateway)
 	partsSupplyRepo := new(mocks.MockPartsSupplyGateway)
 	billingServiceRepo := new(mocks.MockBillingServiceGateway)
-	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo)
+	executionRepo := new(mocks.MockExecutionGateway)
+	useCase := NewServiceOrderUseCase(serviceOrderRepo, vehicleRepo, customerRepo, serviceRepo, partsSupplyRepo, billingServiceRepo, executionRepo)
 
 	ctx := context.Background()
 	base := time.Date(2024, 1, 1, 10, 0, 0, 0, time.UTC)

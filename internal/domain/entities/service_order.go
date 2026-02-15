@@ -12,14 +12,15 @@ type ServiceOrder struct {
 	VehicleID                uint                           `json:"vehicle_id"`
 	Vehicle                  *Vehicle                       `json:"vehicle"`
 	Status                   valueobject.ServiceOrderStatus `json:"service_order_status"`
-	Estimate                 *Estimate                        `json:"estimate,omitempty"`
-	StartedExecutionDate     *time.Time                     `json:"started_execution_date,omitempty"`
-	FinalExecutionDate       *time.Time                     `json:"final_execution_date,omitempty"`
-	ExecutionDurationInHours float64                        `json:"execution_duration_in_hours,omitempty"`
+	Estimate                 *Estimate                      `json:"estimate,omitempty"`
+	Execution                *Execution                     `json:"execution,omitempty"`
 	CreatedAt                *time.Time                     `json:"created_at,omitempty"`
 	UpdatedAt                *time.Time                     `json:"updated_at,omitempty"`
-	PaymentID                *uint                          `json:"payment_id,omitempty"`
 	AdditionalRepairs        []AdditionalRepair             `json:"additional_repairs,omitempty"`
 	PartsSupplies            []PartsSupply                  `json:"parts_supplies,omitempty"`
 	Services                 []Service                      `json:"services,omitempty"`
+}
+
+func (s *ServiceOrder) IsDiagnosisPending() bool {
+	return len(s.Services) == 0 && len(s.PartsSupplies) == 0
 }

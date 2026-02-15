@@ -81,13 +81,9 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		VehicleID:                m.VehicleID,
 		Status:                   m.ServiceOrderStatus.ToDomain(),
 		// Estimate:                 m.Estimate,
-		StartedExecutionDate:     m.StartedExecutionDate,
-		FinalExecutionDate:       m.FinalExecutionDate,
-		ExecutionDurationInHours: m.ExecutionDurationInHours,
 		CreatedAt:                m.CreatedAt,
 		UpdatedAt:                m.UpdatedAt,
 		AdditionalRepairs:        additionalRepairs,
-		PaymentID:                m.PaymentID,
 		PartsSupplies:            partsSupplies,
 		Services:                 services,
 	}

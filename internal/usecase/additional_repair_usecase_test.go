@@ -66,6 +66,7 @@ func TestCreateAdditionalRepair_PartsSupplyNotFound(t *testing.T) {
 	}
 
 	mockRepoOS.On("GetByID", uint(1), false).Return((&dto.ServiceOrderModel{ID: 1}).ToDomain(), nil)
+	mockPartsSupplyRepo.On("Reserve", mock.Anything, mock.Anything).Return(nil)
 	mockPartsSupplyRepo.On("GetByID", mock.Anything, uint(88)).Return(&entities.PartsSupply{}, nil)
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)
