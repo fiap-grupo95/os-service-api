@@ -149,7 +149,6 @@ func (u *ServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entitie
 	return filtered, nil
 }
 
-
 // CreateServiceOrder creates a new service order after validating the vehicle and customer.
 // It sets the initial status of the service order to "Recebida".
 // If the vehicle or customer validation fails, it logs the error and returns it.
@@ -157,14 +156,9 @@ func (u *ServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrd
 	logger := logs.Logger()
 	txn := newrelic.FromContext(ctx)
 	if txn != nil {
-		logger = logs.LoggerWithContext(ctx)
-	}
-
-	// Validation segment - track validation operations separately
-	var seg *newrelic.Segment
-	if txn != nil {
-		seg = txn.StartSegment("ServiceOrderUseCase.CreateServiceOrder.Validation")
+		seg := txn.StartSegment("ServiceOrderUseCase.CreateServiceOrder.Validation")
 		defer seg.End()
+		logger = logs.LoggerWithContext(ctx)
 	}
 
 	if serviceOrder == nil {
@@ -212,7 +206,7 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		defer startSegment.End()
 	}
 
-	result, err := u.checkIfServiceOrderExists(ctx, request.ID)
+	result, err := u.validateServiceOrderExists(ctx, request.ID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -227,23 +221,30 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		return nil, err
 	}
 
-	if serviceOrder.Status.IsEmDiagnostico() {
-		return serviceOrder, nil
-	}
-
-	var estimate *entities.Estimate
-	estimate, err = u.billingServiceRepo.CreateEstimate(ctx, serviceOrder)
+	err = u.partsSupplyRepo.Reserve(ctx, serviceOrder.PartsSupplies)
 	if err != nil {
-		logger.Error().Err(err).Msg("Error calculating estimate")
+		logger.Error().Err(err).Any("parts_supply", serviceOrder.PartsSupplies).Msg("Error reserving parts supply")
 		return nil, err
 	}
 
-	if estimate == nil {
-		logger.Error().Msg("Error calculating estimate: the value from estimate creation is nil")
-		return nil, ErrInvalidEstimateValue
-	}
+	if !serviceOrder.IsDiagnosisPending() {
+		var estimate *entities.Estimate
+		estimate, err = u.billingServiceRepo.CreateEstimate(ctx, serviceOrder)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error calculating estimate")
+			return nil, err
+		}
 
-	serviceOrder.Status = valueobject.StatusAguardandoAprovacao
+		if estimate == nil {
+			logger.Error().Msg("Error calculating estimate: the value from estimate creation is nil")
+			return nil, ErrInvalidEstimateValue
+		}
+
+		serviceOrder.Status = valueobject.StatusAguardandoAprovacao
+		serviceOrder.Estimate = estimate
+	} else {
+		serviceOrder.Status = valueobject.StatusEmDiagnostico
+	}
 
 	err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
@@ -258,8 +259,9 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 // If the status is "Recebida" or "Em Diagnostico" and the request status is "Em Diagnostico",
 // it updates the service order status to "Em Diagnostico".
 func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	logger := logs.LoggerWithContext(ctx)
+	logger := logs.Logger()
 	if txn := newrelic.FromContext(ctx); txn != nil {
+		logger = logs.LoggerWithContext(ctx)
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateDiagnosis")
 		defer startSegment.End()
 	}
@@ -271,9 +273,7 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		return nil, ErrInvalidTransitionStatusToDiagnosis
 	}
 
-	serviceOrder.Status = valueobject.StatusEmDiagnostico
-
-	if len(serviceOrder.Services) == 0 && len(serviceOrder.PartsSupplies) == 0 {
+	if serviceOrder.IsDiagnosisPending() {
 		observability.IncrementCounter(ctx, "service_order_diagnosis_pending_services_parts_supplies", nil)
 		return serviceOrder, nil
 	}
@@ -288,21 +288,15 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		)
 	}
 
-	err := u.validateIfServicesExists(ctx, serviceOrder.Services)
+	err := u.validateServicesExists(ctx, serviceOrder.Services)
 	if err != nil {
-		logs.Logger().Error().Err(err).Any("services", serviceOrder.Services).Msg("Error validating services")
+		logger.Error().Err(err).Any("services", serviceOrder.Services).Msg("Error validating services")
 		return nil, err
 	}
 
 	err = u.partsSupplyRepo.AuthorizeReserve(ctx, serviceOrder.PartsSupplies)
 	if err != nil {
-		logs.Logger().Error().Err(err).Msg("Error authorizing reserve parts supply")
-		return nil, err
-	}
-
-	err = u.partsSupplyRepo.Reserve(ctx, serviceOrder.PartsSupplies)
-	if err != nil {
-		logger.Error().Err(err).Any("parts_supply", serviceOrder.PartsSupplies).Msg("Error reserving parts supply")
+		logger.Error().Err(err).Msg("Error authorizing reserve parts supply")
 		return nil, err
 	}
 	return serviceOrder, nil
@@ -311,7 +305,7 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceOrderID uint, operation string) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 
-	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	serviceOrder, err := u.validateServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -353,7 +347,7 @@ func (u *ServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, service
 		defer startSegment.End()
 	}
 
-	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	serviceOrder, err := u.validateServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -374,7 +368,7 @@ func (u *ServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, service
 		}
 		serviceOrder.Execution = execution
 		serviceOrder.Status = valueobject.StatusEmExecucao
-		
+
 	} else if operation == constants.EXECUTION_FINISH {
 		execution, err := u.executionRepo.FinishExecution(ctx, serviceOrder)
 		if err != nil {
@@ -393,14 +387,14 @@ func (u *ServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, service
 	return serviceOrder, nil
 }
 
-func (u *ServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error){
+func (u *ServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateExecution")
 		defer startSegment.End()
 	}
 
-	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	serviceOrder, err := u.validateServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -434,14 +428,14 @@ func (u *ServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceO
 	return serviceOrder, nil
 }
 
-func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error){
+func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateExecution")
 		defer startSegment.End()
 	}
 
-	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	serviceOrder, err := u.validateServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -462,14 +456,14 @@ func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOr
 	return serviceOrder, nil
 }
 
-func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error){
+func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrderID uint) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateExecution")
 		defer startSegment.End()
 	}
 
-	serviceOrder, err := u.checkIfServiceOrderExists(ctx, serviceOrderID)
+	serviceOrder, err := u.validateServiceOrderExists(ctx, serviceOrderID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
 		return nil, err
@@ -482,7 +476,7 @@ func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrd
 	serviceOrder.Status = valueobject.StatusCancelada
 
 	err = u.repo.Update(ctx, serviceOrder)
-	if err != nil{
+	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
 	}
@@ -521,7 +515,7 @@ func (u *ServiceOrderUseCase) validateCustomer(ctx context.Context, serviceOrder
 	return ErrInvalidID
 }
 
-func (u *ServiceOrderUseCase) validateIfServicesExists(ctx context.Context, services []entities.Service) error {
+func (u *ServiceOrderUseCase) validateServicesExists(ctx context.Context, services []entities.Service) error {
 	for _, s := range services {
 		_, err := u.serviceRepo.GetByID(ctx, s.ID)
 		if err != nil {
@@ -531,7 +525,7 @@ func (u *ServiceOrderUseCase) validateIfServicesExists(ctx context.Context, serv
 	return nil
 }
 
-func (u *ServiceOrderUseCase) checkIfServiceOrderExists(ctx context.Context, id uint) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) validateServiceOrderExists(ctx context.Context, id uint) (*entities.ServiceOrder, error) {
 	logger := logs.LoggerWithContext(ctx)
 	serviceOrder, err := u.repo.GetByID(ctx, id, false)
 	if err != nil {

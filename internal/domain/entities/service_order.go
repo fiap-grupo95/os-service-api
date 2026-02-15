@@ -20,3 +20,7 @@ type ServiceOrder struct {
 	PartsSupplies            []PartsSupply                  `json:"parts_supplies,omitempty"`
 	Services                 []Service                      `json:"services,omitempty"`
 }
+
+func (s *ServiceOrder) IsDiagnosisPending() bool {
+	return len(s.Services) == 0 && len(s.PartsSupplies) == 0
+}
