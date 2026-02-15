@@ -13,7 +13,7 @@ type ServiceOrderResponse struct {
 	VehicleID                uint                                   `json:"vehicle_id"`
 	Vehicle                  *VehicleResponse                       `json:"vehicle,omitempty"`
 	Status                   string                                 `json:"status"`
-	Estimate                 float64                                `json:"estimate,omitempty"`
+	Estimate                 *EstimateResponse                      `json:"estimate,omitempty"`
 	StartedExecutionDate     *time.Time                             `json:"started_execution_date,omitempty"`
 	FinalExecutionDate       *time.Time                             `json:"final_execution_date,omitempty"`
 	ExecutionDurationInHours float64                                `json:"execution_duration_in_hours,omitempty"`
@@ -56,24 +56,27 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 		return ServiceOrderResponse{}
 	}
 
-	return ServiceOrderResponse{
+	response := ServiceOrderResponse{
 		ID:                       entity.ID,
 		CustomerID:               entity.CustomerID,
 		Customer:                 mapCustomerResponse(entity.Customer),
 		VehicleID:                entity.VehicleID,
 		Vehicle:                  mapVehicleResponse(entity.Vehicle),
 		Status:                   entity.Status.String(),
-		// Estimate:                 entity.Estimate,
-		StartedExecutionDate:     entity.StartedExecutionDate,
-		FinalExecutionDate:       entity.FinalExecutionDate,
-		ExecutionDurationInHours: entity.ExecutionDurationInHours,
 		CreatedAt:                entity.CreatedAt,
 		UpdatedAt:                entity.UpdatedAt,
 		Services:                 mapServiceResponses(entity.Services),
 		PartsSupplies:            mapPartsSupplyResponses(entity.PartsSupplies),
 		AdditionalRepairs:        mapAdditionalRepairResponses(entity.AdditionalRepairs),
-		PaymentID:                entity.PaymentID,
 	}
+
+	if entity.Estimate != nil {
+		response.Estimate = &EstimateResponse{
+			Value: entity.Estimate.Value,
+		}
+	}
+
+	return response
 }
 
 func NewServiceOrderListResponse(orders []*entities.ServiceOrder) []ServiceOrderResponse {

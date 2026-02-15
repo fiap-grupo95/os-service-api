@@ -65,3 +65,11 @@ func (r *BillingServiceRepository) ApproveEstimate(ctx context.Context, request 
 func (r *BillingServiceRepository) CancelEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error){
 	return nil, nil
 }
+
+func (r *BillingServiceRepository) CreatePayment(ctx context.Context, estimateID string) error {
+	return nil
+}
+
+func (r *BillingServiceRepository) GetPaymentByEstimateID (ctx context.Context, estimateID string) (*response.PaymentResponse, error){
+	return nil, nil
+}

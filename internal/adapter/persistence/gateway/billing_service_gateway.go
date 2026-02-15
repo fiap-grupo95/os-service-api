@@ -141,6 +141,14 @@ func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder
 	}, nil
 }
 
+func (g *BillingServiceGateway) CreatePayment(ctx context.Context, estimateID string) error {
+	return nil
+}
+
+func (g *BillingServiceGateway) GetPaymentByEstimateID(ctx context.Context, estimateID string) (*entities.Payment, error) {
+	return nil, nil
+}
+
 func (g *BillingServiceGateway) getServicesByIDs(ctx context.Context, services []entities.Service) ([]entities.Service, error) {
 	logger := logs.Logger()
 	if len(services) == 0 {

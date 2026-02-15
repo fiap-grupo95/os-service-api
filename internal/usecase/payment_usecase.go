@@ -42,7 +42,7 @@ func (p *PaymentUseCase) CreatePayment(ctx context.Context, payment *entities.Pa
 	if serviceOrder.Estimate == nil {
 		return nil, ErrPaymentAmountDoesNotMatch
 	}
-	if *serviceOrder.Estimate.Value != payment.Amount {
+	if serviceOrder.Estimate.Value != payment.Amount {
 		return nil, ErrPaymentAmountDoesNotMatch
 	}
 	existingPayment, err := p.repo.GetByServiceOrderID(ctx, payment.ServiceOrderID)

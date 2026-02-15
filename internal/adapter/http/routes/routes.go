@@ -7,6 +7,7 @@ import (
 	middleware "github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/billing_service"
 	entityapi "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/entity_api"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/execution_service"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/gateway"
 	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/repository"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
@@ -79,7 +80,7 @@ func InitApp() {
 	customerRepository := entityapi.NewCustomerRepository()
 	serviceOrderRepository := repository.NewServiceOrderRepository(db)
 	billingServiceRepository := billing_service.NewBillingServiceRepository()
-
+	executionServiceRepository := execution_service.NewExecutionServiceRepository()
 	// additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
 
 	vehiclesGateway := gateway.NewVehicleGateway(vehiclesRepository)
@@ -87,6 +88,7 @@ func InitApp() {
 	partsSupplyGateway := gateway.NewPartsSupplyGateway(partsSupplyRepository)
 	serviceGateway := gateway.NewServiceGateway(serviceRepository)
 	billingServiceGateway := gateway.NewBillingServiceGateway(billingServiceRepository)
+	executionGateway := gateway.NewExecutionServiceGateway(executionServiceRepository)
 	serviceOrderGateway := gateway.NewServiceOrderGateway(
 		serviceOrderRepository,
 		vehiclesGateway,
@@ -102,6 +104,7 @@ func InitApp() {
 		serviceGateway,
 		partsSupplyGateway,
 		billingServiceGateway,
+		executionGateway,
 	)
 	// additionalRepairUsecase := usecase.NewSOAdditionalRepairUseCase(
 	// 	additionalRepairGateway,
