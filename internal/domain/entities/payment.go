@@ -5,9 +5,8 @@ import (
 )
 
 type Payment struct {
-	ID             uint          `json:"id"`
-	ServiceOrderID uint          `json:"service_order_id"`
-	ServiceOrder   *ServiceOrder `json:"service_order,omitempty"`
-	PaymentDate    time.Time     `json:"payment_date"`
-	Amount         float64       `json:"amount"`
+	ID          uint      `json:"id"`
+	EstimateID  string    `json:"estimate_id"`
+	PaymentDate time.Time `json:"payment_date"`
+	Amount      float64   `json:"amount"`
 }

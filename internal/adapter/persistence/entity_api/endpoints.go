@@ -27,6 +27,6 @@ const (
 
 // Service Endpoints
 const (
-	SERVICE_ENDPOINT             = BASE_URL + "/v1/service"
-	SERVICE_ID_ENDPOINT          = BASE_URL + "/v1/service/%d"
+	SERVICE_ENDPOINT    = BASE_URL + "/v1/service"
+	SERVICE_ID_ENDPOINT = BASE_URL + "/v1/service/%d"
 )

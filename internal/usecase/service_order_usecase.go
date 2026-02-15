@@ -449,7 +449,7 @@ func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOr
 		return nil, errors.New("estimate is required for delivery")
 	}
 
-	if err := u.billingServiceRepo.CreatePayment(ctx, serviceOrder.Estimate.ID); err != nil {
+	if _, err := u.billingServiceRepo.CreatePayment(ctx, serviceOrder.Estimate.ID); err != nil {
 		return nil, err
 	}
 

@@ -14,7 +14,7 @@ type IBillingServiceGateway interface {
 	RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
 	CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
 	GetPaymentByEstimateID(ctx context.Context, estimateID string) (*entities.Payment, error)
-	CreatePayment(ctx context.Context, estimateID string) error
+	CreatePayment(ctx context.Context, estimateID string) (*entities.Payment, error)
 }
 
 type IBillingServiceRepository interface {
@@ -23,5 +23,5 @@ type IBillingServiceRepository interface {
 	RejectEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
 	CancelEstimate(ctx context.Context, request *request.EstimateRequest) (*response.EstimateResponse, error)
 	GetPaymentByEstimateID(ctx context.Context, estimateID string) (*response.PaymentResponse, error)
-	CreatePayment(ctx context.Context, estimateID string) error
+	CreatePayment(ctx context.Context, estimateID string) (*response.PaymentResponse, error)
 }

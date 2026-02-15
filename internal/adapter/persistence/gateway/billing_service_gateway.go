@@ -141,12 +141,54 @@ func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder
 	}, nil
 }
 
-func (g *BillingServiceGateway) CreatePayment(ctx context.Context, estimateID string) error {
-	return nil
+func (g *BillingServiceGateway) CreatePayment(ctx context.Context, estimateID string) (*entities.Payment, error) {
+	logger := logs.Logger()
+	if estimateID == "" {
+		return nil, errors.New("no estimate ID provided")
+	}
+
+	payment, err := g.repo.CreatePayment(ctx, estimateID)
+	if err != nil {
+		logger.Error().Err(err).Msg("error creating payment")
+		return nil, err
+	}
+
+	if payment == nil {
+		logger.Error().Msg("error creating payment: the payment is nil")
+		return nil, errors.New("error creating payment: the payment is nil")
+	}
+
+	return &entities.Payment{
+		ID:          payment.ID,
+		EstimateID:  payment.EstimateID,
+		PaymentDate: payment.PaymentDate,
+		Amount:      payment.Amount,
+	}, nil
 }
 
 func (g *BillingServiceGateway) GetPaymentByEstimateID(ctx context.Context, estimateID string) (*entities.Payment, error) {
-	return nil, nil
+	logger := logs.Logger()
+	if estimateID == "" {
+		return nil, errors.New("no estimate ID provided")
+	}
+
+	payment, err := g.repo.GetPaymentByEstimateID(ctx, estimateID)
+	if err != nil {
+		logger.Error().Err(err).Msg("error getting payment by estimate ID")
+		return nil, err
+	}
+
+	if payment == nil {
+		logger.Error().Msg("error creating payment: the payment is nil")
+		return nil, errors.New("error creating payment: the payment is nil")
+	}
+
+	return &entities.Payment{
+		ID:          payment.ID,
+		EstimateID:  payment.EstimateID,
+		PaymentDate: payment.PaymentDate,
+		Amount:      payment.Amount,
+	}, nil
 }
 
 func (g *BillingServiceGateway) getServicesByIDs(ctx context.Context, services []entities.Service) ([]entities.Service, error) {
@@ -155,18 +197,17 @@ func (g *BillingServiceGateway) getServicesByIDs(ctx context.Context, services [
 		return nil, errors.New("no services provided")
 	}
 
-	var serviceDb []entities.Service
+	var servicesResponse []entities.Service
 	for _, s := range services {
 		item, err := g.serviceRepo.GetByID(ctx, s.ID)
 		if err != nil {
 			logger.Error().Err(err).Any("service_id", s.ID).Msg("error getting service by ID")
 			return nil, err
 		}
-		serviceDb = append(serviceDb, *item)
+		servicesResponse = append(servicesResponse, *item)
 	}
 
-	// Assuming we have a service repository to get the services by IDs
-	return serviceDb, nil
+	return servicesResponse, nil
 }
 
 func (g *BillingServiceGateway) getPartsSupplyByIDs(ctx context.Context, partsSupplies []entities.PartsSupply) ([]entities.PartsSupply, error) {
@@ -175,17 +216,17 @@ func (g *BillingServiceGateway) getPartsSupplyByIDs(ctx context.Context, partsSu
 		return nil, errors.New("no services provided")
 	}
 
-	var psDb []entities.PartsSupply
+	var partsSupplyResponse []entities.PartsSupply
 	for _, ps := range partsSupplies {
 		item, err := g.partsSupplyRepo.GetByID(ctx, ps.ID)
 		if err != nil {
 			logger.Error().Err(err).Any("parts_supply_id", ps.ID).Msg("error getting Parts Supplies by ID")
 			return nil, err
 		}
-		psDb = append(psDb, *item)
+		partsSupplyResponse = append(partsSupplyResponse, *item)
 	}
 
-	return psDb, nil
+	return partsSupplyResponse, nil
 }
 
 func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRequest {
