@@ -3,19 +3,18 @@ package routes
 import (
 	"strconv"
 
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/gateway"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/billing_service"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/entity_api"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/execution_service"
 	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
-	middleware "github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
-	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/billing_service"
-	entityapi "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/entity_api"
-	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/execution_service"
-	"github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/gateway"
-	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/repository"
+	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
+	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 	"github.com/fiap-grupo95/os-service-api/pkg/utils/auth"
-
 	"github.com/gin-gonic/gin"
 	"github.com/newrelic/go-agent/v3/integrations/nrgin"
 	swaggerFiles "github.com/swaggo/files"
@@ -74,10 +73,10 @@ func InitApp() {
 	// Auth routes
 	addAuthRoutes(router, authHandler)
 
-	partsSupplyRepository := entityapi.NewPartsSupplyRepository()
-	serviceRepository := entityapi.NewServiceRepository()
-	vehiclesRepository := entityapi.NewVehicleRepository()
-	customerRepository := entityapi.NewCustomerRepository()
+	partsSupplyRepository := entity_api.NewPartsSupplyRepository()
+	serviceRepository := entity_api.NewServiceRepository()
+	vehiclesRepository := entity_api.NewVehicleRepository()
+	customerRepository := entity_api.NewCustomerRepository()
 	serviceOrderRepository := repository.NewServiceOrderRepository(db)
 	billingServiceRepository := billing_service.NewBillingServiceRepository()
 	executionServiceRepository := execution_service.NewExecutionServiceRepository()
