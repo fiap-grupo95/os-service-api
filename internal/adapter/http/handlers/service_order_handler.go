@@ -9,7 +9,6 @@ import (
 	request "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	response "github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
@@ -21,9 +20,9 @@ import (
 )
 
 const (
-	getFlow             = "get"
-	listFlow            = "list"
-	createFlow          = "create"
+	getFlow    = "get"
+	listFlow   = "list"
+	createFlow = "create"
 )
 
 const (
@@ -36,7 +35,7 @@ const (
 type IServiceOrderHandler interface {
 	GetServiceOrder(c *gin.Context)
 	ListServiceOrders(c *gin.Context)
-	CreateServiceOrder(c *gin.	Context)
+	CreateServiceOrder(c *gin.Context)
 	CancelServiceOrder(c *gin.Context)
 	DiagnosisServiceOrder(c *gin.Context)
 	ApproveServiceOrderEstimate(c *gin.Context)
@@ -59,17 +58,18 @@ func NewServiceOrderHandler(useCase usecase.IServiceOrderUseCase) *ServiceOrderH
 }
 
 // GetServiceOrder godoc
-// @Summary Get service order by ID
-// @Description Retrieve a service order by its ID
+// @Summary Retrieve service order details
+// @Description Fetches a specific service order by its unique identifier. Use the 'full_data' query parameter to include complete related entity information (customer, vehicle, services, parts, additional repairs).
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param id path int true "Service Order ID"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param id path int true "Service Order ID" minimum(1)
+// @Param full_data query boolean false "Include complete related entity data" default(false)
+// @Success 200 {object} response.ServiceOrderResponse "Service order retrieved successfully"
+// @Failure 400 {object} map[string]string "Invalid service order ID format"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id} [get]
 func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
@@ -97,13 +97,13 @@ func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 
 // ListServiceOrders godoc
 // @Summary List all service orders
-// @Description Get a list of all service orders
+// @Description Retrieves a complete list of all service orders in the system. Returns basic information for each service order without detailed related entities.
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Success 200 {array} response.ServiceOrderResponse
-// @Failure 500 {object} map[string]string
+// @Success 200 {array} response.ServiceOrderResponse "List of service orders retrieved successfully"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders [get]
 func (h *ServiceOrderHandler) ListServiceOrders(c *gin.Context) {
 	logger := logs.Logger()
@@ -123,16 +123,16 @@ func (h *ServiceOrderHandler) ListServiceOrders(c *gin.Context) {
 
 // CreateServiceOrder godoc
 // @Summary Create a new service order
-// @Description Create a new service order record
+// @Description Creates a new service order with initial status 'PENDING'. Requires valid customer ID, vehicle ID, and at least one service. The service order will be initialized with creation timestamp and default status.
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param order body request.ServiceOrderCreateRequest true "Service Order Information"
-// @Success 201 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param order body request.ServiceOrderCreateRequest true "Service order creation payload with customer, vehicle, and service details"
+// @Success 201 {object} response.ServiceOrderResponse "Service order created successfully"
+// @Failure 400 {object} map[string]string "Invalid request payload or validation error"
+// @Failure 404 {object} map[string]string "Referenced customer, vehicle, or service not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/create [post]
 func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
@@ -166,20 +166,20 @@ func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
 	// TODO: Implement this method
 }
 
-// UpdateServiceOrderDiagnosis godoc
-// @Summary Update service order diagnosis
-// @Description Update the diagnosis information of a service order
+// DiagnosisServiceOrder godoc
+// @Summary Submit service order diagnosis
+// @Description Updates the service order with diagnosis information and transitions status to 'DIAGNOSIS'. Requires the service order to be in a valid state for diagnosis. Includes diagnosis description, estimated cost, and required parts.
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderDiagnosisUpdateRequest true "Service Order Diagnosis Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /service-orders/{id}/diagnosis [post]
+// @Param id path int true "Service Order ID" minimum(1)
+// @Param order body request.ServiceOrderDiagnosisUpdateRequest true "Diagnosis details including description, estimated cost, and parts list"
+// @Success 200 {object} response.ServiceOrderResponse "Diagnosis submitted successfully"
+// @Failure 400 {object} map[string]string "Invalid ID, payload, or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order or referenced parts not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /v1/service-orders/{id}/diagnosis [post]
 func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Diagnosis")
@@ -210,18 +210,18 @@ func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-// UpdateServiceOrderEstimate godoc
-// @Summary Update service order estimate
-// @Description Update the estimate information of a service order
+// ApproveServiceOrderEstimate godoc
+// @Summary Approve service order estimate
+// @Description Customer approves the service order estimate, transitioning the status to 'APPROVED'. This allows the service order to proceed to execution phase. Must be in 'DIAGNOSIS' status.
 // @Tags Service Orders
 // @Security Bearer
-// @Accept JSON
-// @Produce JSON
-// @Param id path int true "Service Order ID"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Estimate approved successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id}/estimate/approve [post]
 func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
@@ -233,29 +233,29 @@ func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
 	}
 	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_APPROVE)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, "", strconv.Itoa(getStatusError(err)))
 
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to approve service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to approve service order estimate")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_APPROVE, string(valueobject.StatusAprovada), strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_APPROVE, result.Status.String(), strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-// UpdateServiceOrderEstimate godoc
-// @Summary Update service order estimate
-// @Description Update the estimate information of a service order
+// RejectServiceOrderEstimate godoc
+// @Summary Reject service order estimate
+// @Description Customer rejects the service order estimate, transitioning the status to 'REJECTED'. The service order will not proceed to execution. Must be in 'DIAGNOSIS' status.
 // @Tags Service Orders
 // @Security Bearer
-// @Accept JSON
-// @Produce JSON
-// @Param id path int true "Service Order ID"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Estimate rejected successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id}/estimate/reject [post]
 func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
@@ -267,29 +267,29 @@ func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
 	}
 	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_REJECT)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, string(valueobject.StatusAguardandoAprovacao), strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, "", strconv.Itoa(getStatusError(err)))
 
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to reject service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to reject service order estimate")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_REJECT, string(valueobject.StatusRejeitada), strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_REJECT, result.Status.String(), strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-// UpdateServiceOrderCancelEstimate godoc
-// @Summary Update service order estimate
-// @Description Update the estimate information of a service order
+// CancelServiceOrderEstimate godoc
+// @Summary Cancel service order estimate
+// @Description Cancels the service order estimate process, transitioning the status to 'CANCELLED'. This action is typically initiated by the customer or service provider. Must be in 'DIAGNOSIS' status.
 // @Tags Service Orders
 // @Security Bearer
-// @Accept JSON
-// @Produce JSON
-// @Param id path int true "Service Order ID"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Estimate cancelled successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id}/estimate/cancel [post]
 func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
@@ -301,82 +301,128 @@ func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	}
 	result, err := h.serviceOrderUseCase.EstimateServiceOrder(ctx, id, constants.ESTIMATE_CANCEL)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, string(valueobject.StatusEmDiagnostico), strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, "", strconv.Itoa(getStatusError(err)))
 
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to cancel service order estimate")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_CANCEL, string(valueobject.StatusCancelada), strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.ESTIMATE_CANCEL, result.Status.String(), strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-// UpdateServiceOrderExecution godoc
-// @Summary Update service order execution
-// @Description Update the execution information of a service order
+// ExecutionServiceOrder godoc
+// @Summary Start service order execution
+// @Description Initiates the execution phase of the service order, transitioning status to 'IN_EXECUTION'. This indicates that work has begun on the vehicle. Must be in 'APPROVED' status.
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderExecutionUpdateRequest true "Service Order Execution Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Execution started successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id}/execution [post]
 func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
 	id, ok := parseServiceOrderIDParam(c)
 	if !ok {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, "", strconv.Itoa(http.StatusBadRequest))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_START, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
 
-	var req request.ServiceOrderExecutionUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order execution")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), constants.EXECUTION)
+	result, err := h.serviceOrderUseCase.ExecutionServiceOrder(ctx, id, constants.EXECUTION_START)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_START, "", strconv.Itoa(getStatusError(err)))
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
 		writeServiceOrderError(c, err, "Failed to update service order execution")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.EXECUTION, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.EXECUTION_START, result.Status.String(), strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
-	// TODO: Implement this method
-}
-
-// UpdateServiceOrderDelivery godoc
-// @Summary Update service order delivery
-// @Description Update the delivery information of a service order
+// FinishServiceOrderExecution godoc
+// @Summary Complete service order execution
+// @Description Marks the execution phase as complete, transitioning status to 'EXECUTED'. This indicates that all work on the vehicle has been finished and the service order is ready for payment. Must be in 'IN_EXECUTION' status.
 // @Tags Service Orders
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param id path int true "Service Order ID"
-// @Param order body request.ServiceOrderDeliveryUpdateRequest true "Service Order Delivery Information"
-// @Success 200 {object} response.ServiceOrderResponse
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Execution completed successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /v1/service-orders/{id}/execution/finish [post]
+func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_FINISH, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+
+	result, err := h.serviceOrderUseCase.ExecutionServiceOrder(ctx, id, constants.EXECUTION_FINISH)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_FINISH, "", strconv.Itoa(getStatusError(err)))
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
+		writeServiceOrderError(c, err, "Failed to update service order execution")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.EXECUTION_FINISH, result.Status.String(), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// PaymentServiceOrder godoc
+// @Summary Process service order payment
+// @Description Processes payment for the service order, transitioning status to 'PAID'. This triggers billing service integration and marks the service order as financially settled. Must be in 'EXECUTED' status.
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Payment processed successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error or billing service failure"
+// @Router /v1/service-orders/{id}/payment [post]
+func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Payment")
+	id, ok := parseServiceOrderIDParam(c)
+	if !ok {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.PAYMENT, "", strconv.Itoa(http.StatusBadRequest))
+		return
+	}
+
+	result, err := h.serviceOrderUseCase.PaymentServiceOrder(ctx, id)
+	if err != nil {
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.PAYMENT, "", strconv.Itoa(getStatusError(err)))
+		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to create service order payment")
+		writeServiceOrderError(c, err, "Failed to create service order payment")
+		return
+	}
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.PAYMENT, result.Status.String(), strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+}
+
+// DeliveryServiceOrder godoc
+// @Summary Complete service order delivery
+// @Description Marks the service order as delivered to the customer, transitioning status to 'DELIVERED'. This is the final step in the service order lifecycle. Must be in 'PAID' status.
+// @Tags Service Orders
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path int true "Service Order ID" minimum(1)
+// @Success 200 {object} response.ServiceOrderResponse "Service order delivered successfully"
+// @Failure 400 {object} map[string]string "Invalid ID or invalid status transition"
+// @Failure 404 {object} map[string]string "Service order not found"
+// @Failure 500 {object} map[string]string "Internal server error"
 // @Router /v1/service-orders/{id}/delivery [post]
 func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
@@ -387,24 +433,14 @@ func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 		return
 	}
 
-	var req request.ServiceOrderDeliveryUpdateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(http.StatusBadRequest))
-
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order delivery")
-
-		writeBindingError(c, err)
-		return
-	}
-
-	result, err := h.serviceOrderUseCase.UpdateServiceOrder(ctx, req.ToEntity(id), constants.DELIVERY)
+	result, err := h.serviceOrderUseCase.DeliveryServiceOrder(ctx, id)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, result.Status.String(), strconv.Itoa(getStatusError(err)))
 		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order delivery")
 		writeServiceOrderError(c, err, "Failed to update service order delivery")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DELIVERY, req.ServiceOrderStatus, strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DELIVERY, result.Status.String(), strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
