@@ -34,6 +34,14 @@ func (m *MockAdditionalRepairGateway) GetByID(ctx context.Context, id string) (*
 	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
+func (m *MockAdditionalRepairGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error) {
+	args := m.Called(ctx, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.AdditionalRepair), args.Error(1)
+}
+
 func (m *MockAdditionalRepairGateway) UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error) {
 	args := m.Called(ctx, additionalRepair)
 	if args.Get(0) == nil {

@@ -9,11 +9,13 @@ import (
 type IAdditionalRepairGateway interface {
 	CreateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 	GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error)
+	GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error)
 	UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 }
 
 type IAdditionalRepairRepository interface {
 	CreateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 	GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error)
-	UpdateAdditionalRepair(ctx context.Context, additionalRepair entities.AdditionalRepair) (entities.AdditionalRepair, error)
+	GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error)
+	UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 }

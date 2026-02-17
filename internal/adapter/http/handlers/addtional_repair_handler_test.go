@@ -116,7 +116,13 @@ func TestGetAdditionalRepair_Success(t *testing.T) {
 	assert.Equal(t, expected.ServiceOrderID, resp.ServiceOrderID)
 	assert.Equal(t, expected.Description, resp.Description)
 	assert.Equal(t, expected.Status.String(), resp.Status)
-	assert.Equal(t, expected.Estimate.Value, resp.Estimate)
+	if assert.NotNil(t, resp.Estimate) {
+		assert.Equal(t, expected.Estimate.ID, resp.Estimate.ID)
+		assert.Equal(t, expected.Estimate.ServiceOrderID, resp.Estimate.ServiceOrderID)
+		assert.Equal(t, expected.Estimate.AdditionalRepairID, resp.Estimate.AdditionalRepairID)
+		assert.Equal(t, expected.Estimate.Value, resp.Estimate.Value)
+		assert.Equal(t, expected.Estimate.Status, resp.Estimate.Status)
+	}
 	assert.Len(t, resp.Services, 1)
 	assert.Equal(t, expected.Services[0].ID, resp.Services[0].ID)
 	assert.Len(t, resp.PartsSupplies, 1)

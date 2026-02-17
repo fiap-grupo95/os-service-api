@@ -25,25 +25,31 @@ func NewBillingServiceGateway(repo interfaces.IBillingServiceRepository) *Billin
 func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate,
 	error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	request := &request.EstimateRequest{
-		Services:      mapServicesDomainToRequest(serviceOrder.Services),
-		PartsSupplies: mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
-	}
+	var estimateRequest *request.EstimateRequest
 
 	if serviceOrder != nil {
-		request.ServiceOrderID = serviceOrder.ID
+		estimateRequest = &request.EstimateRequest{
+			ServiceOrderID: serviceOrder.ID,
+			Services:       mapServicesDomainToRequest(serviceOrder.Services),
+			PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
+		}
 	}
 	if additionalRepair != nil {
-		request.AdditionalRepairID = additionalRepair.ID
+		estimateRequest = &request.EstimateRequest{
+			AdditionalRepairID: additionalRepair.ID,
+			Services:           mapServicesDomainToRequest(additionalRepair.Services),
+			PartsSupplies:      mapPartsSupplyDomainToRequest(additionalRepair.PartsSupplies),
+		}
 	}
 
-	response, err := g.repo.CreateEstimate(ctx, request)
+	response, err := g.repo.CreateEstimate(ctx, estimateRequest)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating estimate")
+		return nil, err
 	}
 
 	estimateResponse := &entities.Estimate{
@@ -59,19 +65,23 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 
 func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
+	var estimate *request.EstimateRequest
 
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
 	}
 	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
 	response, err := g.repo.ApproveEstimate(ctx, estimate)
@@ -94,19 +104,23 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 
 func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
-	
+	var estimate *request.EstimateRequest
+
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
 	}
 	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
 	response, err := g.repo.RejectEstimate(ctx, estimate)
@@ -129,21 +143,25 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 
 func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
+	var estimate *request.EstimateRequest
 
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
+	}
+	if additionalRepair != nil {
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
-	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
-	}
 
 	response, err := g.repo.CancelEstimate(ctx, estimate)
 	if err != nil {
@@ -214,7 +232,7 @@ func (g *BillingServiceGateway) GetPaymentByEstimateID(ctx context.Context, esti
 }
 
 func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRequest {
-	servicesRequest := make([]request.ServiceRequest, len(services))
+	servicesRequest := make([]request.ServiceRequest, 0, len(services))
 	for _, s := range services {
 		service := request.ServiceRequest{
 			ID:          s.ID,
@@ -228,7 +246,7 @@ func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRe
 }
 
 func mapPartsSupplyDomainToRequest(partsSupplies []entities.PartsSupply) []request.PartsSupplyRequest {
-	partsSuppliesRequest := make([]request.PartsSupplyRequest, len(partsSupplies))
+	partsSuppliesRequest := make([]request.PartsSupplyRequest, 0, len(partsSupplies))
 	for _, s := range partsSupplies {
 		ps := request.PartsSupplyRequest{
 			ID:       s.ID,

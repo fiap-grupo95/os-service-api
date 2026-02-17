@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 
@@ -46,7 +45,7 @@ func TestCreateAdditionalRepair_ServiceNotFound(t *testing.T) {
 		Services:       []entities.Service{{ID: "99"}},
 	}
 
-	mockRepoOS.On("GetByID", mock.Anything, "1", false).Return((&dto.ServiceOrderModel{ID: "1"}).ToDomain(), nil)
+	mockRepoOS.On("GetByID", mock.Anything, "1", false).Return(&entities.ServiceOrder{ID: "1"}, nil)
 	mockServiceRepo.On("GetByID", mock.Anything, "99").Return(&entities.Service{}, nil)
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)
@@ -68,7 +67,7 @@ func TestCreateAdditionalRepair_PartsSupplyNotFound(t *testing.T) {
 		PartsSupplies:  []entities.PartsSupply{{ID: "88"}},
 	}
 
-	mockRepoOS.On("GetByID", mock.Anything, "1", false).Return((&dto.ServiceOrderModel{ID: "1"}).ToDomain(), nil)
+	mockRepoOS.On("GetByID", mock.Anything, "1", false).Return(&entities.ServiceOrder{ID: "1"}, nil)
 	mockPartsSupplyRepo.On("GetByID", mock.Anything, "88").Return(&entities.PartsSupply{}, nil)
 
 	result, err := uc.CreateAdditionalRepair(context.Background(), adr)

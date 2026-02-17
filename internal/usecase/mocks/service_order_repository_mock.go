@@ -8,7 +8,6 @@ import (
 	"context"
 
 	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -39,19 +38,36 @@ func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id string, isFull
 		return value, args.Error(1)
 	case entities.ServiceOrder:
 		return &value, args.Error(1)
-	case *dto.ServiceOrderModel:
-		return value.ToDomain(), args.Error(1)
-	case dto.ServiceOrderModel:
-		copy := value
-		return copy.ToDomain(), args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}
 }
 
-func (m *MockServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
-	args := m.Called(serviceOrder)
-	return args.Error(0)
+func (m *MockServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrder)
+
+	var result *entities.ServiceOrder
+	if len(args) > 0 {
+		switch value := args.Get(0).(type) {
+		case nil:
+			result = serviceOrder
+		case *entities.ServiceOrder:
+			result = value
+		case entities.ServiceOrder:
+			result = &value
+		default:
+			result = serviceOrder
+		}
+	} else {
+		result = serviceOrder
+	}
+
+	var err error
+	if len(args) > 1 {
+		err = args.Error(1)
+	}
+
+	return result, err
 }
 
 func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrder, error) {
@@ -68,13 +84,6 @@ func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.Service
 		for _, item := range value {
 			itemCopy := item
 			result = append(result, &itemCopy)
-		}
-		return result, args.Error(1)
-	case []dto.ServiceOrderModel:
-		result := make([]*entities.ServiceOrder, 0, len(value))
-		for _, item := range value {
-			itemCopy := item
-			result = append(result, itemCopy.ToDomain())
 		}
 		return result, args.Error(1)
 	default:

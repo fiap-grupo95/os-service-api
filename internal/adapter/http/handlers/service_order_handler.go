@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -221,10 +222,14 @@ func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 
 	var req request.ServiceOrderDiagnosisUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
-		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
-		writeBindingError(c, err)
-		return
+		if errors.Is(err, io.EOF) {
+			req = request.ServiceOrderDiagnosisUpdateRequest{}
+		} else {
+			sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
+			logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
+			writeBindingError(c, err)
+			return
+		}
 	}
 
 	result, err := h.serviceOrderUseCase.DiagnosisServiceOrder(ctx, req.ToEntity(id))
@@ -437,8 +442,8 @@ func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
 		writeServiceOrderError(c, err, "Failed to create service order payment")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.PAYMENT, result.Status.String(), strconv.Itoa(http.StatusOK))
-	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.PAYMENT, "", strconv.Itoa(http.StatusOK))
+	c.JSON(http.StatusOK, result)
 }
 
 // DeliveryServiceOrder godoc
@@ -465,12 +470,12 @@ func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 
 	result, err := h.serviceOrderUseCase.DeliveryServiceOrder(ctx, id)
 	if err != nil {
-		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, result.Status.String(), strconv.Itoa(getStatusError(err)))
+		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, "", strconv.Itoa(getStatusError(err)))
 		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to update service order delivery")
 		writeServiceOrderError(c, err, "Failed to update service order delivery")
 		return
 	}
-	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DELIVERY, result.Status.String(), strconv.Itoa(http.StatusOK))
+	sendToMetric(ctx, metricServiceOrderStatusChange, resultSuccess, constants.DELIVERY, "", strconv.Itoa(http.StatusOK))
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 

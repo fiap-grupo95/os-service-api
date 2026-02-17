@@ -9,8 +9,8 @@ type AdditionalRepairServiceItem struct {
 // AdditionalRepairPartsSupplyItem represents the minimal information required
 // to associate a parts supply with an additional repair.
 type AdditionalRepairPartsSupplyItem struct {
-	ID              string `json:"id" binding:"required"`
-	Quantity        int  `json:"quantity" binding:"required"`
+	ID       string `json:"id" binding:"required"`
+	Quantity int    `json:"quantity" binding:"required"`
 }
 
 // AdditionalRepairCreateRequest is the payload used to create a new
@@ -29,10 +29,4 @@ type AdditionalRepairItemsRequest struct {
 	Description    string                            `json:"description"`
 	Services       []AdditionalRepairServiceItem     `json:"services"`
 	PartsSupplies  []AdditionalRepairPartsSupplyItem `json:"parts_supplies"`
-}
-
-// AdditionalRepairApprovalRequest is the payload used to capture
-// customer approval decisions for an additional repair.
-type AdditionalRepairApprovalRequest struct {
-	ApprovalStatus string `json:"approval_status" binding:"required,oneof=APPROVED DENIED"`
 }

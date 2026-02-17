@@ -2,14 +2,12 @@ package database
 
 import (
 	"log"
-
-	"gorm.io/gorm"
 )
 
-func ConnectDatabase() *gorm.DB {
-	db, err := NewDBFromEnv()
+func ConnectDatabase() *MongoDBConfig {
+	db, err := NewMongoDBFromEnv()
 	if err != nil {
-		log.Fatalf("failed to connect to the database: %v", err)
+		log.Fatalf("failed to connect to MongoDB: %v", err)
 	}
 	return db
 }

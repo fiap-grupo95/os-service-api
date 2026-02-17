@@ -40,7 +40,7 @@ type IServiceOrderUseCase interface {
 	DiagnosisServiceOrder(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error)
 	EstimateServiceOrder(ctx context.Context, serviceOrderID string, operation string) (*entities.ServiceOrder, error)
 	ExecutionServiceOrder(ctx context.Context, serviceOrderID string, operation string) (*entities.ServiceOrder, error)
-	PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error)
+	PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.Payment, error)
 	DeliveryServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error)
 	GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, isFullData bool) (*entities.ServiceOrder, error)
 	ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error)
@@ -206,6 +206,8 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		defer startSegment.End()
 	}
 
+	logger.Debug().Any("request", request).Msg("Request received")
+
 	result, err := u.validateServiceOrderExists(ctx, request.ID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
@@ -246,7 +248,7 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		serviceOrder.Status = valueobject.StatusEmDiagnostico
 	}
 
-	err = u.repo.Update(ctx, serviceOrder)
+	serviceOrder, err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
@@ -277,6 +279,9 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		observability.IncrementCounter(ctx, "service_order_diagnosis_pending_services_parts_supplies", nil)
 		return serviceOrder, nil
 	}
+
+	logger.Debug().Any("service", serviceOrder.Services).Msg("Service received")
+	logger.Debug().Any("parts_supply", serviceOrder.PartsSupplies).Msg("Parts supply received")
 
 	if len(serviceOrder.Services) == 0 || len(serviceOrder.PartsSupplies) == 0 {
 		observability.IncrementCounter(ctx,
@@ -331,13 +336,13 @@ func (u *ServiceOrderUseCase) EstimateServiceOrder(ctx context.Context, serviceO
 		return nil, err
 	}
 
-	err = u.repo.Update(ctx, result)
+	serviceOrder, err = u.repo.Update(ctx, result)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
 	}
 
-	return result, nil
+	return serviceOrder, nil
 }
 
 func (u *ServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, serviceOrderID string, operation string) (*entities.ServiceOrder, error) {
@@ -378,7 +383,7 @@ func (u *ServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, service
 		serviceOrder.Status = valueobject.StatusFinalizada
 	}
 
-	err = u.repo.Update(ctx, serviceOrder)
+	serviceOrder, err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
@@ -419,7 +424,7 @@ func (u *ServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceO
 
 	serviceOrder.Status = valueobject.StatusEntregue
 
-	err = u.repo.Update(ctx, serviceOrder)
+	serviceOrder, err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err
@@ -428,7 +433,7 @@ func (u *ServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceO
 	return serviceOrder, nil
 }
 
-func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error) {
+func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.Payment, error) {
 	logger := logs.LoggerWithContext(ctx)
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		startSegment := txn.StartSegment("ServiceOrderUseCase.validateExecution")
@@ -449,11 +454,12 @@ func (u *ServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOr
 		return nil, errors.New("estimate is required for delivery")
 	}
 
-	if _, err := u.billingServiceRepo.CreatePayment(ctx, serviceOrder.Estimate.ID); err != nil {
+	payment, err := u.billingServiceRepo.CreatePayment(ctx, serviceOrder.Estimate.ID)
+	if err != nil {
 		return nil, err
 	}
 
-	return serviceOrder, nil
+	return payment, nil
 }
 
 func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error) {
@@ -475,7 +481,7 @@ func (u *ServiceOrderUseCase) CancelServiceOrder(ctx context.Context, serviceOrd
 
 	serviceOrder.Status = valueobject.StatusCancelada
 
-	err = u.repo.Update(ctx, serviceOrder)
+	serviceOrder, err = u.repo.Update(ctx, serviceOrder)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error updating service order")
 		return nil, err

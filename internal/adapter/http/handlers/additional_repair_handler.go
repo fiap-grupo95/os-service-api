@@ -27,8 +27,10 @@ const (
 type IAdditionalRepairHandler interface {
 	CreateAdditionalRepair(c *gin.Context)
 	GetAdditionalRepair(c *gin.Context)
+	GetAdditionalRepairBySO(c *gin.Context)
 	ApproveAdditionalRepair(c *gin.Context)
 	RejectAdditionalRepair(c *gin.Context)
+	CancelAdditionalRepair(c *gin.Context)
 }
 
 // AdditionalRepairHandler handles HTTP requests for additional repairs
@@ -52,12 +54,12 @@ func NewAdditionalRepairHandler(useCase usecase.IAdditionalRepairUseCase) *Addit
 // @Security Bearer
 // @Accept json
 // @Produce json
-// @Param id path int true "Additional Repair ID"
+// @Param id path string true "Additional Repair ID"
 // @Success 200 {object} response.AdditionalRepairResponse
 // @Failure 400 {object} pkg.AppError
 // @Failure 404 {object} pkg.AppError
 // @Failure 500 {object} pkg.AppError
-// @Router /additional-repairs/{id} [get]
+// @Router /v1/additional-repair/{id} [get]
 func (h *AdditionalRepairHandler) GetAdditionalRepair(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/Get")
@@ -80,6 +82,40 @@ func (h *AdditionalRepairHandler) GetAdditionalRepair(c *gin.Context) {
 	c.JSON(http.StatusOK, toAdditionalRepairResponse(foundAdr))
 }
 
+// GetAdditionalRepairBySO godoc
+// @Summary Get additional repairs by service order ID
+// @Description Retrieve additional repairs by service order ID
+// @Tags Additional Repairs
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path string true "Service Order ID"
+// @Success 200 {array} response.AdditionalRepairResponse
+// @Failure 400 {object} pkg.AppError
+// @Failure 500 {object} pkg.AppError
+// @Router /v1/additional-repair/service-orders/{id} [get]
+func (h *AdditionalRepairHandler) GetAdditionalRepairBySO(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/GetAdditionalRepairBySO")
+
+	serviceOrderID := c.Param("id")
+	if serviceOrderID == "" {
+		logger.Error().Str("id", c.Param("id")).Msg("Failed to parse service order ID")
+		c.JSON(errInvalidAdditionalRepairID.HTTPStatus, errInvalidAdditionalRepairID.ToHTTPError())
+		return
+	}
+
+	adrs, err := h.additionalRepairUseCase.GetAdditionalRepairBySO(ctx, serviceOrderID)
+	if err != nil {
+		logger.Error().Err(err).Str("SO_ID", serviceOrderID).Msg("Failed to retrieve additional repair")
+		appErr := mapAdditionalRepairError(err)
+		c.JSON(appErr.HTTPStatus, appErr.ToHTTPError())
+		return
+	}
+
+	c.JSON(http.StatusOK, toAdditionalRepairResponseList(adrs))
+}
+
 // CreateAdditionalRepair godoc
 // @Summary Create a new additional repair
 // @Description Create a new additional repair record
@@ -91,7 +127,7 @@ func (h *AdditionalRepairHandler) GetAdditionalRepair(c *gin.Context) {
 // @Success 201 {object} response.AdditionalRepairResponse
 // @Failure 400 {object} pkg.AppError
 // @Failure 500 {object} pkg.AppError
-// @Router /additional-repairs [post]
+// @Router /v1/additional-repair [post]
 func (h *AdditionalRepairHandler) CreateAdditionalRepair(c *gin.Context) {
 	var payload request.AdditionalRepairCreateRequest
 	logger := logs.Logger()
@@ -127,7 +163,7 @@ func (h *AdditionalRepairHandler) CreateAdditionalRepair(c *gin.Context) {
 // @Failure 400 {object} pkg.AppError
 // @Failure 404 {object} pkg.AppError
 // @Failure 500 {object} pkg.AppError
-// @Router /additional-repairs/{id}/approve [post]
+// @Router /v1/additional-repair/{id}/approve [post]
 func (h *AdditionalRepairHandler) ApproveAdditionalRepair(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/ApproveAdditionalRepair")
@@ -161,7 +197,7 @@ func (h *AdditionalRepairHandler) ApproveAdditionalRepair(c *gin.Context) {
 // @Failure 400 {object} pkg.AppError
 // @Failure 404 {object} pkg.AppError
 // @Failure 500 {object} pkg.AppError
-// @Router /additional-repairs/{id}/reject [post]
+// @Router /v1/additional-repair/{id}/reject [post]
 func (h *AdditionalRepairHandler) RejectAdditionalRepair(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/RejectAdditionalRepair")
@@ -175,6 +211,40 @@ func (h *AdditionalRepairHandler) RejectAdditionalRepair(c *gin.Context) {
 	ar, err := h.additionalRepairUseCase.CustomerApprovalStatus(ctx, additionalRepairID, REJECTED_FLOW)
 	if err != nil {
 		logger.Error().Err(err).Str("ADR_ID", additionalRepairID).Msg("Failed to reject additional repair")
+		appErr := mapAdditionalRepairError(err)
+		c.JSON(appErr.HTTPStatus, appErr.ToHTTPError())
+		return
+	}
+
+	c.JSON(http.StatusOK, toAdditionalRepairResponse(ar))
+}
+
+// CancelAdditionalRepair godoc
+// @Summary Cancel an additional repair
+// @Description Cancel an additional repair by its ID
+// @Tags Additional Repairs
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path string true "Additional Repair ID"
+// @Success 200 {object} response.AdditionalRepairResponse
+// @Failure 400 {object} pkg.AppError
+// @Failure 404 {object} pkg.AppError
+// @Failure 500 {object} pkg.AppError
+// @Router /v1/additional-repair/{id}/cancel [post]
+func (h *AdditionalRepairHandler) CancelAdditionalRepair(c *gin.Context) {
+	logger := logs.Logger()
+	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/CancelAdditionalRepair")
+	additionalRepairID := c.Param("id")
+	if additionalRepairID == "" {
+		logger.Error().Str("id", c.Param("id")).Msg("Failed to parse additional repair ID")
+		c.JSON(errInvalidAdditionalRepairID.HTTPStatus, errInvalidAdditionalRepairID.ToHTTPError())
+		return
+	}
+
+	ar, err := h.additionalRepairUseCase.CancelAdditionalRepair(ctx, additionalRepairID)
+	if err != nil {
+		logger.Error().Err(err).Str("ADR_ID", additionalRepairID).Msg("Failed to cancel additional repair")
 		appErr := mapAdditionalRepairError(err)
 		c.JSON(appErr.HTTPStatus, appErr.ToHTTPError())
 		return
@@ -236,8 +306,8 @@ func mapAdditionalRepairPartsSupplies(partsSupplies []request.AdditionalRepairPa
 	result := make([]entities.PartsSupply, 0, len(partsSupplies))
 	for _, ps := range partsSupplies {
 		result = append(result, entities.PartsSupply{
-			ID: ps.ID,
-			// QuantityReserve: ps.QuantityReserve,
+			ID:       ps.ID,
+			Quantity: ps.Quantity,
 		})
 	}
 	return result
@@ -259,7 +329,13 @@ func toAdditionalRepairResponse(entity *entities.AdditionalRepair) response.Addi
 	}
 
 	if entity.Estimate != nil {
-		res.Estimate = entity.Estimate.Value
+		res.Estimate = &response.EstimateResponse{
+			ID:                 entity.Estimate.ID,
+			Value:              entity.Estimate.Value,
+			Status:             entity.Estimate.Status,
+			ServiceOrderID:     entity.Estimate.ServiceOrderID,
+			AdditionalRepairID: entity.Estimate.AdditionalRepairID,
+		}
 	}
 
 	for _, service := range entity.Services {
@@ -279,4 +355,12 @@ func toAdditionalRepairResponse(entity *entities.AdditionalRepair) response.Addi
 	}
 
 	return res
+}
+
+func toAdditionalRepairResponseList(entities []entities.AdditionalRepair) []response.AdditionalRepairResponse {
+	list := make([]response.AdditionalRepairResponse, 0, len(entities))
+	for _, entity := range entities {
+		list = append(list, toAdditionalRepairResponse(&entity))
+	}
+	return list
 }

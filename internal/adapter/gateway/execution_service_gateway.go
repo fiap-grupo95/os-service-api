@@ -52,6 +52,7 @@ func (g *ExecutionServiceGateway) FinishExecution(ctx context.Context, serviceOr
 	}
 
 	execution := &request.ExecutionRequest{
+		ID:             serviceOrder.Execution.ID,
 		ServiceOrderID: serviceOrder.ID,
 	}
 

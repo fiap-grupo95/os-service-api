@@ -21,9 +21,14 @@ func (a *AdditionalRepairGateway) CreateAdditionalRepair(ctx context.Context, ad
 	return a.repo.CreateAdditionalRepair(ctx, additionalRepair)
 }
 
-func (a *AdditionalRepairGateway) GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error){
-	return nil, nil
+func (a *AdditionalRepairGateway) GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error) {
+	return a.repo.GetByID(ctx, id)
 }
-func (a *AdditionalRepairGateway) UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error){
-	return nil, nil
+
+func (a *AdditionalRepairGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error) {
+	return a.repo.GetByServiceOrderID(ctx, serviceOrderID)
+}
+
+func (a *AdditionalRepairGateway) UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error) {
+	return a.repo.UpdateAdditionalRepair(ctx, additionalRepair)
 }

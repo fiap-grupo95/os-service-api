@@ -11,19 +11,19 @@ type AdditionalRepairServiceResponse struct {
 
 // AdditionalRepairPartsSupplyResponse represents a parts supply returned to the client.
 type AdditionalRepairPartsSupplyResponse struct {
-	ID              string  `json:"id"`
-	Name            string  `json:"name,omitempty"`
-	Price           float64 `json:"price,omitempty"`
-	Quantity        int     `json:"quantity"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name,omitempty"`
+	Price    float64 `json:"price,omitempty"`
+	Quantity int     `json:"quantity"`
 }
 
 // AdditionalRepairResponse encapsulates the data returned for a single additional repair.
 type AdditionalRepairResponse struct {
 	ID             string                                `json:"id"`
-	ServiceOrderID string                                  `json:"service_order_id"`
+	ServiceOrderID string                                `json:"service_order_id"`
 	Description    string                                `json:"description"`
 	Status         string                                `json:"status"`
-	Estimate       float64                               `json:"estimate"`
+	Estimate       *EstimateResponse                     `json:"estimate"`
 	CreatedAt      time.Time                             `json:"created_at"`
 	UpdatedAt      time.Time                             `json:"updated_at"`
 	Services       []AdditionalRepairServiceResponse     `json:"services"`

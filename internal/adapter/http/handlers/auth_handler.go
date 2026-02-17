@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 )
@@ -14,6 +13,11 @@ const (
 	ErrCodeInvalidRequest = "INVALID_REQUEST"
 	ErrMsgInvalidRequest  = "Invalid request body"
 )
+
+type AuthDTO struct {
+	Email    string `json:"email" binding:"required,email" example:"admin@xpto.com"`
+	Password string `json:"password" binding:"required" example:"Q1w2e3r%"`
+}
 
 type AuthHandler struct {
 	usecase usecase.AuthInterface
@@ -32,13 +36,13 @@ func NewAuthHandler(usecase usecase.AuthInterface) *AuthHandler {
 // @Tags         Auth
 // @Accept       json
 // @Produce      json
-// @Param        loginRequest  body  dto.AuthDTO  true  "Credenciais do usuário"
+// @Param        loginRequest  body  AuthDTO  true  "Credenciais do usuário"
 // @Success      200  {object}  map[string]string  "Token JWT"
 // @Failure      400  {object}  pkg.ErrorResponse  "Requisição inválida"
 // @Failure      401  {object}  pkg.ErrorResponse  "Não autorizado"
 // @Router       /login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req dto.AuthDTO
+	var req AuthDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(
 			http.StatusBadRequest,

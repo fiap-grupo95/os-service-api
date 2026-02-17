@@ -62,11 +62,8 @@ func (r *ExecutionServiceRepository) CreateExecution(ctx context.Context, execut
 
 func (r *ExecutionServiceRepository) FinishExecution(ctx context.Context, execution *request.ExecutionRequest) (*response.ExecutionResponse, error) {
 	logger := logs.Logger()
-	if execution == nil {
-		return nil, errors.New("no execution request provided")
-	}
-	if execution.ID == "" {
-		return nil, errors.New("no service order ID provided")
+	if execution == nil || execution.ID == "" {
+		return nil, errors.New("no execution request or execution ID provided")
 	}
 
 	payload, err := json.Marshal(execution)

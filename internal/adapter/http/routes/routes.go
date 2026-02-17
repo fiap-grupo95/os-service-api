@@ -9,7 +9,7 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/execution_service"
 	handlers "github.com/fiap-grupo95/os-service-api/internal/adapter/http/handlers"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/middleware"
-	repository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence"
+	mongorepository "github.com/fiap-grupo95/os-service-api/internal/adapter/persistence/mongodb"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/database"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/observability"
@@ -65,7 +65,7 @@ func InitApp() {
 	db := database.ConnectDatabase()
 
 	// Handler de autenticação
-	userRepository := repository.NewUserRepository(db)
+	userRepository := mongorepository.NewUserRepository(db)
 	authHandler := handlers.NewAuthHandler(
 		usecase.NewAuthUseCase(jwtService, userRepository),
 	)
@@ -77,10 +77,9 @@ func InitApp() {
 	serviceRepository := entity_api.NewServiceRepository()
 	vehiclesRepository := entity_api.NewVehicleRepository()
 	customerRepository := entity_api.NewCustomerRepository()
-	serviceOrderRepository := repository.NewServiceOrderRepository(db)
+	serviceOrderRepository := mongorepository.NewServiceOrderRepository(db)
 	billingServiceRepository := billing_service.NewBillingServiceRepository()
 	executionServiceRepository := execution_service.NewExecutionServiceRepository()
-	// additionalRepairRepository := repository.NewAdditionalRepairRepository(db)
 
 	vehiclesGateway := gateway.NewVehicleGateway(vehiclesRepository)
 	customerGateway := gateway.NewCustomerGateway(customerRepository)
@@ -105,20 +104,24 @@ func InitApp() {
 		billingServiceGateway,
 		executionGateway,
 	)
-	// additionalRepairUsecase := usecase.NewSOAdditionalRepairUseCase(
-	// 	additionalRepairGateway,
-	// 	serviceOrderGateway,
-	// 	serviceGateway,
-	// 	partsSupplyGateway)
+	additionalRepairRepository := mongorepository.NewAdditionalRepairRepository(db)
+	additionalRepairGateway := gateway.NewAdditionalRepairGateway(additionalRepairRepository)
+	additionalRepairUsecase := usecase.NewAdditionalRepairUseCase(
+		additionalRepairGateway,
+		serviceOrderGateway,
+		serviceGateway,
+		partsSupplyGateway,
+		billingServiceGateway,
+	)
 
 	serviceOrderHandler := handlers.NewServiceOrderHandler(serviceOrderUsecase)
-	// additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
+	additionalRepairHandler := handlers.NewAdditionalRepairHandler(additionalRepairUsecase)
 
 	// Protected routes
 	router.Use(middleware.AuthMiddleware(jwtService))
 	addPingRoutes(router)
 	addServiceOrderRoutes(router, serviceOrderHandler)
-	// addAdditionalRepairRoutes(router, additionalRepairHandler)
+	addAdditionalRepairRoutes(router, additionalRepairHandler)
 }
 
 func setMiddlewares() {
