@@ -21,27 +21,6 @@ func NewMockServiceOrderGateway() *MockServiceOrderGateway {
 	return &MockServiceOrderGateway{}
 }
 
-func (m *MockServiceOrderGateway) UpdateEstimate(ctx context.Context, id string, estimate float64) error {
-	args := m.Called(ctx, id, estimate)
-	return args.Error(0)
-}
-
-func (m *MockServiceOrderGateway) GetByName(ctx context.Context, name string) (entities.Service, error) {
-	args := m.Called(ctx, name)
-	if args.Get(0) == nil {
-		return entities.Service{}, args.Error(1)
-	}
-	return args.Get(0).(entities.Service), args.Error(1)
-}
-
-func (m *MockServiceOrderGateway) Delete(ctx context.Context, id string) error {
-	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return args.Error(1)
-	}
-	return args.Error(0)
-}
-
 func (m *MockServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
 	args := m.Called(ctx, serviceOrder)
 	if args.Get(0) == nil {

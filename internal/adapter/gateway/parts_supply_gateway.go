@@ -31,21 +31,6 @@ func (s *PartsSupplyGateway) GetByID(ctx context.Context, id string) (*entities.
 	return mapPartsSupplyResponseToDomain(ctx, *reponse), nil
 }
 
-func (s *PartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.PartsSupply, error) {
-	logger := logs.Logger()
-	partsSupplies := make([]entities.PartsSupply, 0)
-	response, err := s.repo.GetByServiceOrderID(ctx, serviceOrderID)
-	if err != nil {
-		logger.Error().Err(err).Str("OS_ID", serviceOrderID).Msg("failed to find parts supply by service order id")
-		return nil, err
-	}
-
-	for _, r := range response {
-		partsSupplies = append(partsSupplies, *mapPartsSupplyResponseToDomain(ctx, r))
-	}
-	return partsSupplies, nil
-}
-
 func (s *PartsSupplyGateway) Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error {
 	partsSupplyRequest := mapPartsSupplyDomainToRequest(partsSupply)
 	return s.repo.Reserve(ctx, partsSupplyRequest)

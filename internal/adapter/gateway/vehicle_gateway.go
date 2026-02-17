@@ -17,19 +17,6 @@ func NewVehicleGateway(repo interfaces.IVehicleRepository) *VehicleGateway {
 	}
 }
 
-func (g *VehicleGateway) FindAll() ([]entities.Vehicle, error) {
-	vehiclesResponse, err := g.repo.FindAll()
-	if err != nil {
-		return nil, err
-	}
-	vehicles := make([]entities.Vehicle, len(vehiclesResponse))
-	for _, vehicle := range vehiclesResponse {
-		v := mapVehicleResponseToDomain(&vehicle)
-		vehicles = append(vehicles, *v)
-	}
-	return vehicles, nil
-}
-
 func (g *VehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
 	vehicleResponse, err := g.repo.FindByID(id)
 	if err != nil {
@@ -38,26 +25,7 @@ func (g *VehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
 	vehicle := mapVehicleResponseToDomain(vehicleResponse)
 	return vehicle, nil
 }
-func (g *VehicleGateway) FindByPlate(plate valueobject.Plate) (*entities.Vehicle, error) {
-	vehicleResponse, err := g.repo.FindByPlate(plate)
-	if err != nil {
-		return nil, err
-	}
-	vehicle := mapVehicleResponseToDomain(vehicleResponse)
-	return vehicle, nil
-}
-func (g *VehicleGateway) FindByCustomerID(customerID string) ([]entities.Vehicle, error) {
-	vehicleResponse, err := g.repo.FindByCustomerID(customerID)
-	if err != nil {
-		return nil, err
-	}
-	vehicles := make([]entities.Vehicle, len(vehicleResponse))
-	for _, vehicle := range vehicleResponse {
-		v := mapVehicleResponseToDomain(&vehicle)
-		vehicles = append(vehicles, *v)
-	}
-	return vehicles, nil
-}
+
 
 func mapVehicleResponseToDomain(resp *response.VehicleResponse) *entities.Vehicle{
 	if resp == nil {

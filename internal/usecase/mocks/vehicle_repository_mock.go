@@ -3,7 +3,6 @@ package mocks
 
 import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -11,20 +10,6 @@ import (
 // Mock Vehicle Repository - "github.com/stretchr/testify/mock"
 type MockVehicleGateway struct {
 	mock.Mock
-}
-
-func (m *MockVehicleGateway) FindAll() ([]entities.Vehicle, error) {
-	args := m.Called()
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	switch v := args.Get(0).(type) {
-	case []entities.Vehicle:
-		return v, args.Error(1)
-	default:
-		return nil, args.Error(1)
-	}
 }
 
 func (m *MockVehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
@@ -38,36 +23,6 @@ func (m *MockVehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
 		return v, args.Error(1)
 	case entities.Vehicle:
 		return &v, args.Error(1)
-	default:
-		return nil, args.Error(1)
-	}
-}
-
-func (m *MockVehicleGateway) FindByPlate(plate valueobject.Plate) (*entities.Vehicle, error) {
-	args := m.Called(plate)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	switch v := args.Get(0).(type) {
-	case *entities.Vehicle:
-		return v, args.Error(1)
-	case entities.Vehicle:
-		return &v, args.Error(1)
-	default:
-		return nil, args.Error(1)
-	}
-}
-
-func (m *MockVehicleGateway) FindByCustomerID(customerID string) ([]entities.Vehicle, error) {
-	args := m.Called(customerID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-
-	switch v := args.Get(0).(type) {
-	case []entities.Vehicle:
-		return v, args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}

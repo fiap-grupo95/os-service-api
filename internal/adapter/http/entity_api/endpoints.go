@@ -21,8 +21,12 @@ const (
 
 // Parts Supply Endpoints
 const (
-	PARTS_SUPPLY_ID_ENDPOINT               = BASE_URL + "/v1/parts-supply/%s"
-	PARTS_SUPPLY_SERVICE_ORDER_ID_ENDPOINT = BASE_URL + "/v1/parts-supply/service-order/%s"
+	PARTS_SUPPLY_ID_ENDPOINT                = BASE_URL + "/v1/parts-supply/%s"
+	PARTS_SUPPLY_SERVICE_ORDER_ID_ENDPOINT  = BASE_URL + "/v1/parts-supply/service-order/%s"
+	PARTS_SUPPLY_RESERVE_ENDPOINT           = BASE_URL + "/v1/parts-supply/reserve"
+	PARTS_SUPPLY_RELEASE_ENDPOINT           = BASE_URL + "/v1/parts-supply/release"
+	PARTS_SUPPLY_WRITEOFF_ENDPOINT          = BASE_URL + "/v1/parts-supply/writeoff"
+	PARTS_SUPPLY_AUTHORIZE_RESERVE_ENDPOINT = BASE_URL + "/v1/parts-supply/authorize-reserve"
 )
 
 // Service Endpoints
