@@ -26,6 +26,7 @@ const (
 type IAdditionalRepairUseCase interface {
 	CreateAdditionalRepair(ctx context.Context, adr entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 	GetAdditionalRepair(ctx context.Context, additionalRepairId string) (*entities.AdditionalRepair, error)
+	GetAdditionalRepairBySO(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error)
 	CustomerApprovalStatus(ctx context.Context, additionalRepairId string, flow string) (*entities.AdditionalRepair, error)
 	CancelAdditionalRepair(ctx context.Context, additionalRepairId string) (*entities.AdditionalRepair, error)
 	Rollback(ctx context.Context, additionalRepair *entities.AdditionalRepair, hasReservedPartsSupply bool) error
@@ -217,6 +218,22 @@ func (u *AdditionalRepairUseCase) GetAdditionalRepair(ctx context.Context, addit
 		return nil, ErrAdditionalRepairNotFound
 	}
 	return additionalRepair, nil
+}
+
+func (u *AdditionalRepairUseCase) GetAdditionalRepairBySO(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error) {
+	logger := logs.LoggerWithContext(ctx)
+
+	additionalRepairs, err := u.repo.GetByServiceOrderID(ctx, serviceOrderID)
+	if err != nil {
+		logger.Error().Err(err).Any("service_order_id", serviceOrderID).Msg("error listing additional repairs by service order id")
+		return nil, err
+	}
+
+	if additionalRepairs == nil {
+		additionalRepairs = []entities.AdditionalRepair{}
+	}
+
+	return additionalRepairs, nil
 }
 
 func (u *AdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, additionalRepairId string, flow string) (*entities.AdditionalRepair, error) {

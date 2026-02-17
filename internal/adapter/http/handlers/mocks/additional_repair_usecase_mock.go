@@ -41,6 +41,15 @@ func (m *MockIAdditionalRepairUseCase) GetAdditionalRepair(ctx context.Context, 
 	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
+// GetAdditionalRepairBySO mocks base method.
+func (m *MockIAdditionalRepairUseCase) GetAdditionalRepairBySO(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error) {
+	args := m.Called(ctx, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.AdditionalRepair), args.Error(1)
+}
+
 // CustomerApprovalStatus mocks base method.
 func (m *MockIAdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, additionalRepairId string, flow string) (*entities.AdditionalRepair, error) {
 	args := m.Called(ctx, additionalRepairId, flow)

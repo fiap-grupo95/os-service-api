@@ -29,19 +29,24 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	request := &request.EstimateRequest{
-		Services:      mapServicesDomainToRequest(serviceOrder.Services),
-		PartsSupplies: mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
-	}
+	var estimateRequest *request.EstimateRequest
 
 	if serviceOrder != nil {
-		request.ServiceOrderID = serviceOrder.ID
+		estimateRequest = &request.EstimateRequest{
+			ServiceOrderID: serviceOrder.ID,
+			Services:       mapServicesDomainToRequest(serviceOrder.Services),
+			PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
+		}
 	}
 	if additionalRepair != nil {
-		request.AdditionalRepairID = additionalRepair.ID
+		estimateRequest = &request.EstimateRequest{
+			AdditionalRepairID: additionalRepair.ID,
+			Services:           mapServicesDomainToRequest(additionalRepair.Services),
+			PartsSupplies:      mapPartsSupplyDomainToRequest(additionalRepair.PartsSupplies),
+		}
 	}
 
-	response, err := g.repo.CreateEstimate(ctx, request)
+	response, err := g.repo.CreateEstimate(ctx, estimateRequest)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating estimate")
 		return nil, err
@@ -64,15 +69,19 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
+	var estimate *request.EstimateRequest
 
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
 	}
 	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
 	response, err := g.repo.ApproveEstimate(ctx, estimate)
@@ -99,15 +108,19 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
+	var estimate *request.EstimateRequest
 
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
 	}
 	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
 	response, err := g.repo.RejectEstimate(ctx, estimate)
@@ -134,17 +147,21 @@ func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder
 		return nil, errors.New("no service order and additional repair provided")
 	}
 
-	estimate := &request.EstimateRequest{
-		ID: serviceOrder.Estimate.ID,
-	}
+	var estimate *request.EstimateRequest
 
 	if serviceOrder != nil {
-		estimate.ServiceOrderID = serviceOrder.ID
+		estimate = &request.EstimateRequest{
+			ID:             serviceOrder.Estimate.ID,
+			ServiceOrderID: serviceOrder.ID,
+		}
+	}
+	if additionalRepair != nil {
+		estimate = &request.EstimateRequest{
+			ID:                 additionalRepair.Estimate.ID,
+			AdditionalRepairID: additionalRepair.ID,
+		}
 	}
 
-	if additionalRepair != nil {
-		estimate.AdditionalRepairID = additionalRepair.ID
-	}
 
 	response, err := g.repo.CancelEstimate(ctx, estimate)
 	if err != nil {

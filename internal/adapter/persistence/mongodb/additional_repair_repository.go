@@ -17,7 +17,6 @@ import (
 
 type AdditionalRepairMongoDB struct {
 	ID             primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
-	ARId           string             `bson:"ar_id" json:"ar_id"`
 	ServiceOrderID string             `bson:"service_order_id" json:"service_order_id"`
 	Description    string             `bson:"description" json:"description"`
 	Status         string             `bson:"status" json:"status"`
@@ -29,11 +28,11 @@ type AdditionalRepairMongoDB struct {
 }
 
 type EstimateMongoDB struct {
-	ID                 string   `bson:"id" json:"id"`
+	ID                 string  `bson:"id" json:"id"`
 	Value              float64 `bson:"value" json:"value"`
-	ServiceOrderID     string   `bson:"service_order_id" json:"service_order_id"`
-	AdditionalRepairID string   `bson:"additional_repair_id" json:"additional_repair_id"`
-	Status             string   `bson:"status" json:"status"`
+	ServiceOrderID     string  `bson:"service_order_id" json:"service_order_id"`
+	AdditionalRepairID string  `bson:"additional_repair_id" json:"additional_repair_id"`
+	Status             string  `bson:"status" json:"status"`
 }
 
 type PartsSupplyItem struct {
@@ -95,7 +94,6 @@ func (r *AdditionalRepairRepository) CreateAdditionalRepair(ctx context.Context,
 	}
 
 	mongoModel := &AdditionalRepairMongoDB{
-		ARId:           additionalRepair.ID,
 		ServiceOrderID: additionalRepair.ServiceOrderID,
 		Description:    additionalRepair.Description,
 		Status:         additionalRepair.Status.String(),
@@ -106,12 +104,14 @@ func (r *AdditionalRepairRepository) CreateAdditionalRepair(ctx context.Context,
 		UpdatedAt:      now,
 	}
 
-	_, err := r.collection.InsertOne(ctx, mongoModel)
+	result, err := r.collection.InsertOne(ctx, mongoModel)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error creating additional repair in MongoDB")
 		return nil, err
 	}
 
+	mongoModel.ID = result.InsertedID.(primitive.ObjectID)
+	additionalRepair.ID = mongoModel.ID.Hex()
 	additionalRepair.CreatedAt = now
 	additionalRepair.UpdatedAt = now
 	return additionalRepair, nil
@@ -121,9 +121,13 @@ func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id string) (*e
 	logger := logs.LoggerWithContext(ctx)
 
 	var mongoModel AdditionalRepairMongoDB
-	filter := bson.M{"ar_id": id}
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, nil
+	}
+	filter := bson.M{"_id": objID}
 
-	err := r.collection.FindOne(ctx, filter).Decode(&mongoModel)
+	err = r.collection.FindOne(ctx, filter).Decode(&mongoModel)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, nil
@@ -159,7 +163,7 @@ func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id string) (*e
 	}
 
 	return &entities.AdditionalRepair{
-		ID:             mongoModel.ARId,
+		ID:             mongoModel.ID.Hex(),
 		Description:    mongoModel.Description,
 		ServiceOrderID: mongoModel.ServiceOrderID,
 		Status:         valueobject.ParseAdditionalRepairStatus(mongoModel.Status),
@@ -171,39 +175,175 @@ func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id string) (*e
 	}, nil
 }
 
+func (r *AdditionalRepairRepository) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.AdditionalRepair, error) {
+	logger := logs.LoggerWithContext(ctx)
+
+	filter := bson.M{"service_order_id": serviceOrderID}
+	opts := options.Find().SetSort(bson.D{{Key: "created_at", Value: -1}})
+
+	cursor, err := r.collection.Find(ctx, filter, opts)
+	if err != nil {
+		logger.Error().Err(err).Str("service_order_id", serviceOrderID).Msg("Error listing additional repairs by service order id")
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []entities.AdditionalRepair
+	for cursor.Next(ctx) {
+		var mongoModel AdditionalRepairMongoDB
+		if err := cursor.Decode(&mongoModel); err != nil {
+			logger.Error().Err(err).Str("service_order_id", serviceOrderID).Msg("Error decoding additional repair")
+			return nil, err
+		}
+
+		var estimate *entities.Estimate
+		if mongoModel.Estimate != nil {
+			estimate = &entities.Estimate{
+				ID:                 mongoModel.Estimate.ID,
+				ServiceOrderID:     mongoModel.Estimate.ServiceOrderID,
+				AdditionalRepairID: mongoModel.Estimate.AdditionalRepairID,
+				Value:              mongoModel.Estimate.Value,
+				Status:             mongoModel.Estimate.Status,
+			}
+		}
+
+		partsSupplies := make([]entities.PartsSupply, 0, len(mongoModel.PartsSupplies))
+		for _, ps := range mongoModel.PartsSupplies {
+			partsSupplies = append(partsSupplies, entities.PartsSupply{
+				ID:       ps.ID,
+				Quantity: ps.Quantity,
+				Price:    ps.Price,
+			})
+		}
+
+		services := make([]entities.Service, 0, len(mongoModel.Services))
+		for _, s := range mongoModel.Services {
+			services = append(services, entities.Service{
+				ID:    s.ID,
+				Price: s.Price,
+			})
+		}
+
+		results = append(results, entities.AdditionalRepair{
+			ID:             mongoModel.ID.Hex(),
+			Description:    mongoModel.Description,
+			ServiceOrderID: mongoModel.ServiceOrderID,
+			Status:         valueobject.ParseAdditionalRepairStatus(mongoModel.Status),
+			Estimate:       estimate,
+			CreatedAt:      mongoModel.CreatedAt,
+			UpdatedAt:      mongoModel.UpdatedAt,
+			PartsSupplies:  partsSupplies,
+			Services:       services,
+		})
+	}
+	if err := cursor.Err(); err != nil {
+		logger.Error().Err(err).Str("service_order_id", serviceOrderID).Msg("Error iterating additional repairs")
+		return nil, err
+	}
+
+	if results == nil {
+		results = []entities.AdditionalRepair{}
+	}
+	return results, nil
+}
+
 func (r *AdditionalRepairRepository) UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error) {
 	logger := logs.LoggerWithContext(ctx)
 
 	now := time.Now()
-	update := bson.M{
-		"$set": bson.M{
-			"description":      additionalRepair.Description,
-			"status":           additionalRepair.Status.String(),
-			"service_order_id": additionalRepair.ServiceOrderID,
-			"updated_at":       now,
-		},
+	if additionalRepair == nil || additionalRepair.ID == "" {
+		return nil, mongo.ErrNoDocuments
 	}
 
-	filter := bson.M{"ar_id": additionalRepair.ID}
-	result, err := r.collection.UpdateOne(ctx, filter, update)
+	objID, err := primitive.ObjectIDFromHex(additionalRepair.ID)
+	if err != nil {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	set := bson.M{
+		"updated_at": now,
+	}
+	if additionalRepair.Description != "" {
+		set["description"] = additionalRepair.Description
+	}
+	if additionalRepair.ServiceOrderID != "" {
+		set["service_order_id"] = additionalRepair.ServiceOrderID
+	}
+	if additionalRepair.Status.String() != "" {
+		set["status"] = additionalRepair.Status.String()
+	}
+	if additionalRepair.Estimate != nil {
+		if additionalRepair.Estimate.ID != "" {
+			set["estimate.id"] = additionalRepair.Estimate.ID
+		}
+		if additionalRepair.Estimate.Status != "" {
+			set["estimate.status"] = additionalRepair.Estimate.Status
+		}
+		if additionalRepair.Estimate.Value != 0 {
+			set["estimate.value"] = additionalRepair.Estimate.Value
+		}
+		if additionalRepair.Estimate.ServiceOrderID != "" {
+			set["estimate.service_order_id"] = additionalRepair.Estimate.ServiceOrderID
+		}
+		if additionalRepair.Estimate.AdditionalRepairID != "" {
+			set["estimate.additional_repair_id"] = additionalRepair.Estimate.AdditionalRepairID
+		}
+	}
+
+	update := bson.M{"$set": set}
+	filter := bson.M{"_id": objID}
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var updated AdditionalRepairMongoDB
+	err = r.collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updated)
 	if err != nil {
 		logger.Error().Err(err).Str("ar_id", additionalRepair.ID).Msg("Error updating additional repair")
 		return nil, err
 	}
-	if result.MatchedCount == 0 {
-		return nil, mongo.ErrNoDocuments
+
+	var estimate *entities.Estimate
+	if updated.Estimate != nil {
+		estimate = &entities.Estimate{
+			ID:                 updated.Estimate.ID,
+			ServiceOrderID:     updated.Estimate.ServiceOrderID,
+			AdditionalRepairID: updated.Estimate.AdditionalRepairID,
+			Value:              updated.Estimate.Value,
+			Status:             updated.Estimate.Status,
+		}
 	}
 
-	additionalRepair.UpdatedAt = now
-	return additionalRepair, nil
+	partsSupplies := make([]entities.PartsSupply, 0, len(updated.PartsSupplies))
+	for _, ps := range updated.PartsSupplies {
+		partsSupplies = append(partsSupplies, entities.PartsSupply{
+			ID:       ps.ID,
+			Quantity: ps.Quantity,
+			Price:    ps.Price,
+		})
+	}
+
+	services := make([]entities.Service, 0, len(updated.Services))
+	for _, s := range updated.Services {
+		services = append(services, entities.Service{
+			ID:    s.ID,
+			Price: s.Price,
+		})
+	}
+
+	return &entities.AdditionalRepair{
+		ID:             updated.ID.Hex(),
+		Description:    updated.Description,
+		ServiceOrderID: updated.ServiceOrderID,
+		Status:         valueobject.ParseAdditionalRepairStatus(updated.Status),
+		Estimate:       estimate,
+		CreatedAt:      updated.CreatedAt,
+		UpdatedAt:      updated.UpdatedAt,
+		PartsSupplies:  partsSupplies,
+		Services:       services,
+	}, nil
 }
 
 func (r *AdditionalRepairRepository) CreateIndexes(ctx context.Context) error {
 	indexes := []mongo.IndexModel{
-		{
-			Keys:    bson.D{{Key: "ar_id", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
 		{
 			Keys: bson.D{{Key: "service_order_id", Value: 1}, {Key: "created_at", Value: -1}},
 		},

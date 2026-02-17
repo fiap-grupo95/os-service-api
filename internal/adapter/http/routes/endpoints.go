@@ -24,6 +24,8 @@ const (
 const (
 	PostAdditionalRepair        = "/v1/additional-repair"
 	GetAdditionalRepair         = "/v1/additional-repair/:id"
-	PostAdditionalRepairApprove = "/v1/additional-repair/approve/:id"
-	PostAdditionalRepairReject  = "/v1/additional-repair/reject/:id"
+	GetAdditionalRepairBySO     = "/v1/additional-repair/service-orders/:id"
+	PostAdditionalRepairApprove = "/v1/additional-repair/:id/approve"
+	PostAdditionalRepairReject  = "/v1/additional-repair/:id/reject"
+	PostAdditionalRepairCancel  = "/v1/additional-repair/:id/cancel"
 )
