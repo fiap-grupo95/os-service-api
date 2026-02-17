@@ -74,8 +74,8 @@ func NewServiceOrderHandler(useCase usecase.IServiceOrderUseCase) *ServiceOrderH
 func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Get")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		return
 	}
 
@@ -86,7 +86,7 @@ func (h *ServiceOrderHandler) GetServiceOrder(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, getFlow, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to retrieve service order")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to retrieve service order")
 
 		writeServiceOrderError(c, err, "Failed to retrieve service order")
 		return
@@ -178,8 +178,8 @@ func (h *ServiceOrderHandler) CreateServiceOrder(c *gin.Context) {
 func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Cancel")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.CANCEL, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -187,7 +187,7 @@ func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.CANCEL, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to cancel service order")
 
 		writeServiceOrderError(c, err, "Failed to cancel service order")
 		return
@@ -213,8 +213,8 @@ func (h *ServiceOrderHandler) CancelServiceOrder(c *gin.Context) {
 func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Diagnosis")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -222,7 +222,7 @@ func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	var req request.ServiceOrderDiagnosisUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(http.StatusBadRequest))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to bind JSON for update service order diagnosis")
 		writeBindingError(c, err)
 		return
 	}
@@ -231,7 +231,7 @@ func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DIAGNOSIS, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order diagnosis")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to update service order diagnosis")
 
 		writeServiceOrderError(c, err, "Failed to update service order diagnosis")
 		return
@@ -256,8 +256,8 @@ func (h *ServiceOrderHandler) DiagnosisServiceOrder(c *gin.Context) {
 func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -265,7 +265,7 @@ func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_APPROVE, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to approve service order estimate")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to approve service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to approve service order estimate")
 		return
@@ -290,8 +290,8 @@ func (h *ServiceOrderHandler) ApproveServiceOrderEstimate(c *gin.Context) {
 func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -299,7 +299,7 @@ func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_REJECT, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to reject service order estimate")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to reject service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to reject service order estimate")
 		return
@@ -324,8 +324,8 @@ func (h *ServiceOrderHandler) RejectServiceOrderEstimate(c *gin.Context) {
 func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Estimate")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -333,7 +333,7 @@ func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.ESTIMATE_CANCEL, "", strconv.Itoa(getStatusError(err)))
 
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to cancel service order estimate")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to cancel service order estimate")
 
 		writeServiceOrderError(c, err, "Failed to cancel service order estimate")
 		return
@@ -358,8 +358,8 @@ func (h *ServiceOrderHandler) CancelServiceOrderEstimate(c *gin.Context) {
 func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_START, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -367,7 +367,7 @@ func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 	result, err := h.serviceOrderUseCase.ExecutionServiceOrder(ctx, id, constants.EXECUTION_START)
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_START, "", strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to update service order execution")
 		writeServiceOrderError(c, err, "Failed to update service order execution")
 		return
 	}
@@ -391,8 +391,8 @@ func (h *ServiceOrderHandler) ExecutionServiceOrder(c *gin.Context) {
 func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Execution")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_FINISH, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -400,7 +400,7 @@ func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
 	result, err := h.serviceOrderUseCase.ExecutionServiceOrder(ctx, id, constants.EXECUTION_FINISH)
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.EXECUTION_FINISH, "", strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order execution")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to update service order execution")
 		writeServiceOrderError(c, err, "Failed to update service order execution")
 		return
 	}
@@ -424,8 +424,8 @@ func (h *ServiceOrderHandler) FinishServiceOrderExecution(c *gin.Context) {
 func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Payment")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.PAYMENT, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -433,7 +433,7 @@ func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
 	result, err := h.serviceOrderUseCase.PaymentServiceOrder(ctx, id)
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.PAYMENT, "", strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to create service order payment")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to create service order payment")
 		writeServiceOrderError(c, err, "Failed to create service order payment")
 		return
 	}
@@ -457,8 +457,8 @@ func (h *ServiceOrderHandler) PaymentServiceOrder(c *gin.Context) {
 func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "ServiceOrder/Delivery")
-	id, ok := parseServiceOrderIDParam(c)
-	if !ok {
+	id := parseServiceOrderIDParam(c)
+	if id == "" {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, "", strconv.Itoa(http.StatusBadRequest))
 		return
 	}
@@ -466,7 +466,7 @@ func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 	result, err := h.serviceOrderUseCase.DeliveryServiceOrder(ctx, id)
 	if err != nil {
 		sendToMetric(ctx, metricServiceOrderStatusChange, resultError, constants.DELIVERY, result.Status.String(), strconv.Itoa(getStatusError(err)))
-		logger.Error().Err(err).Uint("OS_ID", id).Msg("Failed to update service order delivery")
+		logger.Error().Err(err).Str("OS_ID", id).Msg("Failed to update service order delivery")
 		writeServiceOrderError(c, err, "Failed to update service order delivery")
 		return
 	}
@@ -474,16 +474,8 @@ func (h *ServiceOrderHandler) DeliveryServiceOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, response.NewServiceOrderResponse(result))
 }
 
-func parseServiceOrderIDParam(c *gin.Context) (uint, bool) {
-	logger := logs.Logger()
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil || id <= 0 {
-		logger.Error().Err(err).Str("id", c.Param("id")).Msg("Invalid service order ID")
-
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service order ID"})
-		return 0, false
-	}
-	return uint(id), true
+func parseServiceOrderIDParam(c *gin.Context) string {
+	return c.Param("id")
 }
 
 func parseIsFullDataParam(c *gin.Context) bool {

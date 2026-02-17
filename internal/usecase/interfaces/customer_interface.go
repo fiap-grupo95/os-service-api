@@ -6,11 +6,11 @@ import (
 )
 
 type ICustomerGateway interface {
-	GetByID(id uint) (*entities.Customer, error)
+	GetByID(id string) (*entities.Customer, error)
 	GetByDocument(CpfCnpj string) (*entities.Customer, error)
 }
 
 type ICustomerRepository interface {
-	GetByID(id uint) (*response.CustomerResponse, error)
+	GetByID(id string) (*response.CustomerResponse, error)
 	GetByDocument(CpfCnpj string) (*response.CustomerResponse, error)
 }

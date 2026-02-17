@@ -21,7 +21,7 @@ func (r *UserRepository) Create(User *entities.User) error {
 	return r.db.Create(userDto).Error
 }
 
-func (r *UserRepository) GetByID(id uint) (*entities.User, error) {
+func (r *UserRepository) GetByID(id string) (*entities.User, error) {
 	var User dto.UserModel
 	err := r.db.Preload("User").First(&User, id).Error
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *UserRepository) Update(User *entities.User) error {
 	return r.db.Save(userDto).Error
 }
 
-func (r *UserRepository) Delete(id uint) error {
+func (r *UserRepository) Delete(id string) error {
 	return r.db.Delete(&dto.UserModel{}, id).Error
 }
 

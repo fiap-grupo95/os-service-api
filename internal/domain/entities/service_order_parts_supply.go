@@ -4,7 +4,7 @@ package entities
 // to a specific service order. It maps the many-to-many relationship while
 // keeping the use case layer free from persistence details.
 type ServiceOrderPartsSupply struct {
-	PartsSupplyID  uint
-	ServiceOrderID uint
+	PartsSupplyID  string
+	ServiceOrderID string
 	Quantity       int
 }

@@ -56,7 +56,7 @@ func (s *ServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities
 	return createdServiceOrder.ToDomain(), nil
 }
 
-func (s *ServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData bool) (*entities.ServiceOrder, error) {
+func (s *ServiceOrderGateway) GetByID(ctx context.Context, id string, isFullData bool) (*entities.ServiceOrder, error) {
 	logger := logs.Logger()
 	if txn := newrelic.FromContext(ctx); txn != nil {
 		logger = logs.LoggerWithContext(ctx)
@@ -136,7 +136,7 @@ func (s *ServiceOrderGateway) getPartsSupplies(ctx context.Context, partsSupplie
 		}
 		partsSuppliesList = append(partsSuppliesList, *partsSupply)
 	}
-	
+
 	return partsSuppliesList, nil
 }
 
@@ -175,14 +175,4 @@ func (s *ServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrde
 	}
 
 	return serviceOrders, nil
-}
-
-func (s *ServiceOrderGateway) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
-	// TODO: Implement me
-	return nil
-}
-
-func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
-	// TODO: Implement me
-	return nil, nil
 }

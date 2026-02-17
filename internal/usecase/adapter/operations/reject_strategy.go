@@ -33,7 +33,7 @@ func (s *RejectEstimateStrategy) Execute(ctx context.Context, serviceOrder *enti
 		return nil, err
 	}
 
-	estimate, err := s.billingServiceRepo.RejectEstimate(ctx, serviceOrder)
+	estimate, err := s.billingServiceRepo.RejectEstimate(ctx, serviceOrder, nil)
 	if err != nil {
 		logger.Error().Err(err).Any("parts_supply_id", serviceOrder.PartsSupplies).Msg("Error rejecting estimate")
 		return nil, err

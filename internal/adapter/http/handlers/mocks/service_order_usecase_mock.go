@@ -10,93 +10,54 @@
 package mocks
 
 import (
-	context "context"
-	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
+	"context"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockIServiceOrderUseCase is a mock of IServiceOrderUseCase interface.
 type MockIServiceOrderUseCase struct {
-	ctrl     *gomock.Controller
-	recorder *MockIServiceOrderUseCaseMockRecorder
-	isgomock struct{}
-}
-
-// MockIServiceOrderUseCaseMockRecorder is the mock recorder for MockIServiceOrderUseCase.
-type MockIServiceOrderUseCaseMockRecorder struct {
-	mock *MockIServiceOrderUseCase
+	mock.Mock
 }
 
 // NewMockIServiceOrderUseCase creates a new mock instance.
-func NewMockIServiceOrderUseCase(ctrl *gomock.Controller) *MockIServiceOrderUseCase {
-	mock := &MockIServiceOrderUseCase{ctrl: ctrl}
-	mock.recorder = &MockIServiceOrderUseCaseMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIServiceOrderUseCase) EXPECT() *MockIServiceOrderUseCaseMockRecorder {
-	return m.recorder
+func NewMockIServiceOrderUseCase(_ interface{}) *MockIServiceOrderUseCase {
+	return &MockIServiceOrderUseCase{}
 }
 
 // CreateServiceOrder mocks base method.
 func (m *MockIServiceOrderUseCase) CreateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateServiceOrder", ctx, serviceOrder)
-	ret0, _ := ret[0].(*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateServiceOrder indicates an expected call of CreateServiceOrder.
-func (mr *MockIServiceOrderUseCaseMockRecorder) CreateServiceOrder(ctx, serviceOrder any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateServiceOrder", reflect.TypeOf((*MockIServiceOrderUseCase)(nil).CreateServiceOrder), ctx, serviceOrder)
+	args := m.Called(ctx, serviceOrder)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
 }
 
 // GetServiceOrder mocks base method.
 func (m *MockIServiceOrderUseCase) GetServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServiceOrder", ctx, serviceOrder)
-	ret0, _ := ret[0].(*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetServiceOrder indicates an expected call of GetServiceOrder.
-func (mr *MockIServiceOrderUseCaseMockRecorder) GetServiceOrder(ctx, serviceOrder any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceOrder", reflect.TypeOf((*MockIServiceOrderUseCase)(nil).GetServiceOrder), ctx, serviceOrder)
+	args := m.Called(ctx, serviceOrder)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
 }
 
 // ListServiceOrders mocks base method.
 func (m *MockIServiceOrderUseCase) ListServiceOrders(ctx context.Context) ([]*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListServiceOrders", ctx)
-	ret0, _ := ret[0].([]*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListServiceOrders indicates an expected call of ListServiceOrders.
-func (mr *MockIServiceOrderUseCaseMockRecorder) ListServiceOrders(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceOrders", reflect.TypeOf((*MockIServiceOrderUseCase)(nil).ListServiceOrders), ctx)
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entities.ServiceOrder), args.Error(1)
 }
 
 // UpdateServiceOrder mocks base method.
 func (m *MockIServiceOrderUseCase) UpdateServiceOrder(ctx context.Context, serviceOrder entities.ServiceOrder, flow string) (*entities.ServiceOrder, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateServiceOrder", ctx, serviceOrder, flow)
-	ret0, _ := ret[0].(*entities.ServiceOrder)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateServiceOrder indicates an expected call of UpdateServiceOrder.
-func (mr *MockIServiceOrderUseCaseMockRecorder) UpdateServiceOrder(ctx, serviceOrder, flow any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateServiceOrder", reflect.TypeOf((*MockIServiceOrderUseCase)(nil).UpdateServiceOrder), ctx, serviceOrder, flow)
+	args := m.Called(ctx, serviceOrder, flow)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
 }

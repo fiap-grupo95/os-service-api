@@ -5,8 +5,8 @@ import (
 )
 
 type Customer struct {
-	ID            uint                `json:"id"`
-	UserID        uint                `json:"user_id"`
+	ID            string              `json:"id"`
+	UserID        string              `json:"user_id"`
 	User          *User               `json:"user-example,omitempty"`
 	CpfCnpj       valueobject.CpfCnpj `json:"document"`
 	PhoneNumber   string              `json:"phone_number"`

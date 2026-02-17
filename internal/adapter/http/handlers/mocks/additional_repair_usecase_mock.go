@@ -5,104 +5,62 @@
 package mocks
 
 import (
-	context "context"
-	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
+	"context"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockIAdditionalRepairUseCase is a mock of IAdditionalRepairUseCase interface.
 type MockIAdditionalRepairUseCase struct {
-	ctrl     *gomock.Controller
-	recorder *MockIAdditionalRepairUseCaseMockRecorder
-}
-
-// MockIAdditionalRepairUseCaseMockRecorder is the mock recorder for MockIAdditionalRepairUseCase.
-type MockIAdditionalRepairUseCaseMockRecorder struct {
-	mock *MockIAdditionalRepairUseCase
-}
-
-// NewMockIAdditionalRepairUseCase creates a new mock instance.
-func NewMockIAdditionalRepairUseCase(ctrl *gomock.Controller) *MockIAdditionalRepairUseCase {
-	mock := &MockIAdditionalRepairUseCase{ctrl: ctrl}
-	mock.recorder = &MockIAdditionalRepairUseCaseMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIAdditionalRepairUseCase) EXPECT() *MockIAdditionalRepairUseCaseMockRecorder {
-	return m.recorder
+	mock.Mock
 }
 
 // AddPartSupplyAndService mocks base method.
-func (m *MockIAdditionalRepairUseCase) AddPartSupplyAndService(ctx context.Context, adrId uint, adr entities.AdditionalRepair) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddPartSupplyAndService", ctx, adrId, adr)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
 
-// AddPartSupplyAndService indicates an expected call of AddPartSupplyAndService.
-func (mr *MockIAdditionalRepairUseCaseMockRecorder) AddPartSupplyAndService(ctx, adrId, adr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPartSupplyAndService", reflect.TypeOf((*MockIAdditionalRepairUseCase)(nil).AddPartSupplyAndService), ctx, adrId, adr)
+// NewMockIAdditionalRepairUseCase creates a new mock instance.
+func NewMockIAdditionalRepairUseCase() *MockIAdditionalRepairUseCase {
+	return &MockIAdditionalRepairUseCase{}
 }
 
 // CreateAdditionalRepair mocks base method.
-func (m *MockIAdditionalRepairUseCase) CreateAdditionalRepair(ctx context.Context, adr entities.AdditionalRepair) (entities.AdditionalRepair, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAdditionalRepair", ctx, adr)
-	ret0, _ := ret[0].(entities.AdditionalRepair)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateAdditionalRepair indicates an expected call of CreateAdditionalRepair.
-func (mr *MockIAdditionalRepairUseCaseMockRecorder) CreateAdditionalRepair(ctx, adr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAdditionalRepair", reflect.TypeOf((*MockIAdditionalRepairUseCase)(nil).CreateAdditionalRepair), ctx, adr)
-}
-
-// CustomerApprovalStatus mocks base method.
-func (m *MockIAdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, additionalRepairId uint, status entities.AdditionalRepairStatusDTO) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CustomerApprovalStatus", ctx, additionalRepairId, status)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CustomerApprovalStatus indicates an expected call of CustomerApprovalStatus.
-func (mr *MockIAdditionalRepairUseCaseMockRecorder) CustomerApprovalStatus(ctx, additionalRepairId, status interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CustomerApprovalStatus", reflect.TypeOf((*MockIAdditionalRepairUseCase)(nil).CustomerApprovalStatus), ctx, additionalRepairId, status)
+func (m *MockIAdditionalRepairUseCase) CreateAdditionalRepair(ctx context.Context, adr entities.AdditionalRepair) (*entities.AdditionalRepair, error) {
+	args := m.Called(ctx, adr)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
 // GetAdditionalRepair mocks base method.
-func (m *MockIAdditionalRepairUseCase) GetAdditionalRepair(ctx context.Context, additionalRepairId uint) (entities.AdditionalRepair, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAdditionalRepair", ctx, additionalRepairId)
-	ret0, _ := ret[0].(entities.AdditionalRepair)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+func (m *MockIAdditionalRepairUseCase) GetAdditionalRepair(ctx context.Context, additionalRepairId string) (*entities.AdditionalRepair, error) {
+	args := m.Called(ctx, additionalRepairId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
-// GetAdditionalRepair indicates an expected call of GetAdditionalRepair.
-func (mr *MockIAdditionalRepairUseCaseMockRecorder) GetAdditionalRepair(ctx, additionalRepairId interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdditionalRepair", reflect.TypeOf((*MockIAdditionalRepairUseCase)(nil).GetAdditionalRepair), ctx, additionalRepairId)
+// CustomerApprovalStatus mocks base method.
+func (m *MockIAdditionalRepairUseCase) CustomerApprovalStatus(ctx context.Context, additionalRepairId string, flow string) (*entities.AdditionalRepair, error) {
+	args := m.Called(ctx, additionalRepairId, flow)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
-// RemovePartSupplyAndService mocks base method.
-func (m *MockIAdditionalRepairUseCase) RemovePartSupplyAndService(ctx context.Context, adrId uint, adr entities.AdditionalRepair) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemovePartSupplyAndService", ctx, adrId, adr)
-	ret0, _ := ret[0].(error)
-	return ret0
+// CancelAdditionalRepair mocks base method.
+func (m *MockIAdditionalRepairUseCase) CancelAdditionalRepair(ctx context.Context, additionalRepairId string) (*entities.AdditionalRepair, error) {
+	args := m.Called(ctx, additionalRepairId)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
 
-// RemovePartSupplyAndService indicates an expected call of RemovePartSupplyAndService.
-func (mr *MockIAdditionalRepairUseCaseMockRecorder) RemovePartSupplyAndService(ctx, adrId, adr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePartSupplyAndService", reflect.TypeOf((*MockIAdditionalRepairUseCase)(nil).RemovePartSupplyAndService), ctx, adrId, adr)
+// Rollback mocks base method.
+func (m *MockIAdditionalRepairUseCase) Rollback(ctx context.Context, additionalRepair *entities.AdditionalRepair, hasReservedPartsSupply bool) error {
+	args := m.Called(ctx, additionalRepair, hasReservedPartsSupply)
+	return args.Error(0)
 }

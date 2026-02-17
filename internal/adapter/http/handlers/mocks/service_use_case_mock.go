@@ -10,106 +10,58 @@
 package mocks
 
 import (
-	context "context"
-	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
+	"context"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockIServiceUseCase is a mock of IServiceUseCase interface.
 type MockIServiceUseCase struct {
-	ctrl     *gomock.Controller
-	recorder *MockIServiceUseCaseMockRecorder
-	isgomock struct{}
-}
-
-// MockIServiceUseCaseMockRecorder is the mock recorder for MockIServiceUseCase.
-type MockIServiceUseCaseMockRecorder struct {
-	mock *MockIServiceUseCase
+	mock.Mock
 }
 
 // NewMockIServiceUseCase creates a new mock instance.
-func NewMockIServiceUseCase(ctrl *gomock.Controller) *MockIServiceUseCase {
-	mock := &MockIServiceUseCase{ctrl: ctrl}
-	mock.recorder = &MockIServiceUseCaseMockRecorder{mock}
-	return mock
-}
 
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIServiceUseCase) EXPECT() *MockIServiceUseCaseMockRecorder {
-	return m.recorder
+func NewMockIServiceUseCase() *MockIServiceUseCase {
+	return &MockIServiceUseCase{}
 }
 
 // CreateService mocks base method.
 func (m *MockIServiceUseCase) CreateService(ctx context.Context, service *entities.Service) (entities.Service, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateService", ctx, service)
-	ret0, _ := ret[0].(entities.Service)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateService indicates an expected call of CreateService.
-func (mr *MockIServiceUseCaseMockRecorder) CreateService(ctx, service any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateService", reflect.TypeOf((*MockIServiceUseCase)(nil).CreateService), ctx, service)
+	args := m.Called(ctx, service)
+	if args.Get(0) == nil {
+		return entities.Service{}, args.Error(1)
+	}
+	return args.Get(0).(entities.Service), args.Error(1)
 }
 
 // DeleteService mocks base method.
 func (m *MockIServiceUseCase) DeleteService(ctx context.Context, id uint) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteService", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteService indicates an expected call of DeleteService.
-func (mr *MockIServiceUseCaseMockRecorder) DeleteService(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteService", reflect.TypeOf((*MockIServiceUseCase)(nil).DeleteService), ctx, id)
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 // GetServiceByID mocks base method.
 func (m *MockIServiceUseCase) GetServiceByID(ctx context.Context, id uint) (entities.Service, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetServiceByID", ctx, id)
-	ret0, _ := ret[0].(entities.Service)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetServiceByID indicates an expected call of GetServiceByID.
-func (mr *MockIServiceUseCaseMockRecorder) GetServiceByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceByID", reflect.TypeOf((*MockIServiceUseCase)(nil).GetServiceByID), ctx, id)
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return entities.Service{}, args.Error(1)
+	}
+	return args.Get(0).(entities.Service), args.Error(1)
 }
 
 // ListServices mocks base method.
 func (m *MockIServiceUseCase) ListServices(ctx context.Context) ([]entities.Service, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListServices", ctx)
-	ret0, _ := ret[0].([]entities.Service)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListServices indicates an expected call of ListServices.
-func (mr *MockIServiceUseCaseMockRecorder) ListServices(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServices", reflect.TypeOf((*MockIServiceUseCase)(nil).ListServices), ctx)
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.Service), args.Error(1)
 }
 
 // UpdateService mocks base method.
 func (m *MockIServiceUseCase) UpdateService(ctx context.Context, service *entities.Service) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateService", ctx, service)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateService indicates an expected call of UpdateService.
-func (mr *MockIServiceUseCaseMockRecorder) UpdateService(ctx, service any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateService", reflect.TypeOf((*MockIServiceUseCase)(nil).UpdateService), ctx, service)
+	args := m.Called(ctx, service)
+	return args.Error(0)
 }

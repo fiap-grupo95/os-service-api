@@ -9,19 +9,19 @@ import (
 
 // N:N relationship between PartsSupply and ServiceOrder
 type PartsSupplyServiceOrder struct {
-	PartsSupplyID  uint `gorm:"column:parts_supply_id;primaryKey"`
-	ServiceOrderID uint `gorm:"column:service_order_id;primaryKey"`
+	PartsSupplyID  string `gorm:"column:parts_supply_id;primaryKey"`
+	ServiceOrderID string `gorm:"column:service_order_id;primaryKey"`
 	Quantity       int  `gorm:"column:quantity"`
 }
 
 // N:N relationship between Service and ServiceOrder
 type ServiceServiceOrder struct {
-	ServiceID      uint `gorm:"primaryKey"`
-	ServiceOrderID uint `gorm:"primaryKey"`
+	ServiceID      string `gorm:"primaryKey"`
+	ServiceOrderID string `gorm:"primaryKey"`
 }
 
 type ServiceOrderStatus struct {
-	ID          uint   `gorm:"primaryKey"`
+	ID          string   `gorm:"primaryKey"`
 	Description string `gorm:"size:50;not null"`
 }
 
@@ -33,12 +33,42 @@ func (m *ServiceOrderStatus) ToDomain() valueobject.ServiceOrderStatus {
 	return valueobject.ParseServiceOrderStatus(m.Description)
 }
 
+type ServiceModel struct {
+	ID          string   `gorm:"primaryKey"`
+	Name        string `gorm:"size:50;not null"`
+	Description string `gorm:"size:255;not null"`
+	Price       float64 `gorm:"type:decimal(10,2);not null"`
+}
+
+func (s ServiceModel) ToDomain() entities.Service{
+	return entities.Service{
+		ID: s.ID,
+		Name: s.Name,
+		Description: s.Description,
+		Price: s.Price,
+	}
+}
+
+type PartsSupplyModel struct {
+	ID          string   `gorm:"primaryKey"`
+	Price       float64 `gorm:"type:decimal(10,2);not null"`
+	Quantity    int    `gorm:"column:quantity"`
+}
+
+
+func (s PartsSupplyModel) ToDomain() entities.PartsSupply{
+	return entities.PartsSupply{
+		ID: s.ID,
+		Price: s.Price,
+		Quantity: s.Quantity,
+	}
+}
+
 type ServiceOrderModel struct {
-	ID                       uint               `gorm:"primaryKey"`
-	CustomerID               uint               `gorm:"not null"`
-	VehicleID                uint               `gorm:"not null"`
-	OSStatusID               uint               `gorm:"not null"`
-	ServiceOrderStatus       ServiceOrderStatus `gorm:"foreignKey:OSStatusID"`
+	ID                       string               `gorm:"primaryKey"`
+	CustomerID               string               `gorm:"not null"`
+	VehicleID                string               `gorm:"not null"`
+	ServiceOrderStatus       ServiceOrderStatus `gorm:"foreignKey:ServiceOrderStatusID"`
 	Estimate                 float64            `gorm:"type:decimal(10,2)"`
 	StartedExecutionDate     *time.Time
 	FinalExecutionDate       *time.Time
@@ -46,7 +76,6 @@ type ServiceOrderModel struct {
 	CreatedAt                *time.Time              `gorm:"autoCreateTime"`
 	UpdatedAt                *time.Time              `gorm:"autoUpdateTime"`
 	AdditionalRepairs        []AdditionalRepairModel `gorm:"foreignKey:ServiceOrderID"`
-	PaymentID                *uint                   `gorm:"nullable"`
 	PartsSupplies            []PartsSupplyModel      `gorm:"many2many:parts_supply_service_orders;foreignKey:ID;joinForeignKey:ServiceOrderID;references:ID;joinReferences:PartsSupplyID"`
 	Services                 []ServiceModel          `gorm:"many2many:service_service_orders;foreignKey:ID;joinForeignKey:ServiceOrderID;references:ID;joinReferences:ServiceID"`
 }
@@ -80,7 +109,6 @@ func (m *ServiceOrderModel) ToDomain() *entities.ServiceOrder {
 		CustomerID:               m.CustomerID,
 		VehicleID:                m.VehicleID,
 		Status:                   m.ServiceOrderStatus.ToDomain(),
-		// Estimate:                 m.Estimate,
 		CreatedAt:                m.CreatedAt,
 		UpdatedAt:                m.UpdatedAt,
 		AdditionalRepairs:        additionalRepairs,

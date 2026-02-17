@@ -36,7 +36,7 @@ func (s *ApproveEstimateStrategy) Execute(ctx context.Context, serviceOrder *ent
 	}
 
 	// Approve estimate - Aprovar orçamento
-	estimate, err := s.billingServiceRepo.ApproveEstimate(ctx, serviceOrder)
+	estimate, err := s.billingServiceRepo.ApproveEstimate(ctx, serviceOrder, nil)
 	if err != nil {
 		logger.Error().Err(err).Any("parts_supply_id", serviceOrder.PartsSupplies).Msg("Error approving estimate")
 		return nil, err

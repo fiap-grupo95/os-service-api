@@ -17,8 +17,8 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func setupADRRouter(h *handler.AdditionalRepairHandler) *gin.Engine {
@@ -26,28 +26,26 @@ func setupADRRouter(h *handler.AdditionalRepairHandler) *gin.Engine {
 	r := gin.New()
 	r.POST("/additional-repair", h.CreateAdditionalRepair)
 	r.GET("/additional-repair/:id", h.GetAdditionalRepair)
-	r.POST("/additional-repair/:id/part", h.AddPartSupplyAndService)
-	r.DELETE("/additional-repair/:id/part", h.RemovePartSupplyAndService)
-	r.POST("/additional-repair/:id/approval", h.CustomerApproval)
+	r.POST("/additional-repair/approve/:id", h.ApproveAdditionalRepair)
+	r.POST("/additional-repair/reject/:id", h.RejectAdditionalRepair)
+
 	return r
 }
 
-func TestCreateSOAdditionalRepair_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestCreateAdditionalRepair_Success(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairCreateRequest{ServiceOrderID: 1, Description: "desc"}
-	expected := entities.AdditionalRepair{ServiceOrderID: 1, Description: "desc"}
-	created := entities.AdditionalRepair{
-		ID:             10,
+	payload := request.AdditionalRepairCreateRequest{ServiceOrderID: "1", Description: "desc"}
+	expected := entities.AdditionalRepair{ServiceOrderID: "1", Description: "desc"}
+	created := &entities.AdditionalRepair{
+		ID:             "10",
 		ServiceOrderID: expected.ServiceOrderID,
 		Description:    expected.Description,
-		ARStatus:       valueobject.AdditionalRepairStatus("IN_ANALYSIS"),
+		Status:         valueobject.StatusARAberta,
 	}
-	mockUC.EXPECT().CreateAdditionalRepair(gomock.Any(), expected).Return(created, nil)
+	mockUC.On("CreateAdditionalRepair", mock.Anything, expected).Return(created, nil)
 
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", "/additional-repair", bytes.NewReader(body))
@@ -61,19 +59,18 @@ func TestCreateSOAdditionalRepair_Success(t *testing.T) {
 	assert.Equal(t, created.ID, resp.ID)
 	assert.Equal(t, created.ServiceOrderID, resp.ServiceOrderID)
 	assert.Equal(t, created.Description, resp.Description)
-	assert.Equal(t, created.ARStatus.String(), resp.Status)
+	assert.Equal(t, created.Status.String(), resp.Status)
+	mockUC.AssertExpectations(t)
 }
 
-func TestCreateSOAdditionalRepair_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestCreateAdditionalRepair_Error(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairCreateRequest{ServiceOrderID: 1, Description: "desc"}
-	expected := entities.AdditionalRepair{ServiceOrderID: 1, Description: "desc"}
-	mockUC.EXPECT().CreateAdditionalRepair(gomock.Any(), expected).Return(entities.AdditionalRepair{}, errors.New("fail"))
+	payload := request.AdditionalRepairCreateRequest{ServiceOrderID: "1", Description: "desc"}
+	expected := entities.AdditionalRepair{ServiceOrderID: "1", Description: "desc"}
+	mockUC.On("CreateAdditionalRepair", mock.Anything, expected).Return((*entities.AdditionalRepair)(nil), errors.New("fail"))
 
 	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", "/additional-repair", bytes.NewReader(body))
@@ -81,32 +78,31 @@ func TestCreateSOAdditionalRepair_Error(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockUC.AssertExpectations(t)
 }
 
 func TestGetAdditionalRepair_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
 	now := time.Now()
-	expected := entities.AdditionalRepair{
-		ID:             1,
-		ServiceOrderID: 10,
+	expected := &entities.AdditionalRepair{
+		ID:             "1",
+		ServiceOrderID: "10",
 		Description:    "desc",
-		ARStatus:       valueobject.StatusAAprovada,
-		Estimate:       123.45,
+		Status:         valueobject.StatusAAprovada,
+		Estimate:       &entities.Estimate{ID: "e1", ServiceOrderID: "10", Value: 123.45, Status: "APPROVED"},
 		CreatedAt:      now,
 		UpdatedAt:      now,
 		Services: []entities.Service{
-			{ID: 2, Name: "service", Price: 80},
+			{ID: "2", Name: "service", Price: 80},
 		},
 		PartsSupplies: []entities.PartsSupply{
-			{ID: 3, Price: 43.45, Quantity: 2},
+			{ID: "3", Price: 43.45, Quantity: 2},
 		},
 	}
-	mockUC.EXPECT().GetAdditionalRepair(gomock.Any(), uint(1)).Return(expected, nil)
+	mockUC.On("GetAdditionalRepair", mock.Anything, "1").Return(expected, nil)
 
 	req, _ := http.NewRequest("GET", "/additional-repair/1", nil)
 	w := httptest.NewRecorder()
@@ -119,201 +115,99 @@ func TestGetAdditionalRepair_Success(t *testing.T) {
 	assert.Equal(t, expected.ID, resp.ID)
 	assert.Equal(t, expected.ServiceOrderID, resp.ServiceOrderID)
 	assert.Equal(t, expected.Description, resp.Description)
-	assert.Equal(t, expected.ARStatus.String(), resp.Status)
-	assert.Equal(t, expected.Estimate, resp.Estimate)
+	assert.Equal(t, expected.Status.String(), resp.Status)
+	assert.Equal(t, expected.Estimate.Value, resp.Estimate)
 	assert.Len(t, resp.Services, 1)
 	assert.Equal(t, expected.Services[0].ID, resp.Services[0].ID)
 	assert.Len(t, resp.PartsSupplies, 1)
 	assert.Equal(t, expected.PartsSupplies[0].ID, resp.PartsSupplies[0].ID)
+	mockUC.AssertExpectations(t)
 }
 
 func TestGetAdditionalRepair_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
 	// Return empty struct and error
-	mockUC.EXPECT().GetAdditionalRepair(gomock.Any(), uint(999)).Return(entities.AdditionalRepair{}, errors.New("not found"))
+	mockUC.On("GetAdditionalRepair", mock.Anything, "999").Return((*entities.AdditionalRepair)(nil), errors.New("not found"))
 
 	req, _ := http.NewRequest("GET", "/additional-repair/999", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockUC.AssertExpectations(t)
 }
 
-func TestAddPartSupplyAndService_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestApproveAdditionalRepair_Success(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairItemsRequest{
-		Description: "update",
-		Services:    []request.AdditionalRepairServiceItem{{ID: 4}},
-		PartsSupplies: []request.AdditionalRepairPartsSupplyItem{
-			{ID: 5, QuantityReserve: 3},
-		},
-	}
-	expected := entities.AdditionalRepair{
-		Description: "update",
-		Services:    []entities.Service{{ID: 4}},
-		PartsSupplies: []entities.PartsSupply{
-			{ID: 5},
-		},
-	}
-	mockUC.EXPECT().AddPartSupplyAndService(gomock.Any(), uint(1), expected).Return(nil)
+	ar := &entities.AdditionalRepair{ID: "1", ServiceOrderID: "10", Description: "desc", Status: valueobject.StatusAAprovada}
+	mockUC.On("CustomerApprovalStatus", mock.Anything, "1", "APPROVED").Return(ar, nil)
 
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "/additional-repair/1/part", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/additional-repair/approve/1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
-	var resp response.OperationMessageResponse
+	assert.Equal(t, http.StatusOK, w.Code)
+	var resp response.AdditionalRepairResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, "Additional repair updated successfully", resp.Message)
+	assert.Equal(t, ar.ID, resp.ID)
+	assert.Equal(t, ar.Status.String(), resp.Status)
+	mockUC.AssertExpectations(t)
 }
 
-func TestAddPartSupplyAndService_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestApproveAdditionalRepair_Error(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairItemsRequest{
-		Description: "update",
-		Services:    []request.AdditionalRepairServiceItem{{ID: 4}},
-		PartsSupplies: []request.AdditionalRepairPartsSupplyItem{
-			{ID: 5, QuantityReserve: 3},
-		},
-	}
-	expected := entities.AdditionalRepair{
-		Description: "update",
-		Services:    []entities.Service{{ID: 4}},
-		PartsSupplies: []entities.PartsSupply{
-			{ID: 5},
-		},
-	}
-	mockUC.EXPECT().AddPartSupplyAndService(gomock.Any(), uint(1), expected).Return(errors.New("fail"))
+	mockUC.On("CustomerApprovalStatus", mock.Anything, "1", "APPROVED").Return((*entities.AdditionalRepair)(nil), errors.New("fail"))
 
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "/additional-repair/1/part", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/additional-repair/approve/1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockUC.AssertExpectations(t)
 }
 
-func TestRemovePartSupplyAndService_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestRejectAdditionalRepair_Success(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairItemsRequest{
-		Description: "remove",
-		Services:    []request.AdditionalRepairServiceItem{{ID: 4}},
-		PartsSupplies: []request.AdditionalRepairPartsSupplyItem{
-			{ID: 5, QuantityReserve: 1},
-		},
-	}
-	expected := entities.AdditionalRepair{
-		Description: "remove",
-		Services:    []entities.Service{{ID: 4}},
-		PartsSupplies: []entities.PartsSupply{
-			{ID: 5},
-		},
-	}
-	mockUC.EXPECT().RemovePartSupplyAndService(gomock.Any(), uint(1), expected).Return(nil)
+	ar := &entities.AdditionalRepair{ID: "1", ServiceOrderID: "10", Description: "desc", Status: valueobject.StatusARRejeitada}
+	mockUC.On("CustomerApprovalStatus", mock.Anything, "1", "REJECTED").Return(ar, nil)
 
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("DELETE", "/additional-repair/1/part", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/additional-repair/reject/1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
-	assert.Equal(t, http.StatusCreated, w.Code)
-	var resp response.OperationMessageResponse
+	assert.Equal(t, http.StatusOK, w.Code)
+	var resp response.AdditionalRepairResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
-	assert.Equal(t, "Additional repair updated successfully", resp.Message)
+	assert.Equal(t, ar.ID, resp.ID)
+	assert.Equal(t, ar.Status.String(), resp.Status)
+	mockUC.AssertExpectations(t)
 }
 
-func TestRemovePartSupplyAndService_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
+func TestRejectAdditionalRepair_Error(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
 	h := handler.NewAdditionalRepairHandler(mockUC)
 	r := setupADRRouter(h)
 
-	payload := request.AdditionalRepairItemsRequest{
-		Description: "remove",
-		Services:    []request.AdditionalRepairServiceItem{{ID: 4}},
-		PartsSupplies: []request.AdditionalRepairPartsSupplyItem{
-			{ID: 5, QuantityReserve: 1},
-		},
-	}
-	expected := entities.AdditionalRepair{
-		Description: "remove",
-		Services:    []entities.Service{{ID: 4}},
-		PartsSupplies: []entities.PartsSupply{
-			{ID: 5},
-		},
-	}
-	mockUC.EXPECT().RemovePartSupplyAndService(gomock.Any(), uint(1), expected).Return(errors.New("fail"))
+	mockUC.On("CustomerApprovalStatus", mock.Anything, "1", "REJECTED").Return((*entities.AdditionalRepair)(nil), errors.New("fail"))
 
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("DELETE", "/additional-repair/1/part", bytes.NewReader(body))
+	req, _ := http.NewRequest("POST", "/additional-repair/reject/1", nil)
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-}
-
-func TestCustomerApproval_Success(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
-	h := handler.NewAdditionalRepairHandler(mockUC)
-	r := setupADRRouter(h)
-
-	payload := request.AdditionalRepairApprovalRequest{ApprovalStatus: "APPROVED"}
-	expected := entities.AdditionalRepairStatusDTO{ApprovalStatus: "APPROVED"}
-	mockUC.EXPECT().CustomerApprovalStatus(gomock.Any(), uint(1), expected).Return(nil)
-
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "/additional-repair/1/approval", bytes.NewReader(body))
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusCreated, w.Code)
-	var resp response.OperationMessageResponse
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-	assert.Equal(t, "Additional repair updated successfully", resp.Message)
-}
-
-func TestCustomerApproval_Error(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockUC := mocks.NewMockIAdditionalRepairUseCase(ctrl)
-	h := handler.NewAdditionalRepairHandler(mockUC)
-	r := setupADRRouter(h)
-
-	payload := request.AdditionalRepairApprovalRequest{ApprovalStatus: "DENIED"}
-	expected := entities.AdditionalRepairStatusDTO{ApprovalStatus: "DENIED"}
-	mockUC.EXPECT().CustomerApprovalStatus(gomock.Any(), uint(1), expected).Return(errors.New("fail"))
-
-	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", "/additional-repair/1/approval", bytes.NewReader(body))
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	mockUC.AssertExpectations(t)
 }

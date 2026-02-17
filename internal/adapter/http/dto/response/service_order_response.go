@@ -7,10 +7,10 @@ import (
 )
 
 type ServiceOrderResponse struct {
-	ID                       uint                                   `json:"id"`
-	CustomerID               uint                                   `json:"customer_id"`
+	ID                       string                                 `json:"id"`
+	CustomerID               string                                 `json:"customer_id"`
 	Customer                 *CustomerResponse                      `json:"customer,omitempty"`
-	VehicleID                uint                                   `json:"vehicle_id"`
+	VehicleID                string                                 `json:"vehicle_id"`
 	Vehicle                  *VehicleResponse                       `json:"vehicle,omitempty"`
 	Status                   string                                 `json:"status"`
 	Estimate                 *EstimateResponse                      `json:"estimate,omitempty"`
@@ -22,31 +22,31 @@ type ServiceOrderResponse struct {
 	Services                 []ServiceOrderServiceResponse          `json:"services,omitempty"`
 	PartsSupplies            []ServiceOrderPartsSupplyResponse      `json:"parts_supplies,omitempty"`
 	AdditionalRepairs        []ServiceOrderAdditionalRepairResponse `json:"additional_repairs,omitempty"`
-	PaymentID                *uint                                  `json:"payment_id,omitempty"`
+	PaymentID                *string                                `json:"payment_id,omitempty"`
 }
 
 type ServiceOrderServiceResponse struct {
-	ID    uint    `json:"id"`
+	ID    string  `json:"id"`
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
 }
 
 type ServiceOrderPartsSupplyResponse struct {
-	ID              uint    `json:"id"`
-	Name            string  `json:"name"`
-	Price           float64 `json:"price"`
-	Quantity        int     `json:"quantity"`
+	ID       string  `json:"id"`
+	Name     string  `json:"name"`
+	Price    float64 `json:"price"`
+	Quantity int     `json:"quantity"`
 }
 
 type ServiceOrderAdditionalRepairResponse struct {
-	ID          uint    `json:"id"`
+	ID          string  `json:"id"`
 	Description string  `json:"description"`
 	Status      string  `json:"status"`
-	Estimate    float64 `json:"estimate"`
+	Estimate    *EstimateResponse `json:"estimate,omitempty"`
 }
 
 type ServiceOrderPaymentResponse struct {
-	ID          uint      `json:"id"`
+	ID          string    `json:"id"`
 	Amount      float64   `json:"amount"`
 	PaymentDate time.Time `json:"payment_date"`
 }
@@ -57,17 +57,17 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 	}
 
 	response := ServiceOrderResponse{
-		ID:                       entity.ID,
-		CustomerID:               entity.CustomerID,
-		Customer:                 mapCustomerResponse(entity.Customer),
-		VehicleID:                entity.VehicleID,
-		Vehicle:                  mapVehicleResponse(entity.Vehicle),
-		Status:                   entity.Status.String(),
-		CreatedAt:                entity.CreatedAt,
-		UpdatedAt:                entity.UpdatedAt,
-		Services:                 mapServiceResponses(entity.Services),
-		PartsSupplies:            mapPartsSupplyResponses(entity.PartsSupplies),
-		AdditionalRepairs:        mapAdditionalRepairResponses(entity.AdditionalRepairs),
+		ID:                entity.ID,
+		CustomerID:        entity.CustomerID,
+		Customer:          mapCustomerResponse(entity.Customer),
+		VehicleID:         entity.VehicleID,
+		Vehicle:           mapVehicleResponse(entity.Vehicle),
+		Status:            entity.Status.String(),
+		CreatedAt:         entity.CreatedAt,
+		UpdatedAt:         entity.UpdatedAt,
+		Services:          mapServiceResponses(entity.Services),
+		PartsSupplies:     mapPartsSupplyResponses(entity.PartsSupplies),
+		AdditionalRepairs: mapAdditionalRepairResponses(entity.AdditionalRepairs),
 	}
 
 	if entity.Estimate != nil {
@@ -115,8 +115,8 @@ func mapPartsSupplyResponses(partsSupplies []entities.PartsSupply) []ServiceOrde
 	result := make([]ServiceOrderPartsSupplyResponse, 0, len(partsSupplies))
 	for _, ps := range partsSupplies {
 		result = append(result, ServiceOrderPartsSupplyResponse{
-			ID:    ps.ID,
-			Price: ps.Price,
+			ID:       ps.ID,
+			Price:    ps.Price,
 			Quantity: ps.Quantity,
 		})
 	}
@@ -130,12 +130,22 @@ func mapAdditionalRepairResponses(repairs []entities.AdditionalRepair) []Service
 
 	result := make([]ServiceOrderAdditionalRepairResponse, 0, len(repairs))
 	for _, repair := range repairs {
-		result = append(result, ServiceOrderAdditionalRepairResponse{
+		s := ServiceOrderAdditionalRepairResponse{
 			ID:          repair.ID,
 			Description: repair.Description,
-			Status:      repair.ARStatus.String(),
-			Estimate:    repair.Estimate,
-		})
+			Status:      repair.Status.String(),
+		}
+
+		if repair.Estimate != nil{
+			s.Estimate = &EstimateResponse{
+				ID: repair.Estimate.ID,
+				ServiceOrderID: repair.ServiceOrderID,
+				AdditionalRepairID: repair.Estimate.AdditionalRepairID,
+				Value: repair.Estimate.Value,
+				Status: repair.Estimate.Status,
+			}
+		}
+		result = append(result, s)
 	}
 	return result
 }

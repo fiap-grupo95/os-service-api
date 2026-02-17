@@ -19,8 +19,8 @@ func (m PartsSupplyAdditionalRepair) TableName() string {
 
 // N:N relationship between Service and AdditionalRepair
 type ServiceAdditionalRepair struct {
-	ServiceID          uint `gorm:"primaryKey"`
-	AdditionalRepairID uint `gorm:"primaryKey"`
+	ServiceID          string `gorm:"primaryKey"`
+	AdditionalRepairID string `gorm:"primaryKey"`
 }
 
 func (m ServiceAdditionalRepair) TableName() string {
@@ -43,11 +43,11 @@ func (arsm *AdditionalRepairStatusModel) ToDomain() valueobject.AdditionalRepair
 }
 
 type AdditionalRepairModel struct {
-	ID             uint                        `gorm:"primaryKey"`
+	ID             string                        `gorm:"primaryKey"`
 	Description    string                      `gorm:"column:description;not null"`
-	ServiceOrderID uint                        `gorm:"column:service_order_id;not null"`
+	ServiceOrderID string                        `gorm:"column:service_order_id;not null"`
 	ServiceOrder   ServiceOrderModel           `gorm:"foreignKey:ServiceOrderID"`
-	ARStatusID     uint                        `gorm:"not null"`
+	ARStatusID     string                        `gorm:"not null"`
 	ARStatus       AdditionalRepairStatusModel `gorm:"foreignKey:ARStatusID"`
 	Estimate       float64                     `gorm:"type:decimal(10,2)"`
 	CreatedAt      time.Time                   `gorm:"autoCreateTime"`
@@ -72,11 +72,16 @@ func (arm *AdditionalRepairModel) ToDomain() entities.AdditionalRepair {
 		services = append(services, s.ToDomain())
 	}
 
+	estimate := &entities.Estimate{
+		ID:     arm.ID,
+		Value:  arm.Estimate,
+	}
+
 	return entities.AdditionalRepair{
 		ID:             arm.ID,
 		Description:    arm.Description,
-		ARStatus:       arm.ARStatus.ToDomain(),
-		Estimate:       arm.Estimate,
+		Status:         arm.ARStatus.ToDomain(),
+		Estimate:       estimate,
 		CreatedAt:      arm.CreatedAt,
 		UpdatedAt:      arm.UpdatedAt,
 		ServiceOrderID: arm.ServiceOrderID,

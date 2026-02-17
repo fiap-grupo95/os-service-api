@@ -16,7 +16,7 @@ type MockPartsSupplyGateway struct {
 	mock.Mock
 }
 
-func (m *MockPartsSupplyGateway) GetByID(ctx context.Context, id uint) (*entities.PartsSupply, error) {
+func (m *MockPartsSupplyGateway) GetByID(ctx context.Context, id string) (*entities.PartsSupply, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -24,7 +24,7 @@ func (m *MockPartsSupplyGateway) GetByID(ctx context.Context, id uint) (*entitie
 	return args.Get(0).(*entities.PartsSupply), args.Error(1)
 }
 
-func (m *MockPartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error) {
+func (m *MockPartsSupplyGateway) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.PartsSupply, error) {
 	args := m.Called(ctx, serviceOrderID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

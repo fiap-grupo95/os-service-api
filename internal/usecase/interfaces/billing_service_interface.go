@@ -9,10 +9,10 @@ import (
 )
 
 type IBillingServiceGateway interface {
-	CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
-	ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
-	RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
-	CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error)
+	CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error)
+	ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error)
+	RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error)
+	CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error)
 	GetPaymentByEstimateID(ctx context.Context, estimateID string) (*entities.Payment, error)
 	CreatePayment(ctx context.Context, estimateID string) (*entities.Payment, error)
 }
