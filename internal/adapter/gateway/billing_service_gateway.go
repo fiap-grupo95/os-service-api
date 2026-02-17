@@ -102,7 +102,7 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 	estimate := &request.EstimateRequest{
 		ID: serviceOrder.Estimate.ID,
 	}
-	
+
 	if serviceOrder != nil {
 		estimate.ServiceOrderID = serviceOrder.ID
 	}
@@ -215,7 +215,7 @@ func (g *BillingServiceGateway) GetPaymentByEstimateID(ctx context.Context, esti
 }
 
 func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRequest {
-	servicesRequest := make([]request.ServiceRequest, len(services))
+	servicesRequest := make([]request.ServiceRequest, 0, len(services))
 	for _, s := range services {
 		service := request.ServiceRequest{
 			ID:          s.ID,
@@ -229,7 +229,7 @@ func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRe
 }
 
 func mapPartsSupplyDomainToRequest(partsSupplies []entities.PartsSupply) []request.PartsSupplyRequest {
-	partsSuppliesRequest := make([]request.PartsSupplyRequest, len(partsSupplies))
+	partsSuppliesRequest := make([]request.PartsSupplyRequest, 0, len(partsSupplies))
 	for _, s := range partsSupplies {
 		ps := request.PartsSupplyRequest{
 			ID:       s.ID,
