@@ -41,26 +41,3 @@ func (m *MockAdditionalRepairGateway) UpdateAdditionalRepair(ctx context.Context
 	}
 	return args.Get(0).(*entities.AdditionalRepair), args.Error(1)
 }
-
-func (m *MockAdditionalRepairGateway) AddPartSupplyAndService(ctx context.Context, additionalRepairID string, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
-	args := m.Called(ctx, additionalRepairID, services, partsSupplies, newEstimate)
-	return args.Error(0)
-}
-
-func (m *MockAdditionalRepairGateway) ReplacePartSupplyAndService(ctx context.Context, additionalRepairID string, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
-	args := m.Called(ctx, additionalRepairID, services, partsSupplies, newEstimate)
-	return args.Error(0)
-}
-
-func (m *MockAdditionalRepairGateway) GetByServiceOrder(ctx context.Context, serviceOrderId string) ([]entities.AdditionalRepair, error) {
-	args := m.Called(ctx, serviceOrderId)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]entities.AdditionalRepair), args.Error(1)
-}
-
-func (m *MockAdditionalRepairGateway) GetPartsSupplyQuantity(ctx context.Context, partsSupplyID string, additionalRepairID string) (int, error) {
-	args := m.Called(ctx, partsSupplyID, additionalRepairID)
-	return args.Int(0), args.Error(1)
-}
