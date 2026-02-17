@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"errors"
+	"net/http"
+
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/request"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/dto/response"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/infrastructure/logs"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase"
-	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
-	"net/http"
+	pkg "github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -114,6 +115,19 @@ func (h *AdditionalRepairHandler) CreateAdditionalRepair(c *gin.Context) {
 	c.JSON(http.StatusCreated, toAdditionalRepairResponse(created))
 }
 
+// ApproveAdditionalRepair godoc
+// @Summary Approve an additional repair
+// @Description Approve an additional repair by its ID
+// @Tags Additional Repairs
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path string true "Additional Repair ID"
+// @Success 200 {object} response.AdditionalRepairResponse
+// @Failure 400 {object} pkg.AppError
+// @Failure 404 {object} pkg.AppError
+// @Failure 500 {object} pkg.AppError
+// @Router /additional-repairs/{id}/approve [post]
 func (h *AdditionalRepairHandler) ApproveAdditionalRepair(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/ApproveAdditionalRepair")
@@ -135,6 +149,19 @@ func (h *AdditionalRepairHandler) ApproveAdditionalRepair(c *gin.Context) {
 	c.JSON(http.StatusOK, toAdditionalRepairResponse(ar))
 }
 
+// RejectAdditionalRepair godoc
+// @Summary Reject an additional repair
+// @Description Reject an additional repair by its ID
+// @Tags Additional Repairs
+// @Security Bearer
+// @Accept json
+// @Produce json
+// @Param id path string true "Additional Repair ID"
+// @Success 200 {object} response.AdditionalRepairResponse
+// @Failure 400 {object} pkg.AppError
+// @Failure 404 {object} pkg.AppError
+// @Failure 500 {object} pkg.AppError
+// @Router /additional-repairs/{id}/reject [post]
 func (h *AdditionalRepairHandler) RejectAdditionalRepair(c *gin.Context) {
 	logger := logs.Logger()
 	ctx := retrieveTransactioAndContext(c, "AdditionalRepair/RejectAdditionalRepair")
@@ -155,7 +182,6 @@ func (h *AdditionalRepairHandler) RejectAdditionalRepair(c *gin.Context) {
 
 	c.JSON(http.StatusOK, toAdditionalRepairResponse(ar))
 }
-
 
 func mapAdditionalRepairError(err error) *pkg.AppError {
 	switch {
