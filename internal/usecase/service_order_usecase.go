@@ -206,6 +206,8 @@ func (u *ServiceOrderUseCase) DiagnosisServiceOrder(ctx context.Context, request
 		defer startSegment.End()
 	}
 
+	logger.Debug().Any("request", request).Msg("Request received")
+
 	result, err := u.validateServiceOrderExists(ctx, request.ID)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error finding service order with id")
@@ -277,6 +279,9 @@ func (u *ServiceOrderUseCase) validateDiagnosis(ctx context.Context, serviceOrde
 		observability.IncrementCounter(ctx, "service_order_diagnosis_pending_services_parts_supplies", nil)
 		return serviceOrder, nil
 	}
+
+	logger.Debug().Any("service_order", serviceOrder).Msg("Service order received")
+	logger.Debug().Any("parts_supply", serviceOrder.PartsSupplies).Msg("Parts supply received")
 
 	if len(serviceOrder.Services) == 0 || len(serviceOrder.PartsSupplies) == 0 {
 		observability.IncrementCounter(ctx,

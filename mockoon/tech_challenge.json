@@ -17,7 +17,7 @@
       "responses": [
         {
           "uuid": "5064ac39-8c5d-4fb8-9a96-3cacb1f6e42f",
-          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"user_id\": 1,\n\t\"full_name\": \"Nome Completo\",\n\t\"email\": \"email345@mail.com\",\n\t\"phone_number\": \"11999858454\",\n\t\"document\": \"70782360092\"\n}",
+          "body": "{\n\t\"id\": \"{{urlParam 'id'}}\",\n\t\"user_id\": \"1\",\n\t\"full_name\": \"Nome Completo\",\n\t\"email\": \"email345@mail.com\",\n\t\"phone_number\": \"11999858454\",\n\t\"document\": \"70782360092\"\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -48,7 +48,7 @@
       "responses": [
         {
           "uuid": "85f90c09-17c1-46a4-a2ac-dbd28798f828",
-          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"customer_id\": 1,\n\t\"brand\": \"Marca\",\n\t\"model\": \"Modelo\",\n\t\"year\": \"2025\",\n\t\"plate\": \"HSD1234\"\n}\n",
+          "body": "{\n\t\"id\": \"{{urlParam 'id'}}\",\n\t\"customer_id\": \"1\",\n\t\"brand\": \"Marca\",\n\t\"model\": \"Modelo\",\n\t\"year\": \"2025\",\n\t\"plate\": \"HSD1234\"\n}\n",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -79,7 +79,7 @@
       "responses": [
         {
           "uuid": "03a234d4-83d3-4260-b324-3ccbdd7f59fa",
-          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"name\": \"Troca de óleo 6475878656851560\",\n\t\"description\": \"Trocar de óleo\",\n\t\"price\": 250\n}",
+          "body": "{\n\t\"id\": \"{{urlParam 'id'}}\",\n\t\"name\": \"Troca de óleo 6475878656851560\",\n\t\"description\": \"Trocar de óleo\",\n\t\"price\": 250\n}",
           "latency": 0,
           "statusCode": 200,
           "label": "",
@@ -110,9 +110,133 @@
       "responses": [
         {
           "uuid": "cd8769b3-9b4e-488d-a515-62c23877a333",
-          "body": "{\n\t\"id\": {{urlParam 'id'}},\n\t\"name\": \"Pneus 1521933804342756\",\n\t\"description\": \"Pneus\",\n\t\"price\": 250,\n\t\"quantity_total\": 100,\n\t\"quantity_reserve\": 20\n}",
+          "body": "{\n\t\"id\": \"{{urlParam 'id'}}\",\n\t\"name\": \"Pneus 1521933804342756\",\n\t\"description\": \"Pneus\",\n\t\"price\": 250,\n\t\"quantity_total\": 100,\n\t\"quantity_reserve\": 20\n}",
           "latency": 0,
           "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a20",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "v1/parts-supply/authorize-reserve",
+      "responses": [
+        {
+          "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a21",
+          "body": "{\n\t\"status\": \"authorized\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a22",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "v1/parts-supply/reserve",
+      "responses": [
+        {
+          "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a23",
+          "body": "",
+          "latency": 0,
+          "statusCode": 204,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a24",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "v1/parts-supply/release",
+      "responses": [
+        {
+          "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a25",
+          "body": "",
+          "latency": 0,
+          "statusCode": 204,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a26",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "v1/parts-supply/writeoff",
+      "responses": [
+        {
+          "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a27",
+          "body": "",
+          "latency": 0,
+          "statusCode": 204,
           "label": "",
           "headers": [],
           "bodyType": "INLINE",
@@ -149,6 +273,22 @@
     {
       "type": "route",
       "uuid": "d35394c5-d8c3-49ed-bb60-0c9ea6c7d810"
+    },
+    {
+      "type": "route",
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a20"
+    },
+    {
+      "type": "route",
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a22"
+    },
+    {
+      "type": "route",
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a24"
+    },
+    {
+      "type": "route",
+      "uuid": "4b1e3a10-03f7-4d2d-b6de-e70a9a8d0a26"
     }
   ],
   "proxyMode": false,

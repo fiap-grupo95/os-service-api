@@ -17,13 +17,13 @@ const (
 	PostServiceOrderPayment         = "/v1/service-orders/:id/payment"
 	PostServiceOrderDelivery        = "/v1/service-orders/:id/delivery"
 
-	GetServiceOrder        = "/v1/service-orders/:id"
-	GetServiceOrderHistory = "/v1/service-orders/:id/history"
+	GetServiceOrder     = "/v1/service-orders/:id"
+	GetServiceOrderList = "/v1/service-orders"
 )
 
 const (
-	PostAdditionalRepair = "/v1/additional-repair"
-	GetAdditionalRepair  = "/v1/additional-repair/:id"
+	PostAdditionalRepair        = "/v1/additional-repair"
+	GetAdditionalRepair         = "/v1/additional-repair/:id"
 	PostAdditionalRepairApprove = "/v1/additional-repair/approve/:id"
-	PostAdditionalRepairReject= "/v1/additional-repair/reject/:id"
+	PostAdditionalRepairReject  = "/v1/additional-repair/reject/:id"
 )

@@ -8,20 +8,12 @@ import (
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/adapter/operations"
 	"github.com/fiap-grupo95/os-service-api/internal/usecase/constants"
 	mocks "github.com/fiap-grupo95/os-service-api/internal/usecase/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
-
-func toServiceOrderEntity(model *dto.ServiceOrderModel) *entities.ServiceOrder {
-	if model == nil {
-		return nil
-	}
-	return model.ToDomain()
-}
 
 const (
 	StatusRecebida            = string(valueobject.StatusRecebida)
@@ -223,12 +215,9 @@ func TestUpdateServiceOrder(t *testing.T) {
 
 		executionRepo.On("CreateExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: "1", ServiceOrderID: "1"}, nil)
 
-		serviceOrderRepo.On("GetByID", mock.Anything, "1", false).Return(&dto.ServiceOrderModel{
-			ID: "1",
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				ID:          "1",
-				Description: string(valueobject.StatusRecebida),
-			},
+		serviceOrderRepo.On("GetByID", mock.Anything, "1", false).Return(&entities.ServiceOrder{
+			ID:     "1",
+			Status: valueobject.StatusRecebida,
 		}, nil)
 		serviceRepo.On("GetByID", mock.Anything, "1").Return(&entities.Service{ID: "1"}, nil)
 		partsSupplyRepo.On("GetByID", mock.Anything, "1").Return(&entities.PartsSupply{
@@ -265,12 +254,9 @@ func TestUpdateServiceOrder(t *testing.T) {
 			Status: valueobject.StatusEntregue,
 		}
 
-		serviceOrderRepo.On("GetByID", mock.Anything, "1", false).Return(&dto.ServiceOrderModel{
-			ID: "1",
-			ServiceOrderStatus: dto.ServiceOrderStatus{
-				ID:          "1",
-				Description: string(valueobject.StatusEntregue),
-			},
+		serviceOrderRepo.On("GetByID", mock.Anything, "1", false).Return(&entities.ServiceOrder{
+			ID:     "1",
+			Status: valueobject.StatusEntregue,
 		}, nil)
 
 		r, err := useCase.DiagnosisServiceOrder(context.Background(), serviceOrder)
@@ -300,11 +286,7 @@ func TestValidateEstimate(t *testing.T) {
 		}, nil)
 
 		// Mock get parts supply service order relation
-		serviceOrderRepo.On("GetPartsSupplyServiceOrder", context.Background(), "1", "1").Return(&dto.PartsSupplyServiceOrder{
-			PartsSupplyID:  "1",
-			ServiceOrderID: "1",
-			Quantity:       2,
-		}, nil)
+		serviceOrderRepo.On("GetPartsSupplyServiceOrder", context.Background(), "1", "1").Return(nil, nil)
 
 		// Mock get parts supply by ID
 		partsSupplyRepo.On("GetByID", context.Background(), "1").Return(&entities.PartsSupply{
@@ -599,10 +581,10 @@ func TestGetServiceOrder(t *testing.T) {
 	validID := "1"
 	invalidID := "999"
 	serviceOrderEntity := entities.ServiceOrder{ID: validID}
-	serviceOrderDTO := &dto.ServiceOrderModel{ID: validID}
+	serviceOrderEntityPtr := &entities.ServiceOrder{ID: validID}
 
 	t.Run("success", func(t *testing.T) {
-		serviceOrderRepo.On("GetByID", ctx, validID, false).Return(serviceOrderDTO, nil)
+		serviceOrderRepo.On("GetByID", ctx, validID, false).Return(serviceOrderEntityPtr, nil)
 		result, err := useCase.GetServiceOrder(ctx, serviceOrderEntity, false)
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -636,19 +618,19 @@ func TestListServiceOrders(t *testing.T) {
 		return &ts
 	}
 
-	serviceOrderDTOs := []dto.ServiceOrderModel{
-		{ID: "1", CreatedAt: timePtr(0), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusEmExecucao)}},
-		{ID: "5", CreatedAt: timePtr(2), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusEmExecucao)}},
-		{ID: "2", CreatedAt: timePtr(1), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusAguardandoAprovacao)}},
-		{ID: "3", CreatedAt: timePtr(3), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusEmDiagnostico)}},
-		{ID: "4", CreatedAt: timePtr(4), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusRecebida)}},
-		{ID: "6", CreatedAt: timePtr(5), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusCancelada)}},
-		{ID: "7", CreatedAt: timePtr(6), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusFinalizada)}},
-		{ID: "8", CreatedAt: timePtr(7), ServiceOrderStatus: dto.ServiceOrderStatus{Description: string(valueobject.StatusEntregue)}},
+	serviceOrders := []entities.ServiceOrder{
+		{ID: "1", CreatedAt: timePtr(0), Status: valueobject.StatusEmExecucao},
+		{ID: "5", CreatedAt: timePtr(2), Status: valueobject.StatusEmExecucao},
+		{ID: "2", CreatedAt: timePtr(1), Status: valueobject.StatusAguardandoAprovacao},
+		{ID: "3", CreatedAt: timePtr(3), Status: valueobject.StatusEmDiagnostico},
+		{ID: "4", CreatedAt: timePtr(4), Status: valueobject.StatusRecebida},
+		{ID: "6", CreatedAt: timePtr(5), Status: valueobject.StatusCancelada},
+		{ID: "7", CreatedAt: timePtr(6), Status: valueobject.StatusFinalizada},
+		{ID: "8", CreatedAt: timePtr(7), Status: valueobject.StatusEntregue},
 	}
 
 	t.Run("apply ordering rules", func(t *testing.T) {
-		serviceOrderRepo.On("List").Return(serviceOrderDTOs, nil)
+		serviceOrderRepo.On("List").Return(serviceOrders, nil)
 		result, err := useCase.ListServiceOrders(ctx)
 
 		assert.NoError(t, err)

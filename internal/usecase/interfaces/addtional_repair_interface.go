@@ -15,5 +15,5 @@ type IAdditionalRepairGateway interface {
 type IAdditionalRepairRepository interface {
 	CreateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 	GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error)
-	UpdateAdditionalRepair(ctx context.Context, additionalRepair entities.AdditionalRepair) (entities.AdditionalRepair, error)
+	UpdateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error)
 }

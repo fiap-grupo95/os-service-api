@@ -8,7 +8,6 @@ import (
 	"context"
 
 	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -39,11 +38,6 @@ func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id string, isFull
 		return value, args.Error(1)
 	case entities.ServiceOrder:
 		return &value, args.Error(1)
-	case *dto.ServiceOrderModel:
-		return value.ToDomain(), args.Error(1)
-	case dto.ServiceOrderModel:
-		copy := value
-		return copy.ToDomain(), args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}
@@ -68,13 +62,6 @@ func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.Service
 		for _, item := range value {
 			itemCopy := item
 			result = append(result, &itemCopy)
-		}
-		return result, args.Error(1)
-	case []dto.ServiceOrderModel:
-		result := make([]*entities.ServiceOrder, 0, len(value))
-		for _, item := range value {
-			itemCopy := item
-			result = append(result, itemCopy.ToDomain())
 		}
 		return result, args.Error(1)
 	default:

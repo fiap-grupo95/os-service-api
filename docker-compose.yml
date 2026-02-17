@@ -5,60 +5,54 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '8080:8080'
+      - "8080:8080"
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGO_SEED_DEFAULT_PASSWORD: ${MONGO_SEED_DEFAULT_PASSWORD}
     networks:
       - app_network
     depends_on:
-      db:
+      mongodb:
         condition: service_healthy
 
-  migration:
-    container_name: os-service-api-migration
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app_network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  seed:
+    container_name: os-service-api-seed
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["./os-service-api-migrate"]
+    command: ["./os-service-api-seed"]
     depends_on:
       app:
         condition: service_started
     env_file:
       - .env
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGO_SEED_DEFAULT_PASSWORD: ${MONGO_SEED_DEFAULT_PASSWORD}
     networks:
       - app_network
     restart: on-failure
-
-  db:
-    image: postgres:17.5
-    container_name: db
-    restart: always
-    env_file:
-      - .env
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgresql_data:/var/lib/postgresql/data
-    networks:
-      - app_network
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
 
   # dev:
   #   image: golang:1.24
@@ -67,7 +61,6 @@ services:
   #     - .:/app
   #   tty: true
   #   command: tail -f /dev/null
-
 
   # sonarqube:
   #   image: sonarqube:25.7.0.110598-community
@@ -108,16 +101,20 @@ services:
     image: mockoon/cli
     container_name: mockoon
     ports:
-      - '8083:8083'
+      - "8083:8083"
     volumes:
       - ./mockoon/tech_challenge.json:/data/tech_challenge.json:ro
     networks:
       - app_network
-    command: [
-      "--data", "/data/tech_challenge.json",
-      "--port", "8083",
-      "--hostname", "0.0.0.0"
-    ]
+    command:
+      [
+        "--data",
+        "/data/tech_challenge.json",
+        "--port",
+        "8083",
+        "--hostname",
+        "0.0.0.0",
+      ]
 
 networks:
   default:
@@ -133,10 +130,8 @@ networks:
     name: sonar-net
 
 volumes:
-  db_data:
+  mongodb_data:
   app_data:
   sonar_data:
   sonar_extensions:
-  postgresql_sonar_data:
-  postgresql_data:
   mockoon_data:

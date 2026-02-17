@@ -1,10 +1,12 @@
 package usecase
 
 import (
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
-	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
-	"github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
+	"golang.org/x/crypto/bcrypt"
+
 	"net/http"
+
+	"github.com/fiap-grupo95/os-service-api/internal/usecase/interfaces"
+	pkg "github.com/fiap-grupo95/os-service-api/pkg/utils/errors"
 )
 
 const (
@@ -36,10 +38,11 @@ func (a *authUseCase) Login(Email, Password string) (string, *pkg.AppError) {
 	if err != nil {
 		return "", pkg.NewDomainErrorSimple(ErrCodeInvalidCredential, ErrMsgInvalidCredential, http.StatusUnauthorized)
 	}
+	if userFromDB == nil {
+		return "", pkg.NewDomainErrorSimple(ErrCodeInvalidCredential, ErrMsgInvalidCredential, http.StatusUnauthorized)
+	}
 
-	hashedPass := valueobject.Password(userFromDB.Password)
-
-	if !hashedPass.Verify(Password) {
+	if err := bcrypt.CompareHashAndPassword([]byte(userFromDB.Password), []byte(Password)); err != nil {
 		return "", pkg.NewDomainErrorSimple(ErrCodeInvalidCredential, ErrMsgInvalidCredential, http.StatusUnauthorized)
 	}
 
