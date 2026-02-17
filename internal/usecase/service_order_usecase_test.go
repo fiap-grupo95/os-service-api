@@ -231,7 +231,7 @@ func TestUpdateServiceOrder(t *testing.T) {
 		estimate := &entities.Estimate{ID: "estimate-1", ServiceOrderID: "1", Value: 100.0, Status: "created"}
 		billingServiceRepo.On("CreateEstimate", mock.Anything, mock.Anything, mock.Anything).Return(estimate, nil)
 		partsSupplyRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.PartsSupply")).Return(nil)
-		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+		serviceOrderRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, nil)
 
 		r, err := useCase.DiagnosisServiceOrder(context.Background(), serviceOrder)
 		assert.NoError(t, err)
@@ -308,7 +308,7 @@ func TestValidateEstimate(t *testing.T) {
 		}, nil)
 		partsSupplyRepo.On("WriteOff", mock.Anything, mock.Anything).Return(nil)
 		billingServiceRepo.On("ApproveEstimate", mock.Anything, mock.Anything, mock.Anything).Return(&entities.Estimate{ID: "estimate-1", ServiceOrderID: "1", Value: 100.0, Status: "approved"}, nil)
-		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+		serviceOrderRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, nil)
 
 		result, err := useCase.EstimateServiceOrder(context.Background(), serviceOrderID, constants.ESTIMATE_APPROVE)
 
@@ -404,7 +404,7 @@ func TestValidateExecution(t *testing.T) {
 		serviceOrderID := "1"
 		serviceOrderRepo.On("GetByID", context.Background(), serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusAprovada}, nil)
 		executionRepo.On("CreateExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: "1", ServiceOrderID: "1", Status: "started"}, nil)
-		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+		serviceOrderRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, nil)
 
 		result, err := useCase.ExecutionServiceOrder(context.Background(), serviceOrderID, constants.EXECUTION_START)
 
@@ -427,7 +427,7 @@ func TestValidateExecution(t *testing.T) {
 		serviceOrderID := "1"
 		serviceOrderRepo.On("GetByID", context.Background(), serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusEmExecucao}, nil)
 		executionRepo.On("FinishExecution", mock.Anything, mock.Anything).Return(&entities.Execution{ID: "1", ServiceOrderID: "1", Status: "finished"}, nil)
-		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+		serviceOrderRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, nil)
 
 		result, err := useCase.ExecutionServiceOrder(context.Background(), serviceOrderID, constants.EXECUTION_FINISH)
 
@@ -472,7 +472,7 @@ func TestValidateDelivery(t *testing.T) {
 		serviceOrderID := "1"
 		serviceOrderRepo.On("GetByID", context.Background(), serviceOrderID, false).Return(&entities.ServiceOrder{ID: serviceOrderID, Status: valueobject.StatusFinalizada, Estimate: &entities.Estimate{ID: "estimate-1"}}, nil)
 		billingServiceRepo.On("GetPaymentByEstimateID", mock.Anything, "estimate-1").Return(&entities.Payment{ID: "1", EstimateID: "estimate-1", Amount: 100.0, PaymentDate: time.Now()}, nil)
-		serviceOrderRepo.On("Update", mock.AnythingOfType("*entities.ServiceOrder")).Return(nil)
+		serviceOrderRepo.On("Update", mock.Anything, mock.AnythingOfType("*entities.ServiceOrder")).Return(nil, nil)
 
 		result, err := useCase.DeliveryServiceOrder(context.Background(), serviceOrderID)
 

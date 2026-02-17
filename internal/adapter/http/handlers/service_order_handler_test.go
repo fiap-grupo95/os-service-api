@@ -51,12 +51,12 @@ func (m *MockServiceOrderUseCase) ExecutionServiceOrder(ctx context.Context, ser
 	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
 }
 
-func (m *MockServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error) {
+func (m *MockServiceOrderUseCase) PaymentServiceOrder(ctx context.Context, serviceOrderID string) (*entities.Payment, error) {
 	args := m.Called(ctx, serviceOrderID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*entities.ServiceOrder), args.Error(1)
+	return args.Get(0).(*entities.Payment), args.Error(1)
 }
 
 func (m *MockServiceOrderUseCase) DeliveryServiceOrder(ctx context.Context, serviceOrderID string) (*entities.ServiceOrder, error) {

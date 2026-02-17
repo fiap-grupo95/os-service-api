@@ -8,15 +8,13 @@ import (
 
 type ServiceOrderResponse struct {
 	ID                       string                                 `json:"id"`
-	CustomerID               string                                 `json:"customer_id"`
+	CustomerID               string                                 `json:"customer_id,omitempty"`
 	Customer                 *CustomerResponse                      `json:"customer,omitempty"`
-	VehicleID                string                                 `json:"vehicle_id"`
+	VehicleID                string                                 `json:"vehicle_id,omitempty"`
 	Vehicle                  *VehicleResponse                       `json:"vehicle,omitempty"`
 	Status                   string                                 `json:"status"`
 	Estimate                 *EstimateResponse                      `json:"estimate,omitempty"`
-	StartedExecutionDate     *time.Time                             `json:"started_execution_date,omitempty"`
-	FinalExecutionDate       *time.Time                             `json:"final_execution_date,omitempty"`
-	ExecutionDurationInHours float64                                `json:"execution_duration_in_hours,omitempty"`
+	Execution                *ExecutionResponse                     `json:"execution,omitempty"`
 	CreatedAt                *time.Time                             `json:"created_at,omitempty"`
 	UpdatedAt                *time.Time                             `json:"updated_at,omitempty"`
 	Services                 []ServiceOrderServiceResponse          `json:"services,omitempty"`
@@ -72,7 +70,21 @@ func NewServiceOrderResponse(entity *entities.ServiceOrder) ServiceOrderResponse
 
 	if entity.Estimate != nil {
 		response.Estimate = &EstimateResponse{
+			ID: entity.Estimate.ID,
+			ServiceOrderID: entity.Estimate.ServiceOrderID,
 			Value: entity.Estimate.Value,
+			Status: string(entity.Estimate.Status),
+			AdditionalRepairID: entity.Estimate.AdditionalRepairID,
+		}
+	}
+
+	if entity.Execution != nil {
+		response.Execution = &ExecutionResponse{
+			ID: entity.Execution.ID,
+			ServiceOrderID: entity.Execution.ServiceOrderID,
+			Status: string(entity.Execution.Status),
+			StartedAt: entity.Execution.StartedAt,
+			FinishedAt: entity.Execution.FinishedAt,
 		}
 	}
 

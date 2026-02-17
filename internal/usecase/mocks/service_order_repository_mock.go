@@ -43,9 +43,31 @@ func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id string, isFull
 	}
 }
 
-func (m *MockServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
-	args := m.Called(serviceOrder)
-	return args.Error(0)
+func (m *MockServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, serviceOrder)
+
+	var result *entities.ServiceOrder
+	if len(args) > 0 {
+		switch value := args.Get(0).(type) {
+		case nil:
+			result = serviceOrder
+		case *entities.ServiceOrder:
+			result = value
+		case entities.ServiceOrder:
+			result = &value
+		default:
+			result = serviceOrder
+		}
+	} else {
+		result = serviceOrder
+	}
+
+	var err error
+	if len(args) > 1 {
+		err = args.Error(1)
+	}
+
+	return result, err
 }
 
 func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrder, error) {

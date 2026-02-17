@@ -29,9 +29,11 @@ type AdditionalRepairMongoDB struct {
 }
 
 type EstimateMongoDB struct {
-	ID     string   `bson:"id" json:"id"`
-	Value  *float64 `bson:"value" json:"value"`
-	Status string   `bson:"status" json:"status"`
+	ID                 string   `bson:"id" json:"id"`
+	Value              float64 `bson:"value" json:"value"`
+	ServiceOrderID     string   `bson:"service_order_id" json:"service_order_id"`
+	AdditionalRepairID string   `bson:"additional_repair_id" json:"additional_repair_id"`
+	Status             string   `bson:"status" json:"status"`
 }
 
 type PartsSupplyItem struct {
@@ -68,9 +70,10 @@ func (r *AdditionalRepairRepository) CreateAdditionalRepair(ctx context.Context,
 	if additionalRepair.Estimate != nil {
 		v := additionalRepair.Estimate.Value
 		estimate = &EstimateMongoDB{
-			ID:     additionalRepair.Estimate.ID,
-			Value:  &v,
-			Status: additionalRepair.Estimate.Status,
+			ID:                 additionalRepair.Estimate.ID,
+			Value:              v,
+			AdditionalRepairID: additionalRepair.ID,
+			Status:             additionalRepair.Estimate.Status,
 		}
 	}
 
@@ -131,13 +134,9 @@ func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id string) (*e
 
 	var estimate *entities.Estimate
 	if mongoModel.Estimate != nil {
-		var v float64
-		if mongoModel.Estimate.Value != nil {
-			v = *mongoModel.Estimate.Value
-		}
 		estimate = &entities.Estimate{
 			ID:     mongoModel.Estimate.ID,
-			Value:  v,
+			Value:  mongoModel.Estimate.Value,
 			Status: mongoModel.Estimate.Status,
 		}
 	}

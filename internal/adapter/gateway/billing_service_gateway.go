@@ -25,8 +25,8 @@ func NewBillingServiceGateway(repo interfaces.IBillingServiceRepository) *Billin
 func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate,
 	error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
 	request := &request.EstimateRequest{
@@ -44,6 +44,7 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 	response, err := g.repo.CreateEstimate(ctx, request)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating estimate")
+		return nil, err
 	}
 
 	estimateResponse := &entities.Estimate{
@@ -59,8 +60,8 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 
 func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
 	estimate := &request.EstimateRequest{
@@ -94,8 +95,8 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 
 func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
 	estimate := &request.EstimateRequest{
@@ -129,8 +130,8 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 
 func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
-	if serviceOrder == nil || additionalRepair == nil {
-		return nil, errors.New("no service order or additional repair provided")
+	if serviceOrder == nil && additionalRepair == nil {
+		return nil, errors.New("no service order and additional repair provided")
 	}
 
 	estimate := &request.EstimateRequest{

@@ -118,7 +118,6 @@ func (s *ServiceOrderGateway) GetByID(ctx context.Context, id string, isFullData
 func (s *ServiceOrderGateway) getPartsSupplies(ctx context.Context, partsSupplies []entities.PartsSupply) (partsSuppliesList []entities.PartsSupply, err error) {
 	logger := logs.Logger()
 
-	// TODO: Revisar modelo de dados de PartsSupplies do Model para armazenas apenas IDs
 	for _, ps := range partsSupplies {
 		partsSupply, err := s.partsSupplyRepo.GetByID(ctx, ps.ID)
 		if err != nil {
@@ -134,7 +133,6 @@ func (s *ServiceOrderGateway) getPartsSupplies(ctx context.Context, partsSupplie
 func (s *ServiceOrderGateway) getService(ctx context.Context, services []entities.Service) (servicesList []entities.Service, err error) {
 	logger := logs.Logger()
 
-	// TODO: Revisar modelo de dados de Services do Model para armazenas apenas IDs
 	for _, svc := range services {
 		service, err := s.serviceRepo.GetByID(ctx, svc.ID)
 		if err != nil {
@@ -146,9 +144,17 @@ func (s *ServiceOrderGateway) getService(ctx context.Context, services []entitie
 	return servicesList, nil
 }
 
-func (s *ServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error {
-	// TODO: Implement me
-	return nil
+func (s *ServiceOrderGateway) Update(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
+	logger := logs.Logger()
+	if serviceOrder == nil || serviceOrder.ID == "" {
+		return nil, errors.New(InvalidID)
+	}
+	so, err := s.repo.Update(ctx, serviceOrder)
+	if err != nil {
+		logger.Error().Msg(err.Error())
+		return nil, err
+	}
+	return so, nil
 }
 
 func (s *ServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrder, error) {
