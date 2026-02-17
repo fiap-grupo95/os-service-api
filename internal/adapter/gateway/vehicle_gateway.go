@@ -58,12 +58,6 @@ func (g *VehicleGateway) FindByCustomerID(customerID string) ([]entities.Vehicle
 	}
 	return vehicles, nil
 }
-// func (g *VehicleGateway) Create(vehicle entities.Vehicle) (*entities.Vehicle, error) {
-// 	return nil, nil
-// }
-// func (g *VehicleGateway) Update(vehicle entities.Vehicle) error {
-// 	return nil
-// }
 
 func mapVehicleResponseToDomain(resp *response.VehicleResponse) *entities.Vehicle{
 	if resp == nil {

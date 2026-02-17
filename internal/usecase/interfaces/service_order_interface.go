@@ -12,7 +12,6 @@ type IServiceOrderGateway interface {
 	GetByID(ctx context.Context, id string, isFullData bool) (*entities.ServiceOrder, error)
 	Update(ctx context.Context, serviceOrder *entities.ServiceOrder) error
 	List(ctx context.Context) ([]*entities.ServiceOrder, error)
-	GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*entities.ServiceOrderPartsSupply, error)
 }
 
 type IServiceOrderRepository interface {
@@ -20,5 +19,4 @@ type IServiceOrderRepository interface {
 	GetByID(ctx context.Context, id string) (*dto.ServiceOrderModel, error)
 	Update(ctx context.Context, serviceOrderDto *dto.ServiceOrderModel) error
 	List(ctx context.Context) ([]*dto.ServiceOrderModel, error)
-	GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*dto.PartsSupplyServiceOrder, error)
 }

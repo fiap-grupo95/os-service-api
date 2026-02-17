@@ -102,30 +102,3 @@ func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.Service
 		return nil, args.Error(1)
 	}
 }
-
-func (m *MockServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*entities.ServiceOrderPartsSupply, error) {
-	args := m.Called(ctx, partsSupplyID, serviceOrderID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	switch value := args.Get(0).(type) {
-	case *entities.ServiceOrderPartsSupply:
-		return value, args.Error(1)
-	case entities.ServiceOrderPartsSupply:
-		return &value, args.Error(1)
-	case *dto.PartsSupplyServiceOrder:
-		return &entities.ServiceOrderPartsSupply{
-			PartsSupplyID:  value.PartsSupplyID,
-			ServiceOrderID: value.ServiceOrderID,
-			Quantity:       value.Quantity,
-		}, args.Error(1)
-	case dto.PartsSupplyServiceOrder:
-		return &entities.ServiceOrderPartsSupply{
-			PartsSupplyID:  value.PartsSupplyID,
-			ServiceOrderID: value.ServiceOrderID,
-			Quantity:       value.Quantity,
-		}, args.Error(1)
-	default:
-		return nil, args.Error(1)
-	}
-}

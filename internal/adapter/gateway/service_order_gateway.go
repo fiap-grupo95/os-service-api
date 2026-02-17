@@ -176,13 +176,3 @@ func (s *ServiceOrderGateway) List(ctx context.Context) ([]*entities.ServiceOrde
 
 	return serviceOrders, nil
 }
-
-func (s *ServiceOrderGateway) UpdateEstimate(ctx context.Context, id string, estimate float64) error {
-	// TODO: Implement me
-	return nil
-}
-
-func (s *ServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*entities.ServiceOrderPartsSupply, error) {
-	// TODO: Implement me
-	return nil, nil
-}
