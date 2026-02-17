@@ -37,7 +37,7 @@ func (r *VehicleRepository) FindAll() ([]response.VehicleResponse, error) {
 	return vehicles, nil
 }
 
-func (r *VehicleRepository) FindByID(id uint) (*response.VehicleResponse, error) {
+func (r *VehicleRepository) FindByID(id string) (*response.VehicleResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(VEHICLES_ID_ENDPOINT, id)
 	resp, err := http.Get(path)
@@ -73,7 +73,7 @@ func (r *VehicleRepository) FindByPlate(plate valueobject.Plate) (*response.Vehi
 	return &vehicle, nil
 }
 
-func (r *VehicleRepository) FindByCustomerID(customerID uint) ([]response.VehicleResponse, error) {
+func (r *VehicleRepository) FindByCustomerID(customerID string) ([]response.VehicleResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(VEHICLES_CUSTOMER_ID_ENDPOINT, customerID)
 	resp, err := http.Get(path)

@@ -22,5 +22,8 @@ const (
 )
 
 const (
-	PathAdditionalRepair = "/v1/additional-repair"
+	PostAdditionalRepair = "/v1/additional-repair"
+	GetAdditionalRepair  = "/v1/additional-repair/:id"
+	PostAdditionalRepairApprove = "/v1/additional-repair/approve/:id"
+	PostAdditionalRepairReject= "/v1/additional-repair/reject/:id"
 )

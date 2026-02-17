@@ -15,7 +15,7 @@ func NewCustomerGateway(repo interfaces.ICustomerRepository) interfaces.ICustome
 	return &CustomerGateway{repo: repo}
 }
 
-func (g *CustomerGateway) GetByID(id uint) (*entities.Customer, error) {
+func (g *CustomerGateway) GetByID(id string) (*entities.Customer, error) {
 	response, err := g.repo.GetByID(id)
 	if err != nil {
 		return nil, err

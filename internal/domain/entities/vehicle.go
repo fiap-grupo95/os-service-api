@@ -1,14 +1,15 @@
 package entities
 
 import (
-	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 	"time"
+
+	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 )
 
 type Vehicle struct {
-	ID         uint              `json:"id"`
+	ID         string            `json:"id"`
 	Plate      valueobject.Plate `json:"plate"`
-	CustomerID uint              `json:"customer_id"`
+	CustomerID string            `json:"customer_id"`
 	Customer   *Customer         `json:"customer,omitempty"`
 	Model      string            `json:"model"`
 	Year       string            `json:"year"`

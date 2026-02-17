@@ -30,7 +30,7 @@ func (g *VehicleGateway) FindAll() ([]entities.Vehicle, error) {
 	return vehicles, nil
 }
 
-func (g *VehicleGateway) FindByID(id uint) (*entities.Vehicle, error) {
+func (g *VehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
 	vehicleResponse, err := g.repo.FindByID(id)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (g *VehicleGateway) FindByPlate(plate valueobject.Plate) (*entities.Vehicle
 	vehicle := mapVehicleResponseToDomain(vehicleResponse)
 	return vehicle, nil
 }
-func (g *VehicleGateway) FindByCustomerID(customerID uint) ([]entities.Vehicle, error) {
+func (g *VehicleGateway) FindByCustomerID(customerID string) ([]entities.Vehicle, error) {
 	vehicleResponse, err := g.repo.FindByCustomerID(customerID)
 	if err != nil {
 		return nil, err

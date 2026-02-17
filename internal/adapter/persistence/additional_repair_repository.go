@@ -19,18 +19,17 @@ func NewAdditionalRepairRepository(db *gorm.DB) interfaces.IAdditionalRepairRepo
 	return &AdditionalRepairRepository{db: db}
 }
 
-func (r *AdditionalRepairRepository) Create(ctx context.Context, additionalRepair entities.AdditionalRepair) (entities.AdditionalRepair, error) {
-	statusDTO, err := r.getStatus(ctx, additionalRepair.ARStatus.String())
+func (r *AdditionalRepairRepository) CreateAdditionalRepair(ctx context.Context, additionalRepair *entities.AdditionalRepair) (*entities.AdditionalRepair, error) {
+	statusDTO, err := r.getStatus(ctx, additionalRepair.Status.String())
 	if err != nil {
-		return entities.AdditionalRepair{}, err
+		return nil, err
 	}
 
 	model := dto.AdditionalRepairModel{
 		ID:             additionalRepair.ID,
 		Description:    additionalRepair.Description,
 		ServiceOrderID: additionalRepair.ServiceOrderID,
-		ARStatusID:     statusDTO.ID,
-		Estimate:       additionalRepair.Estimate,
+		Estimate:       additionalRepair.Estimate.Value,
 		Services:       mapServicesToModels(additionalRepair.Services),
 		PartsSupplies:  mapPartsSuppliesToModels(additionalRepair.PartsSupplies),
 	}
@@ -39,23 +38,23 @@ func (r *AdditionalRepairRepository) Create(ctx context.Context, additionalRepai
 	tx := r.db.WithContext(ctx).Begin()
 	if err := tx.Create(&model).Error; err != nil {
 		tx.Rollback()
-		return entities.AdditionalRepair{}, err
+		return nil, err
 	}
 
 	if err := updatePartsSupplyQuantities(tx, model.ID, additionalRepair.PartsSupplies); err != nil {
 		tx.Rollback()
-		return entities.AdditionalRepair{}, err
+		return nil, err
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		return entities.AdditionalRepair{}, err
+		return nil, err
 	}
 
 	created := model.ToDomain()
-	return created, nil
+	return &created, nil
 }
 
-func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id uint) (entities.AdditionalRepair, error) {
+func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id string) (*entities.AdditionalRepair, error) {
 	var additionalRepair dto.AdditionalRepairModel
 	err := r.db.WithContext(ctx).
 		Preload("ARStatus").
@@ -64,14 +63,15 @@ func (r *AdditionalRepairRepository) GetByID(ctx context.Context, id uint) (enti
 		First(&additionalRepair, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return entities.AdditionalRepair{}, nil
+			return nil, nil
 		}
-		return entities.AdditionalRepair{}, err
+		return nil, err
 	}
-	return additionalRepair.ToDomain(), nil
+	ar := additionalRepair.ToDomain()
+	return &ar, nil
 }
 
-func (r *AdditionalRepairRepository) AddPartSupplyAndService(ctx context.Context, additionalRepairID uint, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
+func (r *AdditionalRepairRepository) AddPartSupplyAndService(ctx context.Context, additionalRepairID string, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
 	tx := r.db.WithContext(ctx).Begin()
 
 	for _, svc := range services {
@@ -112,7 +112,7 @@ func (r *AdditionalRepairRepository) AddPartSupplyAndService(ctx context.Context
 	return tx.Commit().Error
 }
 
-func (r *AdditionalRepairRepository) ReplacePartSupplyAndService(ctx context.Context, additionalRepairID uint, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
+func (r *AdditionalRepairRepository) ReplacePartSupplyAndService(ctx context.Context, additionalRepairID string, services []entities.Service, partsSupplies []entities.PartsSupply, newEstimate float64) error {
 	tx := r.db.WithContext(ctx).Begin()
 
 	if err := tx.Where("additional_repair_id = ?", additionalRepairID).
@@ -165,18 +165,7 @@ func (r *AdditionalRepairRepository) ReplacePartSupplyAndService(ctx context.Con
 	return tx.Commit().Error
 }
 
-func (r *AdditionalRepairRepository) UpdateStatus(ctx context.Context, id uint, status entities.AdditionalRepairStatusDTO) error {
-	dtoStatus, err := r.getStatus(ctx, status.ApprovalStatus)
-	if err != nil {
-		return err
-	}
-
-	return r.db.WithContext(ctx).Model(&dto.AdditionalRepairModel{}).
-		Where("id = ?", id).
-		Update("ar_status_id", dtoStatus.ID).Error
-}
-
-func (r *AdditionalRepairRepository) GetByServiceOrder(ctx context.Context, serviceOrderId uint) ([]entities.AdditionalRepair, error) {
+func (r *AdditionalRepairRepository) GetByServiceOrder(ctx context.Context, serviceOrderId string) ([]entities.AdditionalRepair, error) {
 	var additionalRepairs []dto.AdditionalRepairModel
 	err := r.db.WithContext(ctx).
 		Preload("ARStatus").
@@ -195,7 +184,7 @@ func (r *AdditionalRepairRepository) GetByServiceOrder(ctx context.Context, serv
 	return result, nil
 }
 
-func (r *AdditionalRepairRepository) GetPartsSupplyQuantity(ctx context.Context, partsSupplyID uint, additionalRepairID uint) (int, error) {
+func (r *AdditionalRepairRepository) GetPartsSupplyQuantity(ctx context.Context, partsSupplyID string, additionalRepairID string) (int, error) {
 	var relation dto.PartsSupplyAdditionalRepair
 	err := r.db.WithContext(ctx).
 		Where("parts_supply_id = ? AND additional_repair_id = ?", partsSupplyID, additionalRepairID).
@@ -204,6 +193,10 @@ func (r *AdditionalRepairRepository) GetPartsSupplyQuantity(ctx context.Context,
 		return 0, err
 	}
 	return relation.Quantity, nil
+}
+
+func (r *AdditionalRepairRepository) UpdateAdditionalRepair(ctx context.Context, additionalRepair entities.AdditionalRepair) (entities.AdditionalRepair, error) {
+	return additionalRepair, nil
 }
 
 func mapServicesToModels(services []entities.Service) []dto.ServiceModel {
@@ -238,7 +231,7 @@ func mapPartsSuppliesToModels(partsSupplies []entities.PartsSupply) []dto.PartsS
 	return result
 }
 
-func updatePartsSupplyQuantities(tx *gorm.DB, additionalRepairID uint, partsSupplies []entities.PartsSupply) error {
+func updatePartsSupplyQuantities(tx *gorm.DB, additionalRepairID string, partsSupplies []entities.PartsSupply) error {
 	// for _, ps := range partsSupplies {
 	// 	if err := tx.Model(&dto.PartsSupplyAdditionalRepair{}).
 	// 		Where("parts_supply_id = ? and additional_repair_id = ?", ps.ID, additionalRepairID).

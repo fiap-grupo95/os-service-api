@@ -6,7 +6,6 @@ import (
 	"github.com/fiap-grupo95/os-service-api/internal/domain/valueobject"
 
 	"github.com/stretchr/testify/mock"
-	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
 )
 
 // Mock Vehicle Repository - "github.com/stretchr/testify/mock"
@@ -23,20 +22,12 @@ func (m *MockVehicleGateway) FindAll() ([]entities.Vehicle, error) {
 	switch v := args.Get(0).(type) {
 	case []entities.Vehicle:
 		return v, args.Error(1)
-	case []dto.VehicleModel:
-		result := make([]entities.Vehicle, 0, len(v))
-		for _, item := range v {
-			if domain := item.ToDomain(); domain != nil {
-				result = append(result, *domain)
-			}
-		}
-		return result, args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}
 }
 
-func (m *MockVehicleGateway) FindByID(id uint) (*entities.Vehicle, error) {
+func (m *MockVehicleGateway) FindByID(id string) (*entities.Vehicle, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -47,14 +38,6 @@ func (m *MockVehicleGateway) FindByID(id uint) (*entities.Vehicle, error) {
 		return v, args.Error(1)
 	case entities.Vehicle:
 		return &v, args.Error(1)
-	case *dto.VehicleModel:
-		if v == nil {
-			return nil, args.Error(1)
-		}
-		return v.ToDomain(), args.Error(1)
-	case dto.VehicleModel:
-		copy := v
-		return copy.ToDomain(), args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}
@@ -71,20 +54,12 @@ func (m *MockVehicleGateway) FindByPlate(plate valueobject.Plate) (*entities.Veh
 		return v, args.Error(1)
 	case entities.Vehicle:
 		return &v, args.Error(1)
-	case *dto.VehicleModel:
-		if v == nil {
-			return nil, args.Error(1)
-		}
-		return v.ToDomain(), args.Error(1)
-	case dto.VehicleModel:
-		copy := v
-		return copy.ToDomain(), args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}
 }
 
-func (m *MockVehicleGateway) FindByCustomerID(customerID uint) ([]entities.Vehicle, error) {
+func (m *MockVehicleGateway) FindByCustomerID(customerID string) ([]entities.Vehicle, error) {
 	args := m.Called(customerID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -93,14 +68,6 @@ func (m *MockVehicleGateway) FindByCustomerID(customerID uint) ([]entities.Vehic
 	switch v := args.Get(0).(type) {
 	case []entities.Vehicle:
 		return v, args.Error(1)
-	case []dto.VehicleModel:
-		result := make([]entities.Vehicle, 0, len(v))
-		for _, item := range v {
-			if domain := item.ToDomain(); domain != nil {
-				result = append(result, *domain)
-			}
-		}
-		return result, args.Error(1)
 	default:
 		return nil, args.Error(1)
 	}

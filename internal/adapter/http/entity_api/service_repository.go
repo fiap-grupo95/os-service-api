@@ -21,7 +21,7 @@ func NewServiceRepository() *ServiceRepository {
 	return &ServiceRepository{http: http.DefaultClient}
 }
 
-func (s *ServiceRepository) GetByID(ctx context.Context, id uint) (*response.ServiceResponse, error) {
+func (s *ServiceRepository) GetByID(ctx context.Context, id string) (*response.ServiceResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(SERVICE_ID_ENDPOINT, id)
 	resp, err := http.Get(path)

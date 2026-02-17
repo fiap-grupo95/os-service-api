@@ -16,7 +16,7 @@ func NewServiceGateway(repo interfaces.IServiceRepository) *ServiceGateway {
 	return &ServiceGateway{repo: repo}
 }
 
-func (s *ServiceGateway) GetByID(ctx context.Context, id uint) (*entities.Service, error){
+func (s *ServiceGateway) GetByID(ctx context.Context, id string) (*entities.Service, error){
 	response, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err

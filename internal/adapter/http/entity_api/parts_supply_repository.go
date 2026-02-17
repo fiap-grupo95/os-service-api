@@ -22,7 +22,7 @@ func NewPartsSupplyRepository() *PartsSupplyRepository {
 	return &PartsSupplyRepository{http: http.DefaultClient}
 }
 
-func (s *PartsSupplyRepository) GetByID(ctx context.Context, id uint) (*response.PartsSupplyResponse, error) {
+func (s *PartsSupplyRepository) GetByID(ctx context.Context, id string) (*response.PartsSupplyResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(PARTS_SUPPLY_ID_ENDPOINT, id)
 	resp, err := http.Get(path)
@@ -40,7 +40,7 @@ func (s *PartsSupplyRepository) GetByID(ctx context.Context, id uint) (*response
 	return &partsSupply, nil
 }
 
-func (s *PartsSupplyRepository) GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]response.PartsSupplyResponse, error) {
+func (s *PartsSupplyRepository) GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]response.PartsSupplyResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(PARTS_SUPPLY_SERVICE_ORDER_ID_ENDPOINT, serviceOrderID)
 	resp, err := http.Get(path)

@@ -10,114 +10,65 @@
 package mocks
 
 import (
-	context "context"
-	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
+	"context"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockIPartsSupplyUseCase is a mock of IPartsSupplyUseCase interface.
 type MockIPartsSupplyUseCase struct {
-	ctrl     *gomock.Controller
-	recorder *MockIPartsSupplyUseCaseMockRecorder
-	isgomock struct{}
-}
-
-// MockIPartsSupplyUseCaseMockRecorder is the mock recorder for MockIPartsSupplyUseCase.
-type MockIPartsSupplyUseCaseMockRecorder struct {
-	mock *MockIPartsSupplyUseCase
+	mock.Mock
 }
 
 // NewMockIPartsSupplyUseCase creates a new mock instance.
-func NewMockIPartsSupplyUseCase(ctrl *gomock.Controller) *MockIPartsSupplyUseCase {
-	mock := &MockIPartsSupplyUseCase{ctrl: ctrl}
-	mock.recorder = &MockIPartsSupplyUseCaseMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIPartsSupplyUseCase) EXPECT() *MockIPartsSupplyUseCaseMockRecorder {
-	return m.recorder
+func NewMockIPartsSupplyUseCase(_ interface{}) *MockIPartsSupplyUseCase {
+	return &MockIPartsSupplyUseCase{}
 }
 
 func (m *MockIPartsSupplyUseCase) GetPartsSupplyByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPartsSupplyByServiceOrderID", ctx, serviceOrderID)
-	ret0, _ := ret[0].([]entities.PartsSupply)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	args := m.Called(ctx, serviceOrderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.PartsSupply), args.Error(1)
 }
 
 // CreatePartsSupply mocks base method.
 func (m *MockIPartsSupplyUseCase) CreatePartsSupply(ctx context.Context, partsSupply *entities.PartsSupply) (entities.PartsSupply, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePartsSupply", ctx, partsSupply)
-	ret0, _ := ret[0].(entities.PartsSupply)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreatePartsSupply indicates an expected call of CreatePartsSupply.
-func (mr *MockIPartsSupplyUseCaseMockRecorder) CreatePartsSupply(ctx, partsSupply any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePartsSupply", reflect.TypeOf((*MockIPartsSupplyUseCase)(nil).CreatePartsSupply), ctx, partsSupply)
+	args := m.Called(ctx, partsSupply)
+	if args.Get(0) == nil {
+		return entities.PartsSupply{}, args.Error(1)
+	}
+	return args.Get(0).(entities.PartsSupply), args.Error(1)
 }
 
 // DeletePartsSupply mocks base method.
 func (m *MockIPartsSupplyUseCase) DeletePartsSupply(ctx context.Context, id uint) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeletePartsSupply", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeletePartsSupply indicates an expected call of DeletePartsSupply.
-func (mr *MockIPartsSupplyUseCaseMockRecorder) DeletePartsSupply(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePartsSupply", reflect.TypeOf((*MockIPartsSupplyUseCase)(nil).DeletePartsSupply), ctx, id)
+	args := m.Called(ctx, id)
+	return args.Error(0)
 }
 
 // GetPartsSupplyByID mocks base method.
 func (m *MockIPartsSupplyUseCase) GetPartsSupplyByID(ctx context.Context, id uint) (entities.PartsSupply, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPartsSupplyByID", ctx, id)
-	ret0, _ := ret[0].(entities.PartsSupply)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPartsSupplyByID indicates an expected call of GetPartsSupplyByID.
-func (mr *MockIPartsSupplyUseCaseMockRecorder) GetPartsSupplyByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPartsSupplyByID", reflect.TypeOf((*MockIPartsSupplyUseCase)(nil).GetPartsSupplyByID), ctx, id)
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return entities.PartsSupply{}, args.Error(1)
+	}
+	return args.Get(0).(entities.PartsSupply), args.Error(1)
 }
 
 // ListPartsSupplies mocks base method.
 func (m *MockIPartsSupplyUseCase) ListPartsSupplies(ctx context.Context) ([]entities.PartsSupply, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPartsSupplies", ctx)
-	ret0, _ := ret[0].([]entities.PartsSupply)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListPartsSupplies indicates an expected call of ListPartsSupplies.
-func (mr *MockIPartsSupplyUseCaseMockRecorder) ListPartsSupplies(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPartsSupplies", reflect.TypeOf((*MockIPartsSupplyUseCase)(nil).ListPartsSupplies), ctx)
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.PartsSupply), args.Error(1)
 }
 
 // UpdatePartsSupply mocks base method.
 func (m *MockIPartsSupplyUseCase) UpdatePartsSupply(ctx context.Context, partsSupply *entities.PartsSupply) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePartsSupply", ctx, partsSupply)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdatePartsSupply indicates an expected call of UpdatePartsSupply.
-func (mr *MockIPartsSupplyUseCaseMockRecorder) UpdatePartsSupply(ctx, partsSupply any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePartsSupply", reflect.TypeOf((*MockIPartsSupplyUseCase)(nil).UpdatePartsSupply), ctx, partsSupply)
+	args := m.Called(ctx, partsSupply)
+	return args.Error(0)
 }

@@ -22,7 +22,7 @@ func NewBillingServiceGateway(repo interfaces.IBillingServiceRepository) *Billin
 	}
 }
 
-func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate,
+func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate,
 	error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
@@ -35,20 +35,27 @@ func (g *BillingServiceGateway) CreateEstimate(ctx context.Context, serviceOrder
 		PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
 	}
 
+	if len(serviceOrder.AdditionalRepairs) > 0 {
+		request.AdditionalRepairID = getOpenAdditionalRepair(serviceOrder).ID
+	}
+
 	response, err := g.repo.CreateEstimate(ctx, request)
 	if err != nil {
 		logger.Error().Err(err).Msg("error creating estimate")
 	}
 
-	return &entities.Estimate{
-		ID:             response.ID,
-		ServiceOrderID: response.ServiceOrderID,
-		Value:          response.Value,
-		Status:         response.Status,
-	}, nil
+	estimateResponse := &entities.Estimate{
+		ID:                 response.ID,
+		ServiceOrderID:     response.ServiceOrderID,
+		AdditionalRepairID: response.AdditionalRepairID,
+		Value:              response.Value,
+		Status:             response.Status,
+	}
+
+	return estimateResponse, nil
 }
 
-func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
+func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
@@ -79,7 +86,7 @@ func (g *BillingServiceGateway) ApproveEstimate(ctx context.Context, serviceOrde
 	}, nil
 }
 
-func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
+func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
@@ -110,7 +117,7 @@ func (g *BillingServiceGateway) RejectEstimate(ctx context.Context, serviceOrder
 	}, nil
 }
 
-func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.Estimate, error) {
+func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder *entities.ServiceOrder, additionalRepair *entities.AdditionalRepair) (*entities.Estimate, error) {
 	logger := logs.Logger()
 	if serviceOrder == nil {
 		return nil, errors.New("no service order provided")
@@ -121,6 +128,13 @@ func (g *BillingServiceGateway) CancelEstimate(ctx context.Context, serviceOrder
 		ServiceOrderID: serviceOrder.ID,
 		Services:       mapServicesDomainToRequest(serviceOrder.Services),
 		PartsSupplies:  mapPartsSupplyDomainToRequest(serviceOrder.PartsSupplies),
+	}
+
+	if len(serviceOrder.AdditionalRepairs) > 0 {
+		additionalRepair := getValidAdditionalRepairToCancel(serviceOrder)
+		if additionalRepair != nil {
+			estimate.AdditionalRepairID = additionalRepair.ID
+		}
 	}
 
 	response, err := g.repo.CancelEstimate(ctx, estimate)
@@ -227,6 +241,30 @@ func (g *BillingServiceGateway) getPartsSupplyByIDs(ctx context.Context, partsSu
 	}
 
 	return partsSupplyResponse, nil
+}
+
+func getOpenAdditionalRepair(serviceOrder *entities.ServiceOrder) *entities.AdditionalRepair {
+	additionalRepairs := serviceOrder.AdditionalRepairs
+	if len(additionalRepairs) > 0 {
+		for _, ar := range additionalRepairs {
+			if ar.ID != "" && ar.Status.IsAberta() {
+				return &ar
+			}
+		}
+	}
+	return nil
+}
+
+func getValidAdditionalRepairToCancel(serviceOrder *entities.ServiceOrder) *entities.AdditionalRepair {
+	additionalRepairs := serviceOrder.AdditionalRepairs
+	if len(additionalRepairs) > 0 {
+		for _, ar := range additionalRepairs {
+			if ar.ID != "" && !(ar.Status.IsCancelada() || ar.Status.IsRejeitada()) {
+				return &ar
+			}
+		}
+	}
+	return nil
 }
 
 func mapServicesDomainToRequest(services []entities.Service) []request.ServiceRequest {

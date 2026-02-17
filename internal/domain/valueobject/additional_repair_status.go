@@ -7,6 +7,7 @@ const (
 	StatusARAguardandoAprovacao AdditionalRepairStatus = "AGUARDANDO_APROVACAO"
 	StatusAAprovada             AdditionalRepairStatus = "APROVADA"
 	StatusARRejeitada           AdditionalRepairStatus = "REJEITADA"
+	StatusARCancelada           AdditionalRepairStatus = "CANCELADA"
 )
 
 func ParseAdditionalRepairStatus(status string) AdditionalRepairStatus {
@@ -19,6 +20,8 @@ func ParseAdditionalRepairStatus(status string) AdditionalRepairStatus {
 		return StatusAAprovada
 	case "REJEITADA":
 		return StatusARRejeitada
+	case "CANCELADA":
+		return StatusARCancelada
 	default:
 		return AdditionalRepairStatus(status)
 	}
@@ -26,4 +29,24 @@ func ParseAdditionalRepairStatus(status string) AdditionalRepairStatus {
 
 func (s AdditionalRepairStatus) String() string {
 	return string(s)
+}
+
+func (s AdditionalRepairStatus) IsAberta() bool {
+	return s == StatusARAberta
+}
+
+func (s AdditionalRepairStatus) IsAguardandoAprovacao() bool {
+	return s == StatusARAguardandoAprovacao
+}
+
+func (s AdditionalRepairStatus) IsAprovada() bool {
+	return s == StatusAAprovada
+}
+
+func (s AdditionalRepairStatus) IsRejeitada() bool {
+	return s == StatusARRejeitada
+}
+
+func (s AdditionalRepairStatus) IsCancelada() bool {
+	return s == StatusARCancelada
 }

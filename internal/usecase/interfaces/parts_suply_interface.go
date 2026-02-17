@@ -9,8 +9,8 @@ import (
 )
 
 type IPartsSupplyGateway interface {
-	GetByID(ctx context.Context, id uint) (*entities.PartsSupply, error)
-	GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]entities.PartsSupply, error)
+	GetByID(ctx context.Context, id string) (*entities.PartsSupply, error)
+	GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]entities.PartsSupply, error)
 	Reserve(ctx context.Context, partsSupply []entities.PartsSupply) error
 	Release(ctx context.Context, partsSupply []entities.PartsSupply) error
 	WriteOff(ctx context.Context, partsSupply []entities.PartsSupply) error
@@ -18,8 +18,8 @@ type IPartsSupplyGateway interface {
 }
 
 type IPartsSupplyRepository interface {
-	GetByID(ctx context.Context, id uint) (*response.PartsSupplyResponse, error)
-	GetByServiceOrderID(ctx context.Context, serviceOrderID uint) ([]response.PartsSupplyResponse, error)
+	GetByID(ctx context.Context, id string) (*response.PartsSupplyResponse, error)
+	GetByServiceOrderID(ctx context.Context, serviceOrderID string) ([]response.PartsSupplyResponse, error)
 	Reserve(ctx context.Context, partsSupply []request.PartsSupplyRequest) error
 	Release(ctx context.Context, partsSupply []request.PartsSupplyRequest) error
 	WriteOff(ctx context.Context, partsSupply []request.PartsSupplyRequest) error

@@ -6,9 +6,10 @@ package mocks
 
 import (
 	"context"
+
 	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	mock "github.com/stretchr/testify/mock"
 	dto "github.com/fiap-grupo95/os-service-api/internal/infrastructure/database/model"
+	mock "github.com/stretchr/testify/mock"
 )
 
 // Mock Service Order Repository
@@ -20,8 +21,8 @@ func NewMockServiceOrderGateway() *MockServiceOrderGateway {
 	return &MockServiceOrderGateway{}
 }
 
-func (m *MockServiceOrderGateway) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
-	args := m.Called(id, estimate)
+func (m *MockServiceOrderGateway) UpdateEstimate(ctx context.Context, id string, estimate float64) error {
+	args := m.Called(ctx, id, estimate)
 	return args.Error(0)
 }
 
@@ -32,7 +33,8 @@ func (m *MockServiceOrderGateway) GetByName(ctx context.Context, name string) (e
 	}
 	return args.Get(0).(entities.Service), args.Error(1)
 }
-func (m *MockServiceOrderGateway) Delete(ctx context.Context, id uint) error {
+
+func (m *MockServiceOrderGateway) Delete(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return args.Error(1)
@@ -41,15 +43,15 @@ func (m *MockServiceOrderGateway) Delete(ctx context.Context, id uint) error {
 }
 
 func (m *MockServiceOrderGateway) Create(ctx context.Context, serviceOrder *entities.ServiceOrder) (*entities.ServiceOrder, error) {
-	args := m.Called(serviceOrder)
+	args := m.Called(ctx, serviceOrder)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*entities.ServiceOrder), nil
 }
 
-func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id uint, isFullData bool) (*entities.ServiceOrder, error) {
-	args := m.Called(id, isFullData)
+func (m *MockServiceOrderGateway) GetByID(ctx context.Context, id string, isFullData bool) (*entities.ServiceOrder, error) {
+	args := m.Called(ctx, id, isFullData)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -101,8 +103,8 @@ func (m *MockServiceOrderGateway) List(ctx context.Context) ([]*entities.Service
 	}
 }
 
-func (m *MockServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*entities.ServiceOrderPartsSupply, error) {
-	args := m.Called(partsSupplyID, serviceOrderID)
+func (m *MockServiceOrderGateway) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*entities.ServiceOrderPartsSupply, error) {
+	args := m.Called(ctx, partsSupplyID, serviceOrderID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

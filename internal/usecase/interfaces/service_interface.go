@@ -9,9 +9,9 @@ import (
 )
 
 type IServiceGateway interface {
-	GetByID(ctx context.Context, id uint) (*entities.Service, error)
+	GetByID(ctx context.Context, id string) (*entities.Service, error)
 }
 
 type IServiceRepository interface {
-	GetByID(ctx context.Context, id uint) (*response.ServiceResponse, error)
+	GetByID(ctx context.Context, id string) (*response.ServiceResponse, error)
 }

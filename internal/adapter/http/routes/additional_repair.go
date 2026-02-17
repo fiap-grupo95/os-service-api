@@ -7,12 +7,8 @@ import (
 )
 
 func addAdditionalRepairRoutes(rg *gin.Engine, additionalRepair *handlers.AdditionalRepairHandler) {
-	serviceOrdersRoutes := rg.Group(PathAdditionalRepair)
-	{
-		serviceOrdersRoutes.POST("", additionalRepair.CreateAdditionalRepair)
-		serviceOrdersRoutes.GET("/:id", additionalRepair.GetAdditionalRepair)
-		serviceOrdersRoutes.PATCH("/:id/add", additionalRepair.AddPartSupplyAndService)
-		serviceOrdersRoutes.PATCH("/:id/remove", additionalRepair.RemovePartSupplyAndService)
-		serviceOrdersRoutes.PATCH("/:id/customer_approval", additionalRepair.CustomerApproval)
+		rg.POST(PostAdditionalRepair, additionalRepair.CreateAdditionalRepair)
+		rg.GET(GetAdditionalRepair, additionalRepair.GetAdditionalRepair)
+		rg.POST(PostAdditionalRepairApprove, additionalRepair.ApproveAdditionalRepair)
+		rg.POST(PostAdditionalRepairReject, additionalRepair.RejectAdditionalRepair)
 	}
-}

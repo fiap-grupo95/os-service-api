@@ -14,7 +14,7 @@ type MockCustomerGateway struct {
 	mock.Mock
 }
 
-func (m *MockCustomerGateway) GetByID(id uint) (*entities.Customer, error) {
+func (m *MockCustomerGateway) GetByID(id string) (*entities.Customer, error) {
 	args := m.Called(id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)

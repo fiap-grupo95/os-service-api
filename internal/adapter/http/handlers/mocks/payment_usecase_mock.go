@@ -10,78 +10,45 @@
 package mocks
 
 import (
-	context "context"
-	entities "github.com/fiap-grupo95/os-service-api/internal/domain/entities"
-	reflect "reflect"
+	"context"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/stretchr/testify/mock"
 )
 
 // MockIPaymentUseCase is a mock of IPaymentUseCase interface.
 type MockIPaymentUseCase struct {
-	ctrl     *gomock.Controller
-	recorder *MockIPaymentUseCaseMockRecorder
-	isgomock struct{}
-}
-
-// MockIPaymentUseCaseMockRecorder is the mock recorder for MockIPaymentUseCase.
-type MockIPaymentUseCaseMockRecorder struct {
-	mock *MockIPaymentUseCase
+	mock.Mock
 }
 
 // NewMockIPaymentUseCase creates a new mock instance.
-func NewMockIPaymentUseCase(ctrl *gomock.Controller) *MockIPaymentUseCase {
-	mock := &MockIPaymentUseCase{ctrl: ctrl}
-	mock.recorder = &MockIPaymentUseCaseMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIPaymentUseCase) EXPECT() *MockIPaymentUseCaseMockRecorder {
-	return m.recorder
+func NewMockIPaymentUseCase(_ interface{}) *MockIPaymentUseCase {
+	return &MockIPaymentUseCase{}
 }
 
 // CreatePayment mocks base method.
 func (m *MockIPaymentUseCase) CreatePayment(ctx context.Context, payment *entities.Payment) (*entities.Payment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePayment", ctx, payment)
-	ret0, _ := ret[0].(*entities.Payment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreatePayment indicates an expected call of CreatePayment.
-func (mr *MockIPaymentUseCaseMockRecorder) CreatePayment(ctx, payment any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePayment", reflect.TypeOf((*MockIPaymentUseCase)(nil).CreatePayment), ctx, payment)
+	args := m.Called(ctx, payment)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.Payment), args.Error(1)
 }
 
 // GetPaymentByID mocks base method.
 func (m *MockIPaymentUseCase) GetPaymentByID(ctx context.Context, id uint) (*entities.Payment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPaymentByID", ctx, id)
-	ret0, _ := ret[0].(*entities.Payment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPaymentByID indicates an expected call of GetPaymentByID.
-func (mr *MockIPaymentUseCaseMockRecorder) GetPaymentByID(ctx, id any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPaymentByID", reflect.TypeOf((*MockIPaymentUseCase)(nil).GetPaymentByID), ctx, id)
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.Payment), args.Error(1)
 }
 
 // ListPayments mocks base method.
 func (m *MockIPaymentUseCase) ListPayments(ctx context.Context) ([]entities.Payment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListPayments", ctx)
-	ret0, _ := ret[0].([]entities.Payment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListPayments indicates an expected call of ListPayments.
-func (mr *MockIPaymentUseCaseMockRecorder) ListPayments(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPayments", reflect.TypeOf((*MockIPaymentUseCase)(nil).ListPayments), ctx)
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.Payment), args.Error(1)
 }

@@ -5,10 +5,10 @@ import (
 )
 
 type IUserRepository interface {
-	GetByID(id uint) (*entities.User, error)
+	GetByID(id string) (*entities.User, error)
 	GetByEmail(email string) (*entities.User, error)
 	Create(User *entities.User) error
 	Update(User *entities.User) error
-	Delete(id uint) error
+	Delete(id string) error
 	List() ([]entities.User, error)
 }

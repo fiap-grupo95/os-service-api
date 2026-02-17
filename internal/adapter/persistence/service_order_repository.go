@@ -32,7 +32,6 @@ func (r *ServiceOrderRepository) Create(ctx context.Context, serviceOrderDto *dt
 		return nil, gorm.ErrInvalidData
 	}
 
-	serviceOrderDto.OSStatusID = dtoStatus.ID
 	serviceOrderDto.ServiceOrderStatus = *dtoStatus
 
 	// Begin transaction
@@ -50,7 +49,7 @@ func (r *ServiceOrderRepository) Create(ctx context.Context, serviceOrderDto *dt
 	return serviceOrderDto, nil
 }
 
-func (r *ServiceOrderRepository) GetByID(ctx context.Context, id uint) (*dto.ServiceOrderModel, error) {
+func (r *ServiceOrderRepository) GetByID(ctx context.Context, id string) (*dto.ServiceOrderModel, error) {
 	var serviceOrder dto.ServiceOrderModel
 	// TODO - Avaliar o que posso tirar do Preload e deixar para serem carregados apenas quando necessÃ¡rio
 	err := r.db.Preload("ServiceOrderStatus").
@@ -60,7 +59,7 @@ func (r *ServiceOrderRepository) GetByID(ctx context.Context, id uint) (*dto.Ser
 		Preload("AdditionalRepairs.PartsSupplies").
 		First(&serviceOrder, id).Error
 	if err != nil {
-		log.Error().Msgf("Error finding service order with id %d: %v", id, err)
+		log.Error().Msgf("Error finding service order with id %s: %v", id, err)
 		if strings.EqualFold(err.Error(), gorm.ErrRecordNotFound.Error()) {
 			return nil, nil
 		}
@@ -69,7 +68,7 @@ func (r *ServiceOrderRepository) GetByID(ctx context.Context, id uint) (*dto.Ser
 	return &serviceOrder, nil
 }
 
-func (r *ServiceOrderRepository) UpdateEstimate(ctx context.Context, id uint, estimate float64) error {
+func (r *ServiceOrderRepository) UpdateEstimate(ctx context.Context, id string, estimate float64) error {
 	var dtoDB dto.ServiceOrderModel
 	if err := r.db.First(&dtoDB, id).Error; err != nil {
 		return err
@@ -86,18 +85,12 @@ func (r *ServiceOrderRepository) Update(ctx context.Context, serviceOrder *dto.S
 		return gorm.ErrInvalidData
 	}
 
-	dtoStatus, err := r.getStatus(ctx, serviceOrder.ServiceOrderStatus)
-	if err != nil {
-		return gorm.ErrInvalidData
-	}
-
 	tx := r.db.Begin()
 
 	serviceOrderDto := dto.ServiceOrderModel{
 		ID:                       serviceOrder.ID,
 		CustomerID:               serviceOrder.CustomerID,
 		VehicleID:                serviceOrder.VehicleID,
-		OSStatusID:               dtoStatus.ID,
 		Estimate:                 serviceOrder.Estimate,
 		StartedExecutionDate:     serviceOrder.StartedExecutionDate,
 		FinalExecutionDate:       serviceOrder.FinalExecutionDate,
@@ -120,7 +113,7 @@ func (r *ServiceOrderRepository) Update(ctx context.Context, serviceOrder *dto.S
 			relation := dto.PartsSupplyServiceOrder{
 				PartsSupplyID:  partsSupply.ID,
 				ServiceOrderID: serviceOrder.ID,
-				Quantity:       partsSupply.QuantityReserve,
+				Quantity:       partsSupply.Quantity,
 			}
 			if err := tx.Create(&relation).Error; err != nil {
 				tx.Rollback()
@@ -181,7 +174,7 @@ func (r *ServiceOrderRepository) getStatus(ctx context.Context, status dto.Servi
 	return &serviceOrderStatuses, nil
 }
 
-func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID uint, serviceOrderID uint) (*dto.PartsSupplyServiceOrder, error) {
+func (r *ServiceOrderRepository) GetPartsSupplyServiceOrder(ctx context.Context, partsSupplyID string, serviceOrderID string) (*dto.PartsSupplyServiceOrder, error) {
 	var relation dto.PartsSupplyServiceOrder
 	err := r.db.Where("parts_supply_id = ? AND service_order_id = ?", partsSupplyID, serviceOrderID).First(&relation).Error
 	if err != nil {

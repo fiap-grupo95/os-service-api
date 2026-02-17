@@ -55,7 +55,7 @@ func (r *CustomerRepository) Create(customer *request.CustomerCreateRequest) err
 	return nil
 }
 
-func (r *CustomerRepository) GetByID(id uint) (*response.CustomerResponse, error) {
+func (r *CustomerRepository) GetByID(id string) (*response.CustomerResponse, error) {
 	logger := logs.Logger()
 	path := fmt.Sprintf(CUSTOMERS_ID_ENDPOINT, id)
 	resp, err := r.http.Get(path)
@@ -91,7 +91,7 @@ func (r *CustomerRepository) GetByDocument(CpfCnpj string) (*response.CustomerRe
 	return &customer, nil
 }
 
-func (r *CustomerRepository) Update(customer *request.CustomerUpdateRequest, id uint) error {
+func (r *CustomerRepository) Update(customer *request.CustomerUpdateRequest, id string) error {
 logger := logs.Logger()
 	path := fmt.Sprintf(CUSTOMERS_ID_ENDPOINT, id)
 

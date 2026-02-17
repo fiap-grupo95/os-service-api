@@ -33,7 +33,7 @@ func (s *CancelEstimateStrategy) Execute(ctx context.Context, serviceOrder *enti
 		return nil, err
 	}
 
-	estimate, err := s.billingServiceRepo.CancelEstimate(ctx, serviceOrder)
+	estimate, err := s.billingServiceRepo.CancelEstimate(ctx, serviceOrder, nil)
 	if err != nil {
 		logger.Error().Err(err).Any("parts_supply_id", serviceOrder.PartsSupplies).Msg("Error canceling estimate")
 		return nil, err
