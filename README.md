@@ -151,6 +151,95 @@ Para gerar e abrir o relatório de cobertura em HTML (abre no navegador):
 make coverage-html
 ```
 
+## Como executar o projeto em Localmente
+
+### Pré-requisitos
+
+- **Minikube:** Configurado com um perfil para autenticação.
+- **Docker:** Necessário para que o minikube crie um cluster local.
+- **Make:** Necessário para que o minikube crie um cluster local. (Caso não tenha o make, execute os comandos setados no Makefile manualmente)
+
+<details>
+<summary>Instalação e Configuração do Minikube</summary>
+
+Baixe o Minikube em: [https://minikube.sigs.k8s.io/docs/start/](https://minikube.sigs.k8s.io/docs/start/)
+
+Para sistemas Unix-like com Docker:
+
+```bash
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+```
+
+Em seguida, verifique a instalação:
+
+```bash
+minikube version
+```
+
+Antes de iniciar o cluster, defina os recursos desejados:
+
+```bash
+minikube config set memory 6144
+minikube config set cpus 2
+```
+
+> **Nota:** A configuração acima reduz os recursos do Minikube para 6144MB de memória e 2 CPUs. Embora isso possa ser suficiente para ambientes de desenvolvimento leves, aplicações que executam múltiplos serviços (como banco de dados, API e jobs) podem exigir mais recursos para funcionar corretamente.
+>
+> **Recomendação:** Caso enfrente problemas de desempenho, falhas de implantação ou erros de memória, aumente a alocação para pelo menos `8192MB` de memória e `4 CPUs`:
+> ```bash
+> minikube config set memory 8192
+> minikube config set cpus 4
+> ```
+>
+> Ajuste os valores conforme a capacidade do seu hardware. Documente e monitore o uso de recursos para garantir o funcionamento adequado do stack completo.
+</details>
+
+### Execução da Infraestrutura Local
+
+1. Execute o comando que cria o cluster local Minikube. E o comando que habilita o addon do metrics-server.
+
+```bash
+minikube start --driver=docker
+minikube addons enable metrics-server
+```
+
+2. Execute os comandos para criar a infraestrutura k8s
+
+- Infraestrutura da API
+```bash
+make deploy-local // Deploy da API local
+make get-all // Checa o status da API
+make run-jobs // Executa os jobs da API
+make local-api // Executa a API localmente
+```
+
+- Infraestrutura do New Relic
+```bash
+make deploy-newrelic // Deploy do New Relic
+make get-newrelic // Checa o status do New Relic
+```
+
+3. Para acessar a API localmente, execute o comando abaixo:
+
+```bash
+make local-api
+```
+
+Dessa forma o endereço da API sempre será http://localhost:8080.
+
+4. Para finalizar a execução da Infraestrutura local, execute o comando abaixo:
+
+- API
+```bash
+make delete
+```
+
+- New Relic
+```bash
+make delete-newrelic
+```
+
 ## Geração de imagem para testes de infraestrutura
 
 Utilize o padrão de tags para versões de teste:

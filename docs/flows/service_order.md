@@ -86,3 +86,5 @@ O fluxo da OS depende da comunicação com diversos serviços externos e interno
 Para visualizar a interação entre os sistemas e a ordem cronológica das mensagens, consulte o diagrama de sequência detalhado:
 
 [Diagrama de Sequência de OS](../diagrams/diagrama_sequencia_os.md)
+
+[Máquina de Estados de OS](../diagrams/maquina_estados_service_order.md)

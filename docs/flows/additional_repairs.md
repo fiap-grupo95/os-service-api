@@ -75,3 +75,5 @@ A principal alteração refletida na OS original é financeira.
 Para visualizar a interação entre os sistemas e a ordem cronológica das mensagens, consulte o diagrama de sequência específico para este fluxo:
 
 [Diagrama de Sequência de Reparos Adicionais](../diagrams/diagrama_sequencia_ar.md)
+
+[Máquina de Estados de Reparos Adicionais](../diagrams/maquina_estados_additional_repair.md)
