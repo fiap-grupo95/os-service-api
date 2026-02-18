@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-job
+  namespace: os-service-api
+spec:
+  backoffLimit: 4
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      containers:
+      - name: seed
+        image: mandaapag03/os-service-api:latest
+        command: ["./os-service-api-seed"]
+        envFrom:
+          - secretRef:
+              name: app-secret
+          - configMapRef:
+              name: app-config
+      restartPolicy: OnFailure

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: os-service-api-deployment
+    namespace: os-service-api
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: os-service-api
+    template:
+        metadata:
+            labels:
+                app: os-service-api
+            annotations:
+              newrelic.com/integrations: "true"
+        spec:
+          containers:
+            - name: os-service-api
+              image: mandaapag03/os-service-api:latest
+              ports:
+                - containerPort: 8080
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "200Mi"
+                  cpu: "200m"
+              envFrom:
+                - secretRef:
+                    name: app-secret
+                - configMapRef:
+                    name: app-config
+              volumeMounts:
+                - mountPath: /app/data
+                  name: app-data
+
+          volumes:
+            - name: app-data
