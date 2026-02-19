@@ -26,8 +26,10 @@ func setupADRRouter(h *handler.AdditionalRepairHandler) *gin.Engine {
 	r := gin.New()
 	r.POST("/additional-repair", h.CreateAdditionalRepair)
 	r.GET("/additional-repair/:id", h.GetAdditionalRepair)
+	r.GET("/additional-repair/service-orders/:id", h.GetAdditionalRepairBySO)
 	r.POST("/additional-repair/approve/:id", h.ApproveAdditionalRepair)
 	r.POST("/additional-repair/reject/:id", h.RejectAdditionalRepair)
+	r.POST("/additional-repair/cancel/:id", h.CancelAdditionalRepair)
 
 	return r
 }
@@ -79,6 +81,19 @@ func TestCreateAdditionalRepair_Error(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	mockUC.AssertExpectations(t)
+}
+
+func TestCreateAdditionalRepair_InvalidJSON(t *testing.T) {
+	mockUC := mocks.NewMockIAdditionalRepairUseCase()
+	h := handler.NewAdditionalRepairHandler(mockUC)
+	r := setupADRRouter(h)
+
+	req, _ := http.NewRequest("POST", "/additional-repair", bytes.NewBufferString("{"))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestGetAdditionalRepair_Success(t *testing.T) {

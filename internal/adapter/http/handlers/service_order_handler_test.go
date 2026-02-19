@@ -3,12 +3,14 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/fiap-grupo95/os-service-api/internal/domain/entities"
+	"github.com/fiap-grupo95/os-service-api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -134,6 +136,188 @@ func TestCreateServiceOrder(t *testing.T) {
 	w = httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestEstimateHandlers_ServiceOrder(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/estimate/approve", h.ApproveServiceOrderEstimate)
+	r.POST("/os/:id/estimate/reject", h.RejectServiceOrderEstimate)
+	r.POST("/os/:id/estimate/cancel", h.CancelServiceOrderEstimate)
+
+	t.Run("approve - not found", func(t *testing.T) {
+		mockUC.On("EstimateServiceOrder", mock.Anything, "1", mock.Anything).Return((*entities.ServiceOrder)(nil), usecase.ErrServiceOrderNotFound).Once()
+		req, _ := http.NewRequest("POST", "/os/1/estimate/approve", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("reject - bad request", func(t *testing.T) {
+		mockUC.On("EstimateServiceOrder", mock.Anything, "2", mock.Anything).Return((*entities.ServiceOrder)(nil), usecase.ErrInvalidTransitionStatusToEstimate).Once()
+		req, _ := http.NewRequest("POST", "/os/2/estimate/reject", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("cancel - internal error", func(t *testing.T) {
+		mockUC.On("EstimateServiceOrder", mock.Anything, "3", mock.Anything).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+		req, _ := http.NewRequest("POST", "/os/3/estimate/cancel", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestExecutionHandlers_ServiceOrder(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/execution/create", h.ExecutionServiceOrder)
+	r.POST("/os/:id/execution/finish", h.FinishServiceOrderExecution)
+
+	t.Run("start - bad request", func(t *testing.T) {
+		mockUC.On("ExecutionServiceOrder", mock.Anything, "1", mock.Anything).Return((*entities.ServiceOrder)(nil), usecase.ErrInvalidTransitionStatusToExecution).Once()
+		req, _ := http.NewRequest("POST", "/os/1/execution/create", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("finish - not found", func(t *testing.T) {
+		mockUC.On("ExecutionServiceOrder", mock.Anything, "2", mock.Anything).Return((*entities.ServiceOrder)(nil), usecase.ErrServiceOrderNotFound).Once()
+		req, _ := http.NewRequest("POST", "/os/2/execution/finish", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("finish - internal error", func(t *testing.T) {
+		mockUC.On("ExecutionServiceOrder", mock.Anything, "3", mock.Anything).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+		req, _ := http.NewRequest("POST", "/os/3/execution/finish", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestPaymentAndDeliveryHandlers_ServiceOrder(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/payment", h.PaymentServiceOrder)
+	r.POST("/os/:id/delivery", h.DeliveryServiceOrder)
+
+	t.Run("payment - bad request", func(t *testing.T) {
+		mockUC.On("PaymentServiceOrder", mock.Anything, "1").Return((*entities.Payment)(nil), usecase.ErrInvalidTransitionStatusToDelivery).Once()
+		req, _ := http.NewRequest("POST", "/os/1/payment", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("payment - internal error", func(t *testing.T) {
+		mockUC.On("PaymentServiceOrder", mock.Anything, "2").Return((*entities.Payment)(nil), errors.New("fail")).Once()
+		req, _ := http.NewRequest("POST", "/os/2/payment", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	t.Run("delivery - not found", func(t *testing.T) {
+		mockUC.On("DeliveryServiceOrder", mock.Anything, "3").Return((*entities.ServiceOrder)(nil), usecase.ErrServiceOrderNotFound).Once()
+		req, _ := http.NewRequest("POST", "/os/3/delivery", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("delivery - bad request", func(t *testing.T) {
+		mockUC.On("DeliveryServiceOrder", mock.Anything, "4").Return((*entities.ServiceOrder)(nil), usecase.ErrInvalidTransitionStatusToDelivery).Once()
+		req, _ := http.NewRequest("POST", "/os/4/delivery", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("delivery - internal error", func(t *testing.T) {
+		mockUC.On("DeliveryServiceOrder", mock.Anything, "5").Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+		req, _ := http.NewRequest("POST", "/os/5/delivery", nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		assert.Equal(t, http.StatusInternalServerError, w.Code)
+	})
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestCancelServiceOrder(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/cancel", h.CancelServiceOrder)
+
+	// Success
+	mockUC.On("CancelServiceOrder", mock.Anything, "1").Return(&entities.ServiceOrder{ID: "1"}, nil).Once()
+	req, _ := http.NewRequest("POST", "/os/1/cancel", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// Failure
+	mockUC.On("CancelServiceOrder", mock.Anything, "2").Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+	req, _ = http.NewRequest("POST", "/os/2/cancel", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestCancelServiceOrderEstimate(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/estimate/cancel", h.CancelServiceOrderEstimate)
+
+	mockUC.On("EstimateServiceOrder", mock.Anything, "1", mock.Anything).Return(&entities.ServiceOrder{ID: "1"}, nil).Once()
+	req, _ := http.NewRequest("POST", "/os/1/estimate/cancel", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	mockUC.On("EstimateServiceOrder", mock.Anything, "2", mock.Anything).Return((*entities.ServiceOrder)(nil), errors.New("fail")).Once()
+	req, _ = http.NewRequest("POST", "/os/2/estimate/cancel", nil)
+	w = httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	mockUC.AssertExpectations(t)
+}
+
+func TestDiagnosisServiceOrder_InvalidJSON(t *testing.T) {
+	_, h, r := setupServiceOrderHandlerTest(t)
+	r.POST("/os/:id/diagnosis", h.DiagnosisServiceOrder)
+
+	req, _ := http.NewRequest("POST", "/os/1/diagnosis", bytes.NewBufferString("{"))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestGetServiceOrderFullData_QueryParam(t *testing.T) {
+	mockUC, h, r := setupServiceOrderHandlerTest(t)
+	r.GET("/os/:id", h.GetServiceOrder)
+
+	so := &entities.ServiceOrder{ID: "1"}
+	mockUC.On("GetServiceOrder", mock.Anything, entities.ServiceOrder{ID: "1"}, true).Return(so, nil).Once()
+
+	req, _ := http.NewRequest("GET", "/os/1?full_data=true", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var got map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &got)
 
 	mockUC.AssertExpectations(t)
 }
