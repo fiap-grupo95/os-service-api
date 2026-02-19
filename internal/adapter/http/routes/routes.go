@@ -3,6 +3,8 @@ package routes
 import (
 	"strconv"
 
+	_ "github.com/fiap-grupo95/os-service-api/docs"
+
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/gateway"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/billing_service"
 	"github.com/fiap-grupo95/os-service-api/internal/adapter/http/entity_api"
