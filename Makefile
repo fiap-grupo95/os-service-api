@@ -4,7 +4,7 @@ DB_SERVICE_NAME=db
 DB_CONTAINER_NAME=db
 APP_BINARY_PATH=/app/os-service-api
 
-.PHONY: init up down logs swag-generate-docker swag-run-docker test coverage coverage-html
+.PHONY: init up down logs swag-generate-docker swag-run-docker test coverage coverage-html coverage-core
 
 init:
 	cp .env-example .env
@@ -51,6 +51,10 @@ coverage-html: dev-up
 	docker-compose exec dev go test ./... -coverprofile=coverage.out
 	docker cp $$(docker-compose ps -q dev):/app/coverage.out .
 	go tool cover -html=coverage.out
+
+coverage-core: dev-up
+	docker-compose exec dev go test ./... -coverpkg=./internal/usecase/...,./internal/adapter/http/handlers/... -coverprofile=coverage-core.out
+	docker-compose exec dev go tool cover -func=coverage-core.out
 
 get-all:
 	kubectl get all -n os-service-api

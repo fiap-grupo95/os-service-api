@@ -54,48 +54,48 @@ services:
       - app_network
     restart: on-failure
 
-  # dev:
-  #   image: golang:1.24
-  #   working_dir: /app
-  #   volumes:
-  #     - .:/app
-  #   tty: true
-  #   command: tail -f /dev/null
+  dev:
+    image: golang:1.24
+    working_dir: /app
+    volumes:
+      - .:/app
+    tty: true
+    command: tail -f /dev/null
 
-  # sonarqube:
-  #   image: sonarqube:25.7.0.110598-community
-  #   container_name: sonarqube
-  #   restart: always
-  #   ports:
-  #     - '9000:9000'
-  #   environment:
-  #     SONAR_JDBC_URL: jdbc:postgresql://db_postgres_sonar:5433/${POSTGRES_SONAR_DB}
-  #     SONAR_JDBC_USERNAME: ${POSTGRES_SONAR_USER}
-  #     SONAR_JDBC_PASSWORD: ${POSTGRES_SONAR_PASSWORD}
-  #   depends_on:
-  #     - db_postgres_sonar
-  #   networks:
-  #     - sonar-net
-  #   volumes:
-  #     - sonar_data:/opt/sonarqube/data
-  #     - sonar_extensions:/opt/sonarqube/extensions
+  sonarqube:
+    image: sonarqube:latest
+    container_name: sonarqube
+    restart: always
+    ports:
+      - '9000:9000'
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://db_postgres_sonar:5433/${POSTGRES_SONAR_DB}
+      SONAR_JDBC_USERNAME: ${POSTGRES_SONAR_USER}
+      SONAR_JDBC_PASSWORD: ${POSTGRES_SONAR_PASSWORD}
+    depends_on:
+      - db_postgres_sonar
+    networks:
+      - sonar-net
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
 
-  # db_postgres_sonar:
-  #   image: postgres:17.5
-  #   container_name: db_postgres_sonar
-  #   restart: always
-  #   environment:
-  #     POSTGRES_USER: ${POSTGRES_SONAR_USER}
-  #     POSTGRES_PASSWORD: ${POSTGRES_SONAR_PASSWORD}
-  #     POSTGRES_DB: ${POSTGRES_SONAR_DB}
-  #     POSTGRES_PORT: 5433
-  #   command: -p 5433
-  #   networks:
-  #     - sonar-net
-  #   ports:
-  #     - '5433:5433'
-  #   volumes:
-  #     - postgresql_sonar_data:/var/lib/postgresql/data
+  db_postgres_sonar:
+    image: postgres:17.5
+    container_name: db_postgres_sonar
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_SONAR_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_SONAR_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_SONAR_DB}
+      POSTGRES_PORT: 5433
+    command: -p 5433
+    networks:
+      - sonar-net
+    ports:
+      - '5433:5433'
+    volumes:
+      - postgresql_sonar_data:/var/lib/postgresql/data
 
   mockoon:
     image: mockoon/cli
@@ -135,3 +135,4 @@ volumes:
   sonar_data:
   sonar_extensions:
   mockoon_data:
+  postgresql_sonar_data:
