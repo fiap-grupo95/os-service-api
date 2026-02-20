@@ -171,13 +171,23 @@ func (r *BillingServiceRepository) CreatePayment(ctx context.Context, estimateID
 		return nil, errors.New("no estimate ID provided")
 	}
 
-	payload := map[string]string{"estimate_id": estimateID}
+	payload := map[string]any{
+		"estimate_id": estimateID,
+		"mp_payload": map[string]any{
+			"payment_method_id": "pix",
+			"payer": map[string]any{
+				"email": "test-user@test.com",
+			},
+		},
+	}
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, PAYMENT_CREATE_ENDPOINT, bytes.NewReader(payloadBytes))
+	url := fmt.Sprintf(PAYMENT_CREATE_ENDPOINT, estimateID)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payloadBytes))
 	if err != nil {
 		return nil, err
 	}
