@@ -385,11 +385,11 @@
       "type": "http",
       "documentation": "",
       "method": "post",
-      "endpoint": "v1/payments",
+      "endpoint": "v1/payments/:id",
       "responses": [
         {
           "uuid": "d8b2f49a-3b42-4e2c-aefb-ec2c6a7c1b8a",
-          "body": "{\n\t\"id\": \"pay_{{uuid}}\",\n\t\"estimate_id\": \"{{body 'estimate_id'}}\",\n\t\"status\": \"created\",\n\t\"amount\": 500,\n\t\"currency\": \"BRL\"\n}",
+          "body": "{\n\t\"id\": \"pay_{{uuid}}\",\n\t\"estimate_id\": \"{{body 'estimate_id'}}\",\n\t\"status\": \"created\",\n\t\"amount\": 500,\n\t\"currency\": \"BRL\",\n\t\"payment_method_id\": \"pix\",\n\t\"payer\": {\n\t\t\"email\": \"test-user@test.com\"\n\t},\n\t\"payer_email\": \"{{body 'mp_payload.payer.email'}}\"\n}",
           "latency": 0,
           "statusCode": 201,
           "label": "",
